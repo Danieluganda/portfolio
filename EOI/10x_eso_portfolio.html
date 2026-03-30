@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>10X Digital Economy · ESO Portfolio</title>
+<style>
+
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f4f5f9;--white:#fff;--border:#e3e6ef;--text:#1a1d2e;--muted:#6b7490;
+  --dfcu:#b45309;--dfcu-lt:#fffbeb;--dfcu-bd:#fde68a;
+  --mubs:#0369a1;--mubs-lt:#eff6ff;--mubs-bd:#bae6fd;
+  --mkazi:#7c3aed;--mkazi-lt:#f5f3ff;--mkazi-bd:#ddd6fe;
+  --excel:#15803d;--excel-lt:#f0fdf4;--excel-bd:#bbf7d0;
+  --stan:#2563eb;--stan-lt:#eff4ff;--stan-bd:#bfdbfe;
+  --pedn:#16803c;--pedn-lt:#f0fdf4;--pedn-bd:#bbf7d0;
+  --chal:#dc2626;--chal-lt:#fef2f2;--chal-bd:#fecaca;
+  --gold:#d97706;--gold-lt:#fffbeb;--red:#dc2626;--green:#059669;--orange:#ea580c;
+}
+html{scroll-behavior:smooth}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+nav{background:var(--white);border-bottom:2px solid var(--border);padding:0 1.25rem;display:flex;align-items:center;justify-content:space-between;height:52px;position:sticky;top:0;z-index:100;box-shadow:0 1px 6px rgba(0,0,0,.07);flex-wrap:wrap;gap:.5rem}
+.nav-logo{width:32px;height:32px;border-radius:6px;background:linear-gradient(135deg,#f0b429,#ea580c);display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.7rem;color:#fff;flex-shrink:0}
+.nav-brand{display:flex;align-items:center;gap:.6rem}
+.nav-title{font-size:.9rem;font-weight:700}
+.nav-sub{font-size:.62rem;color:var(--muted);margin-top:1px}
+.nav-tabs{display:flex;gap:3px;flex-wrap:wrap}
+.nav-tab{font-size:.7rem;font-weight:600;padding:5px 11px;border-radius:5px;border:1.5px solid transparent;cursor:pointer;background:none;color:var(--muted);transition:all .15s;white-space:nowrap}
+.nav-tab:hover{color:var(--text);background:var(--bg)}
+.t-ov{color:var(--gold);background:var(--gold-lt);border-color:#fde68a}
+.t-dfcu{color:var(--dfcu);background:var(--dfcu-lt);border-color:var(--dfcu-bd)}
+.t-mubs{color:var(--mubs);background:var(--mubs-lt);border-color:var(--mubs-bd)}
+.t-mkazi{color:var(--mkazi);background:var(--mkazi-lt);border-color:var(--mkazi-bd)}
+.t-excel{color:var(--excel);background:var(--excel-lt);border-color:var(--excel-bd)}
+.t-stan{color:var(--stan);background:var(--stan-lt);border-color:var(--stan-bd)}
+.t-pedn{color:var(--pedn);background:var(--pedn-lt);border-color:var(--pedn-bd)}
+.t-chal{color:var(--chal);background:var(--chal-lt);border-color:var(--chal-bd)}
+.section{display:none}.section.active{display:block}
+.page{padding:1rem 1.25rem 2rem;max-width:1440px;margin:0 auto}
+.tbar{border-radius:8px 8px 0 0;padding:.6rem 1.25rem;display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:.5rem}
+.tbar h1{font-size:1rem;font-weight:800;color:#fff;letter-spacing:-.02em}
+.tbar-meta{font-size:.65rem;color:rgba(255,255,255,.75)}
+.tbar-accent{height:4px;border-radius:0 0 4px 4px;margin-bottom:.75rem}
+.kpi-strip{display:grid;grid-template-columns:repeat(7,1fr);border:1px solid var(--border);border-radius:8px;overflow:hidden;margin-bottom:.85rem;background:var(--white);box-shadow:0 1px 4px rgba(0,0,0,.05)}
+.kpi{padding:.85rem .7rem;border-right:1px solid var(--border);text-align:center;position:relative}
+.kpi:last-child{border-right:none}
+.kpi::after{content:'';position:absolute;top:0;left:0;right:0;height:3px}
+.kv{font-size:1.75rem;font-weight:800;line-height:1;margin-bottom:.25rem;letter-spacing:-.04em}
+.kl{font-size:.58rem;font-weight:500;color:var(--muted);text-transform:uppercase;letter-spacing:.05em;line-height:1.3}
+.tcol{display:grid;grid-template-columns:1.1fr 1fr 1fr;gap:.85rem}
+@media(max-width:1100px){.tcol{grid-template-columns:1fr}}
+.panel{background:var(--white);border:1px solid var(--border);border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.ph{padding:.6rem .9rem;font-size:.65rem;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:#fff}
+.pb{padding:.8rem .9rem}
+.sh{font-size:.58rem;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--muted);margin-bottom:.5rem;margin-top:.15rem}
+.hr{display:flex;align-items:center;gap:7px;margin-bottom:.48rem}
+.hl{font-size:.69rem;color:var(--text);flex:0 0 140px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hl.sm{flex:0 0 108px}
+.ht{flex:1;height:8px;background:#edf0f7;border-radius:2px;overflow:hidden}
+.hf{height:100%;border-radius:2px}
+.hn{font-family:monospace;font-size:.6rem;color:var(--muted);flex:0 0 52px;text-align:right;white-space:nowrap}
+.lt{display:flex;align-items:center;gap:7px;margin-bottom:.42rem}
+.ltl{font-size:.69rem;flex:0 0 72px}
+.ltt{flex:1;height:9px;background:#edf0f7;border-radius:2px;overflow:hidden}
+.ltf{height:100%;border-radius:2px}
+.ltv{font-family:monospace;font-size:.6rem;color:var(--muted);flex:0 0 56px;text-align:right}
+.dv{height:1px;background:var(--border);margin:.6rem 0}
+.gb{height:13px;border-radius:6px;overflow:hidden;display:flex;margin:.35rem 0}
+.smr{display:flex;gap:.6rem;flex-wrap:wrap;margin-top:.65rem;padding-top:.65rem;border-top:1px solid var(--border)}
+.sm-v{font-size:1.15rem;font-weight:800;letter-spacing:-.03em;line-height:1}
+.sm-l{font-size:.55rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:2px}
+.null-box{background:var(--bg);border-radius:6px;padding:.7rem;text-align:center;font-size:.63rem;color:var(--muted)}
+.null-v{font-size:1.2rem;font-weight:800;color:var(--muted);margin-bottom:2px}
+.tag{font-size:.58rem;padding:2px 7px;border-radius:3px;font-weight:600}
+.ov-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.85rem;margin-bottom:.85rem}
+.ov-row{display:grid;grid-template-columns:repeat(3,1fr);gap:.85rem}
+@media(max-width:1100px){.ov-grid{grid-template-columns:repeat(2,1fr)}.ov-row{grid-template-columns:1fr}}
+.ecc{background:var(--white);border:1px solid var(--border);border-radius:8px;overflow:hidden;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.ecc-h{padding:.7rem .9rem;color:#fff}
+.ecc-hn{font-size:.88rem;font-weight:800}
+.ecc-hr{font-size:.58rem;opacity:.8;text-transform:uppercase;letter-spacing:.08em;margin-bottom:2px}
+.ecc-b{padding:.75rem .9rem}
+.ecc-ks{display:flex;flex-wrap:wrap;gap:.4rem;margin-bottom:.65rem}
+.ecc-k{text-align:center;background:var(--bg);border-radius:5px;padding:.4rem .5rem;flex:1;min-width:48px}
+.ecc-kv{font-size:1rem;font-weight:800;line-height:1}
+.ecc-kl{font-size:.5rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em;margin-top:2px}
+.highlight-box{border-radius:6px;padding:.65rem;text-align:center;margin-bottom:.5rem}
+.highlight-val{font-size:1.5rem;font-weight:800}
+.highlight-sub{font-size:.6rem;color:var(--muted)}
+
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="nav-brand">
+    <div class="nav-logo">10X</div>
+    <div>
+      <div class="nav-title">ESO Portfolio Intelligence</div>
+      <div class="nav-sub">10X Digital Economy Programme · Outbox Uganda · March 2026</div>
+    </div>
+  </div>
+  <div class="nav-tabs">
+    <button class="nav-tab t-ov" onclick="ST('ov')">Overview</button>
+    <button class="nav-tab" onclick="ST('dfcu')">DFCU Foundation</button>
+    <button class="nav-tab" onclick="ST('mubs')">MUBS EIIC</button>
+    <button class="nav-tab" onclick="ST('mkazi')">Mkazipreneur</button>
+    <button class="nav-tab" onclick="ST('excel')">ExcelHort</button>
+    <button class="nav-tab" onclick="ST('stan')">Stanbic Incubator</button>
+    <button class="nav-tab" onclick="ST('pedn')">PEDN</button>
+    <button class="nav-tab" onclick="ST('chal')">Challenges Uganda</button>
+  </div>
+</nav>
+
+<div id="tab-ov" class="section active">
+<div class="page">
+  <div style="background:var(--white);border:1px solid var(--border);border-radius:8px;padding:1.25rem 1.4rem;margin-bottom:.85rem;box-shadow:0 1px 4px rgba(0,0,0,.05)">
+    <div style="display:flex;justify-content:space-between;flex-wrap:wrap;gap:.75rem;align-items:flex-start">
+      <div>
+        <div style="font-size:.58rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;color:var(--gold);margin-bottom:.5rem">10X Digital Economy · Outbox Uganda · March 2026</div>
+        <div style="font-size:1.6rem;font-weight:800;letter-spacing:-.04em;margin-bottom:.3rem">Full ESO Portfolio Summary</div>
+        <div style="font-size:.8rem;color:var(--muted);max-width:560px;line-height:1.65">Raw EOI data across 7 ESO partners — 7,001 submissions analysed. Covers MSME profiles, employment generated, sector distribution, and founder demographics.</div>
+      </div>
+      <div style="display:flex;gap:.35rem;flex-wrap:wrap;align-items:center">
+        <span class="tag" style="background:var(--dfcu-lt);color:var(--dfcu);border:1px solid var(--dfcu-bd)">DFCU · Eastern</span>
+        <span class="tag" style="background:var(--mubs-lt);color:var(--mubs);border:1px solid var(--mubs-bd)">MUBS · Eastern</span>
+        <span class="tag" style="background:var(--mkazi-lt);color:var(--mkazi);border:1px solid var(--mkazi-bd)">Mkazipreneur · Central</span>
+        <span class="tag" style="background:var(--excel-lt);color:var(--excel);border:1px solid var(--excel-bd)">ExcelHort · Western</span>
+        <span class="tag" style="background:var(--stan-lt);color:var(--stan);border:1px solid var(--stan-bd)">Stanbic · Central</span>
+        <span class="tag" style="background:var(--pedn-lt);color:var(--pedn);border:1px solid var(--pedn-bd)">PEDN · Eastern</span>
+        <span class="tag" style="background:var(--chal-lt);color:var(--chal);border:1px solid var(--chal-bd)">Challenges · Northern</span>
+        
+      </div>
+    </div>
+  </div>
+  <div class="kpi-strip"><div class="kpi" style="position:relative"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:#d97706;border-radius:0"></div><div class="kv" style="color:var(--gold)">7,001</div><div class="kl">Total Submissions</div></div><div class="kpi" style="position:relative"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:#059669;border-radius:0"></div><div class="kv" style="color:var(--green)">8,446</div><div class="kl">FTE Workers</div></div><div class="kpi" style="position:relative"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:#ea580c;border-radius:0"></div><div class="kv" style="color:var(--orange)">2,761</div><div class="kl">PTE Workers</div></div><div class="kpi" style="position:relative"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:#d97706;border-radius:0"></div><div class="kv" style="color:var(--gold)">95.5%</div><div class="kl">Female Founders</div></div><div class="kpi" style="position:relative"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:#dc2626;border-radius:0"></div><div class="kv" style="color:var(--red)">255</div><div class="kl">PWD Founders</div></div><div class="kpi" style="position:relative"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:#7c3aed;border-radius:0"></div><div class="kv" style="color:#7c3aed">225</div><div class="kl">URSB Registered</div></div><div class="kpi" style="position:relative"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:#0369a1;border-radius:0"></div><div class="kv" style="color:var(--mubs)">84.7%</div><div class="kl">Youth (18–35)</div></div></div>
+  <div class="ov-grid">
+<div class="ecc">
+  <div class="ecc-h" style="background:linear-gradient(135deg,#92400e,#b45309)">
+    <div class="ecc-hr">Eastern Uganda</div>
+    <div class="ecc-hn">DFCU Foundation</div>
+  </div>
+  <div class="ecc-b">
+    <div class="ecc-ks">
+      <div class="ecc-k"><div class="ecc-kv" style="color:var(--dfcu)">2,642</div><div class="ecc-kl">Submissions</div></div>
+      <div class="ecc-k"><div class="ecc-kv" style="color:var(--gold)">97.2%</div><div class="ecc-kl">Female</div></div>
+      <div class="ecc-k"><div class="ecc-kv">3,020</div><div class="ecc-kl">FTE</div></div>
+    </div>
+    <div class="sh">Top Sectors</div>
+    <div class="hr"><div class="hl sm">Trade & Services</div><div class="ht"><div class="hf" style="width:100.0%;background:var(--dfcu)"></div></div><div class="hn">1,032</div></div><div class="hr"><div class="hl sm">Fashion & Design</div><div class="ht"><div class="hf" style="width:79.3%;background:var(--dfcu);opacity:0.55"></div></div><div class="hn">818</div></div><div class="hr"><div class="hl sm">Agriculture</div><div class="ht"><div class="hf" style="width:63.8%;background:var(--dfcu);opacity:0.35"></div></div><div class="hn">658</div></div>
+    <div class="dv"></div>
+    <div style="display:flex;gap:.3rem;flex-wrap:wrap">
+      <span class="tag" style="background:var(--dfcu-lt);color:var(--dfcu);border:1px solid var(--dfcu-bd)">Bulambuli · Pallisa</span>
+      <span class="tag" style="background:var(--bg);color:var(--muted)">UGX 14.3M avg rev</span>
+    </div>
+  </div>
+</div>
+
+<div class="ecc">
+  <div class="ecc-h" style="background:linear-gradient(135deg,#075985,#0369a1)">
+    <div class="ecc-hr">Eastern Uganda</div>
+    <div class="ecc-hn">MUBS EIIC</div>
+  </div>
+  <div class="ecc-b">
+    <div class="ecc-ks">
+      <div class="ecc-k"><div class="ecc-kv" style="color:var(--mubs)">1,000</div><div class="ecc-kl">Submissions</div></div>
+      <div class="ecc-k"><div class="ecc-kv" style="color:var(--gold)">97.8%</div><div class="ecc-kl">Female</div></div>
+      <div class="ecc-k"><div class="ecc-kv">1,135</div><div class="ecc-kl">FTE</div></div>
+    </div>
+    <div class="sh">Top Sectors</div>
+    <div class="hr"><div class="hl sm">Trade & Services</div><div class="ht"><div class="hf" style="width:100.0%;background:var(--mubs)"></div></div><div class="hn">532</div></div><div class="hr"><div class="hl sm">Fashion & Design</div><div class="ht"><div class="hf" style="width:40.6%;background:var(--mubs);opacity:0.55"></div></div><div class="hn">216</div></div><div class="hr"><div class="hl sm">Agriculture</div><div class="ht"><div class="hf" style="width:30.5%;background:var(--mubs);opacity:0.35"></div></div><div class="hn">162</div></div>
+    <div class="dv"></div>
+    <div style="display:flex;gap:.3rem;flex-wrap:wrap">
+      <span class="tag" style="background:var(--mubs-lt);color:var(--mubs);border:1px solid var(--mubs-bd)">Mbale · Kapchorwa</span>
+      <span class="tag" style="background:var(--bg);color:var(--muted)">UGX 8.1M avg rev</span>
+    </div>
+  </div>
+</div>
+
+<div class="ecc">
+  <div class="ecc-h" style="background:linear-gradient(135deg,#6d28d9,#7c3aed)">
+    <div class="ecc-hr">Central Uganda</div>
+    <div class="ecc-hn">Mkazipreneur</div>
+  </div>
+  <div class="ecc-b">
+    <div class="ecc-ks">
+      <div class="ecc-k"><div class="ecc-kv" style="color:var(--mkazi)">766</div><div class="ecc-kl">Submissions</div></div>
+      <div class="ecc-k"><div class="ecc-kv" style="color:var(--gold)">95.6%</div><div class="ecc-kl">Female</div></div>
+      <div class="ecc-k"><div class="ecc-kv">883</div><div class="ecc-kl">FTE</div></div>
+    </div>
+    <div class="sh">Top Sectors</div>
+    <div class="hr"><div class="hl sm">Trade & Services</div><div class="ht"><div class="hf" style="width:100.0%;background:var(--mkazi)"></div></div><div class="hn">401</div></div><div class="hr"><div class="hl sm">Fashion & Design</div><div class="ht"><div class="hf" style="width:47.1%;background:var(--mkazi);opacity:0.55"></div></div><div class="hn">189</div></div><div class="hr"><div class="hl sm">Agriculture</div><div class="ht"><div class="hf" style="width:18.5%;background:var(--mkazi);opacity:0.35"></div></div><div class="hn">74</div></div>
+    <div class="dv"></div>
+    <div style="display:flex;gap:.3rem;flex-wrap:wrap">
+      <span class="tag" style="background:var(--mkazi-lt);color:var(--mkazi);border:1px solid var(--mkazi-bd)">Kampala · Wakiso</span>
+      <span class="tag" style="background:var(--bg);color:var(--muted)">UGX 5.0M avg rev</span>
+    </div>
+  </div>
+</div>
+
+<div class="ecc">
+  <div class="ecc-h" style="background:linear-gradient(135deg,#14532d,#15803d)">
+    <div class="ecc-hr">Western Uganda</div>
+    <div class="ecc-hn">ExcelHort</div>
+  </div>
+  <div class="ecc-b">
+    <div class="ecc-ks">
+      <div class="ecc-k"><div class="ecc-kv" style="color:var(--excel)">722</div><div class="ecc-kl">Submissions</div></div>
+      <div class="ecc-k"><div class="ecc-kv" style="color:var(--gold)">98.2%</div><div class="ecc-kl">Female</div></div>
+      <div class="ecc-k"><div class="ecc-kv">732</div><div class="ecc-kl">FTE</div></div>
+    </div>
+    <div class="sh">Top Sectors</div>
+    <div class="hr"><div class="hl sm">Trade & Services</div><div class="ht"><div class="hf" style="width:100.0%;background:var(--excel)"></div></div><div class="hn">313</div></div><div class="hr"><div class="hl sm">Agriculture</div><div class="ht"><div class="hf" style="width:70.9%;background:var(--excel);opacity:0.55"></div></div><div class="hn">222</div></div><div class="hr"><div class="hl sm">Fashion & Design</div><div class="ht"><div class="hf" style="width:43.8%;background:var(--excel);opacity:0.35"></div></div><div class="hn">137</div></div>
+    <div class="dv"></div>
+    <div style="display:flex;gap:.3rem;flex-wrap:wrap">
+      <span class="tag" style="background:var(--excel-lt);color:var(--excel);border:1px solid var(--excel-bd)">Isingiro · Kamwenge</span>
+      <span class="tag" style="background:var(--bg);color:var(--muted)">UGX 9.7M avg rev</span>
+    </div>
+  </div>
+</div></div>
+  <div class="ov-row">
+<div class="ecc">
+  <div class="ecc-h" style="background:linear-gradient(135deg,#1d4ed8,#2563eb)">
+    <div class="ecc-hr">Central Uganda</div>
+    <div class="ecc-hn">Stanbic Bank Incubator</div>
+  </div>
+  <div class="ecc-b">
+    <div class="ecc-ks">
+      <div class="ecc-k"><div class="ecc-kv" style="color:var(--stan)">713</div><div class="ecc-kl">Submissions</div></div>
+      <div class="ecc-k"><div class="ecc-kv" style="color:var(--gold)">89.9%</div><div class="ecc-kl">Female</div></div>
+      <div class="ecc-k"><div class="ecc-kv">877</div><div class="ecc-kl">FTE</div></div>
+    </div>
+    <div class="sh">Top Sectors</div>
+    <div class="hr"><div class="hl sm">Trade & Services</div><div class="ht"><div class="hf" style="width:100.0%;background:var(--stan)"></div></div><div class="hn">261</div></div><div class="hr"><div class="hl sm">Fashion & Design</div><div class="ht"><div class="hf" style="width:85.8%;background:var(--stan);opacity:0.55"></div></div><div class="hn">224</div></div><div class="hr"><div class="hl sm">Agriculture</div><div class="ht"><div class="hf" style="width:39.1%;background:var(--stan);opacity:0.35"></div></div><div class="hn">102</div></div>
+    <div class="dv"></div>
+    <div style="display:flex;gap:.3rem;flex-wrap:wrap">
+      <span class="tag" style="background:var(--stan-lt);color:var(--stan);border:1px solid var(--stan-bd)">Wakiso · Kampala</span>
+      <span class="tag" style="background:var(--bg);color:var(--muted)">UGX 3.4M avg rev</span>
+    </div>
+  </div>
+</div>
+
+<div class="ecc">
+  <div class="ecc-h" style="background:linear-gradient(135deg,#15803d,#16a34a)">
+    <div class="ecc-hr">Eastern Uganda</div>
+    <div class="ecc-hn">PEDN</div>
+  </div>
+  <div class="ecc-b">
+    <div class="ecc-ks">
+      <div class="ecc-k"><div class="ecc-kv" style="color:var(--pedn)">679</div><div class="ecc-kl">Submissions</div></div>
+      <div class="ecc-k"><div class="ecc-kv" style="color:var(--gold)">89.2%</div><div class="ecc-kl">Female</div></div>
+      <div class="ecc-k"><div class="ecc-kv">1,266</div><div class="ecc-kl">FTE</div></div>
+    </div>
+    <div class="sh">Top Sectors</div>
+    <div class="hr"><div class="hl sm">Agriculture</div><div class="ht"><div class="hf" style="width:100.0%;background:var(--pedn)"></div></div><div class="hn">586</div></div><div class="hr"><div class="hl sm">Trade & Services</div><div class="ht"><div class="hf" style="width:15.5%;background:var(--pedn);opacity:0.55"></div></div><div class="hn">91</div></div><div class="hr"><div class="hl sm">Fashion & Design</div><div class="ht"><div class="hf" style="width:0.2%;background:var(--pedn);opacity:0.35"></div></div><div class="hn">1</div></div>
+    <div class="dv"></div>
+    <div style="display:flex;gap:.3rem;flex-wrap:wrap">
+      <span class="tag" style="background:var(--pedn-lt);color:var(--pedn);border:1px solid var(--pedn-bd)">Pallisa · Tororo</span>
+      <span class="tag" style="background:var(--bg);color:var(--muted)">UGX 5.3M avg rev</span>
+    </div>
+  </div>
+</div>
+
+<div class="ecc">
+  <div class="ecc-h" style="background:linear-gradient(135deg,#991b1b,#dc2626)">
+    <div class="ecc-hr">Northern Uganda</div>
+    <div class="ecc-hn">Challenges Uganda</div>
+  </div>
+  <div class="ecc-b">
+    <div class="ecc-ks">
+      <div class="ecc-k"><div class="ecc-kv" style="color:var(--chal)">479</div><div class="ecc-kl">Submissions</div></div>
+      <div class="ecc-k"><div class="ecc-kv" style="color:var(--gold)">94.7%</div><div class="ecc-kl">Female</div></div>
+      <div class="ecc-k"><div class="ecc-kv">533</div><div class="ecc-kl">FTE</div></div>
+    </div>
+    <div class="sh">Top Sectors</div>
+    <div class="hr"><div class="hl sm">Trade & Services</div><div class="ht"><div class="hf" style="width:100.0%;background:var(--chal)"></div></div><div class="hn">253</div></div><div class="hr"><div class="hl sm">Fashion & Design</div><div class="ht"><div class="hf" style="width:50.6%;background:var(--chal);opacity:0.55"></div></div><div class="hn">128</div></div><div class="hr"><div class="hl sm">Agriculture</div><div class="ht"><div class="hf" style="width:33.2%;background:var(--chal);opacity:0.35"></div></div><div class="hn">84</div></div>
+    <div class="dv"></div>
+    <div style="display:flex;gap:.3rem;flex-wrap:wrap">
+      <span class="tag" style="background:var(--chal-lt);color:var(--chal);border:1px solid var(--chal-bd)">Gulu · Budaka</span>
+      <span class="tag" style="background:var(--bg);color:var(--muted)">UGX 5.2M avg rev</span>
+    </div>
+  </div>
+</div></div>
+</div>
+</div>
+
+<div id="tab-dfcu" class="section">
+<div class="page">
+  <div class="tbar" style="background:linear-gradient(135deg,#92400e,#b45309)">
+    <h1>DFCU Foundation · MSME Portfolio Summary</h1>
+    <span class="tbar-meta">10X EOI Raw Data · Eastern Uganda · March 2026</span>
+  </div>
+  <div class="tbar-accent" style="background:linear-gradient(90deg,#b45309,rgba(255,255,255,.3),transparent)"></div>
+  <div class="kpi-strip"><div class="kpi" style="position:relative"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:#b45309"></div><div class="kv" style="color:#b45309">2,642</div><div class="kl">Total Submissions</div></div><div class="kpi" style="position:relative"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:#059669"></div><div class="kv" style="color:#059669">21</div><div class="kl">PWD Founders</div></div><div class="kpi" style="position:relative"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:#dc2626"></div><div class="kv" style="color:#dc2626">2</div><div class="kl">Refugee Founders</div></div><div class="kpi" style="position:relative"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:#d97706"></div><div class="kv" style="color:#d97706">97.2%</div><div class="kl">Female Founders</div></div><div class="kpi" style="position:relative"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:#b45309"></div><div class="kv" style="color:#b45309">84.9%</div><div class="kl">Youth (18–35)</div></div><div class="kpi" style="position:relative"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:#ea580c"></div><div class="kv" style="color:#ea580c">Eastern</div><div class="kl">Primary Region</div></div><div class="kpi" style="position:relative"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:#059669"></div><div class="kv" style="color:#059669">3,020</div><div class="kl">FTE Workers</div></div></div>
+  <div class="tcol">
+    
+<div class="panel">
+  <div class="ph" style="background:var(--dfcu)">Sector &amp; Subsector Breakdown</div>
+  <div class="pb">
+    <div class="sh">Top Sectors</div>
+    <div class="hr"><div class="hl">Trade & Services</div><div class="ht"><div class="hf" style="width:100.0%;background:var(--dfcu)"></div></div><div class="hn">1,032·39.1%</div></div><div class="hr"><div class="hl">Fashion & Design</div><div class="ht"><div class="hf" style="width:79.3%;background:var(--dfcu);opacity:0.75"></div></div><div class="hn">818·31.0%</div></div><div class="hr"><div class="hl">Agriculture</div><div class="ht"><div class="hf" style="width:63.8%;background:var(--dfcu);opacity:0.60"></div></div><div class="hn">658·24.9%</div></div><div class="hr"><div class="hl">Others / Events</div><div class="ht"><div class="hf" style="width:7.2%;background:var(--dfcu);opacity:0.45"></div></div><div class="hn">74·2.8%</div></div><div class="hr"><div class="hl">Health</div><div class="ht"><div class="hf" style="width:4.7%;background:var(--dfcu);opacity:0.35"></div></div><div class="hn">48·1.8%</div></div><div class="hr"><div class="hl">Light Manufacturing</div><div class="ht"><div class="hf" style="width:0.8%;background:var(--dfcu);opacity:0.35"></div></div><div class="hn">8·0.3%</div></div>
+    <div class="dv"></div>
+    <div class="sh">Context</div>
+    <div style="font-size:.68rem;color:var(--muted);line-height:1.55">
+      DFCU Foundation serves <strong>Eastern Uganda</strong>. 2,642 EOI submissions with
+      97.2% female founders and 84.9% youth (18–35).
+      Average biennial revenue: UGX 14.3M.
+    </div>
+  </div>
+</div>
+    
+<div class="panel">
+  <div class="ph" style="background:var(--dfcu)">Location &amp; Groups</div>
+  <div class="pb">
+    <div class="sh">Top Districts</div>
+    <div class="hr"><div class="hl">Bulambuli</div><div class="ht"><div class="hf" style="width:100.0%;background:var(--dfcu)"></div></div><div class="hn">540</div></div><div class="hr"><div class="hl">Pallisa</div><div class="ht"><div class="hf" style="width:94.4%;background:var(--dfcu);opacity:0.78"></div></div><div class="hn">510</div></div><div class="hr"><div class="hl">Tororo</div><div class="ht"><div class="hf" style="width:78.0%;background:var(--dfcu);opacity:0.66"></div></div><div class="hn">421</div></div><div class="hr"><div class="hl">Budaka</div><div class="ht"><div class="hf" style="width:77.0%;background:var(--dfcu);opacity:0.54"></div></div><div class="hn">416</div></div><div class="hr"><div class="hl">Busia</div><div class="ht"><div class="hf" style="width:60.2%;background:var(--dfcu);opacity:0.42"></div></div><div class="hn">325</div></div><div class="hr"><div class="hl">Sironko</div><div class="ht"><div class="hf" style="width:39.4%;background:var(--dfcu);opacity:0.35"></div></div><div class="hn">213</div></div><div class="hr"><div class="hl">Mbale</div><div class="ht"><div class="hf" style="width:22.6%;background:var(--dfcu);opacity:0.35"></div></div><div class="hn">122</div></div>
+    <div class="dv"></div>
+    <div class="sh">Groups &amp; Collectives</div>
+    <div class="null-box"><div class="null-v">0</div><div>No formal collectives identified</div><div>Individual / SME submissions only</div></div>
+    <div class="smr"><div><div class="sm-v" style="color:var(--dfcu)">89</div><div class="sm-l">URSB Reg.</div></div><div><div class="sm-v" style="color:var(--green)">21</div><div class="sm-l">PWD</div></div><div><div class="sm-v" style="color:var(--red)">2</div><div class="sm-l">Refugees</div></div><div><div class="sm-v" style="color:var(--gold)">14.3M</div><div class="sm-l">Avg Rev UGX</div></div><div><div class="sm-v" style="color:var(--orange)">1,219</div><div class="sm-l">PTE Workers</div></div></div>
+  </div>
+</div>
+    
+<div class="panel">
+  <div class="ph" style="background:var(--dfcu)">Archetypes &amp; Demographics</div>
+  <div class="pb">
+    <div style="text-align:center;font-size:.8rem;font-weight:700;margin-bottom:.3rem">
+      <span style="color:var(--gold)">♀ 97.2% Female</span>&nbsp;·&nbsp;
+      <span style="color:var(--dfcu)">♂ 2.8% Male</span>
+    </div>
+    <div class="gb"><div class="gf" style="width:97.2%"></div><div style="flex:1;background:var(--dfcu)"></div></div>
+    <div class="dv"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem">
+      <div>
+        <div class="sh">Age of Lead Founder</div>
+        <div class="hr"><div class="hl sm">18-25</div><div class="ht"><div class="hf" style="width:64.2%;background:var(--dfcu)"></div></div><div class="hn">811·36.9%</div></div><div class="hr"><div class="hl sm">26-35</div><div class="ht"><div class="hf" style="width:100.0%;background:var(--dfcu)"></div></div><div class="hn">1,264·57.5%</div></div><div class="hr"><div class="hl sm">36-45</div><div class="ht"><div class="hf" style="width:7.0%;background:var(--dfcu)"></div></div><div class="hn">89·4.0%</div></div><div class="hr"><div class="hl sm">46-55</div><div class="ht"><div class="hf" style="width:1.6%;background:var(--dfcu)"></div></div><div class="hn">20·0.9%</div></div><div class="hr"><div class="hl sm">56+</div><div class="ht"><div class="hf" style="width:1.3%;background:var(--dfcu)"></div></div><div class="hn">16·0.7%</div></div>
+      </div>
+      <div>
+        <div class="sh">Youth Highlight</div>
+        <div class="highlight-box" style="background:var(--dfcu-lt)">
+          <div class="highlight-val" style="color:var(--dfcu)">84.9%</div>
+          <div class="highlight-sub">Youth founders (18–35)</div>
+        </div>
+        <div class="sh">Employment</div>
+        <div class="hr"><div class="hl sm">FTE</div>
+          <div class="ht"><div class="hf" style="width:100%;background:var(--dfcu)"></div></div>
+          <div class="hn">3,020</div></div>
+        <div class="hr"><div class="hl sm">PTE</div>
+          <div class="ht"><div class="hf" style="width:40.4%;background:var(--dfcu);opacity:.6"></div></div>
+          <div class="hn">1,219</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+  </div>
+</div>
+</div>
+
+<div id="tab-mubs" class="section">
+<div class="page">
+  <div class="tbar" style="background:linear-gradient(135deg,#075985,#0369a1)">
+    <h1>MUBS EIIC · MSME Portfolio Summary</h1>
+    <span class="tbar-meta">10X EOI Raw Data · Eastern Uganda · March 2026</span>
+  </div>
+  <div class="tbar-accent" style="background:linear-gradient(90deg,#0369a1,rgba(255,255,255,.3),transparent)"></div>
+  <div class="kpi-strip"><div class="kpi" style="position:relative"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:#0369a1"></div><div class="kv" style="color:#0369a1">1,000</div><div class="kl">Total Submissions</div></div><div class="kpi" style="position:relative"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:#059669"></div><div class="kv" style="color:#059669">21</div><div class="kl">PWD Founders</div></div><div class="kpi" style="position:relative"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:#dc2626"></div><div class="kv" style="color:#dc2626">1</div><div class="kl">Refugee Founders</div></div><div class="kpi" style="position:relative"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:#d97706"></div><div class="kv" style="color:#d97706">97.8%</div><div class="kl">Female Founders</div></div><div class="kpi" style="position:relative"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:#0369a1"></div><div class="kv" style="color:#0369a1">92.7%</div><div class="kl">Youth (18–35)</div></div><div class="kpi" style="position:relative"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:#ea580c"></div><div class="kv" style="color:#ea580c">Eastern</div><div class="kl">Primary Region</div></div><div class="kpi" style="position:relative"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:#059669"></div><div class="kv" style="color:#059669">1,135</div><div class="kl">FTE Workers</div></div></div>
+  <div class="tcol">
+    
+<div class="panel">
+  <div class="ph" style="background:var(--mubs)">Sector &amp; Subsector Breakdown</div>
+  <div class="pb">
+    <div class="sh">Top Sectors</div>
+    <div class="hr"><div class="hl">Trade & Services</div><div class="ht"><div class="hf" style="width:100.0%;background:var(--mubs)"></div></div><div class="hn">532·53.2%</div></div><div class="hr"><div class="hl">Fashion & Design</div><div class="ht"><div class="hf" style="width:40.6%;background:var(--mubs);opacity:0.75"></div></div><div class="hn">216·21.6%</div></div><div class="hr"><div class="hl">Agriculture</div><div class="ht"><div class="hf" style="width:30.5%;background:var(--mubs);opacity:0.60"></div></div><div class="hn">162·16.2%</div></div><div class="hr"><div class="hl">Others / Events</div><div class="ht"><div class="hf" style="width:10.7%;background:var(--mubs);opacity:0.45"></div></div><div class="hn">57·5.7%</div></div><div class="hr"><div class="hl">Light Manufacturing</div><div class="ht"><div class="hf" style="width:3.4%;background:var(--mubs);opacity:0.35"></div></div><div class="hn">18·1.8%</div></div><div class="hr"><div class="hl">Health</div><div class="ht"><div class="hf" style="width:2.1%;background:var(--mubs);opacity:0.35"></div></div><div class="hn">11·1.1%</div></div>
+    <div class="dv"></div>
+    <div class="sh">Context</div>
+    <div style="font-size:.68rem;color:var(--muted);line-height:1.55">
+      MUBS EIIC serves <strong>Eastern Uganda</strong>. 1,000 EOI submissions with
+      97.8% female founders and 92.7% youth (18–35).
+      Average biennial revenue: UGX 8.1M.
+    </div>
+  </div>
+</div>
+    
+<div class="panel">
+  <div class="ph" style="background:var(--mubs)">Location &amp; Groups</div>
+  <div class="pb">
+    <div class="sh">Top Districts</div>
+    <div class="hr"><div class="hl">Mbale</div><div class="ht"><div class="hf" style="width:100.0%;background:var(--mubs)"></div></div><div class="hn">229</div></div><div class="hr"><div class="hl">Kapchorwa</div><div class="ht"><div class="hf" style="width:66.8%;background:var(--mubs);opacity:0.78"></div></div><div class="hn">153</div></div><div class="hr"><div class="hl">Busia</div><div class="ht"><div class="hf" style="width:64.6%;background:var(--mubs);opacity:0.66"></div></div><div class="hn">148</div></div><div class="hr"><div class="hl">Kween</div><div class="ht"><div class="hf" style="width:51.1%;background:var(--mubs);opacity:0.54"></div></div><div class="hn">117</div></div><div class="hr"><div class="hl">Tororo</div><div class="ht"><div class="hf" style="width:48.5%;background:var(--mubs);opacity:0.42"></div></div><div class="hn">111</div></div><div class="hr"><div class="hl">Bukedea</div><div class="ht"><div class="hf" style="width:40.2%;background:var(--mubs);opacity:0.35"></div></div><div class="hn">92</div></div><div class="hr"><div class="hl">Namisindwa</div><div class="ht"><div class="hf" style="width:32.8%;background:var(--mubs);opacity:0.35"></div></div><div class="hn">75</div></div>
+    <div class="dv"></div>
+    <div class="sh">Groups &amp; Collectives</div>
+    <div class="null-box"><div class="null-v">0</div><div>No formal collectives identified</div><div>Individual / SME submissions only</div></div>
+    <div class="smr"><div><div class="sm-v" style="color:var(--mubs)">16</div><div class="sm-l">URSB Reg.</div></div><div><div class="sm-v" style="color:var(--green)">21</div><div class="sm-l">PWD</div></div><div><div class="sm-v" style="color:var(--red)">1</div><div class="sm-l">Refugees</div></div><div><div class="sm-v" style="color:var(--gold)">8.1M</div><div class="sm-l">Avg Rev UGX</div></div><div><div class="sm-v" style="color:var(--orange)">174</div><div class="sm-l">PTE Workers</div></div></div>
+  </div>
+</div>
+    
+<div class="panel">
+  <div class="ph" style="background:var(--mubs)">Archetypes &amp; Demographics</div>
+  <div class="pb">
+    <div style="text-align:center;font-size:.8rem;font-weight:700;margin-bottom:.3rem">
+      <span style="color:var(--gold)">♀ 97.8% Female</span>&nbsp;·&nbsp;
+      <span style="color:var(--mubs)">♂ 2.2% Male</span>
+    </div>
+    <div class="gb"><div class="gf" style="width:97.8%"></div><div style="flex:1;background:var(--mubs)"></div></div>
+    <div class="dv"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem">
+      <div>
+        <div class="sh">Age of Lead Founder</div>
+        <div class="hr"><div class="hl sm">18-25</div><div class="ht"><div class="hf" style="width:44.5%;background:var(--mubs)"></div></div><div class="hn">271·30.0%</div></div><div class="hr"><div class="hl sm">26-35</div><div class="ht"><div class="hf" style="width:100.0%;background:var(--mubs)"></div></div><div class="hn">609·67.4%</div></div><div class="hr"><div class="hl sm">36-45</div><div class="ht"><div class="hf" style="width:3.3%;background:var(--mubs)"></div></div><div class="hn">20·2.2%</div></div><div class="hr"><div class="hl sm">46-55</div><div class="ht"><div class="hf" style="width:0.5%;background:var(--mubs)"></div></div><div class="hn">3·0.3%</div></div><div class="hr"><div class="hl sm">56+</div><div class="ht"><div class="hf" style="width:0.2%;background:var(--mubs)"></div></div><div class="hn">1·0.1%</div></div>
+      </div>
+      <div>
+        <div class="sh">Youth Highlight</div>
+        <div class="highlight-box" style="background:var(--mubs-lt)">
+          <div class="highlight-val" style="color:var(--mubs)">92.7%</div>
+          <div class="highlight-sub">Youth founders (18–35)</div>
+        </div>
+        <div class="sh">Employment</div>
+        <div class="hr"><div class="hl sm">FTE</div>
+          <div class="ht"><div class="hf" style="width:100%;background:var(--mubs)"></div></div>
+          <div class="hn">1,135</div></div>
+        <div class="hr"><div class="hl sm">PTE</div>
+          <div class="ht"><div class="hf" style="width:15.3%;background:var(--mubs);opacity:.6"></div></div>
+          <div class="hn">174</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+  </div>
+</div>
+</div>
+
+<div id="tab-mkazi" class="section">
+<div class="page">
+  <div class="tbar" style="background:linear-gradient(135deg,#6d28d9,#7c3aed)">
+    <h1>Mkazipreneur · MSME Portfolio Summary</h1>
+    <span class="tbar-meta">10X EOI Raw Data · Central Uganda · March 2026</span>
+  </div>
+  <div class="tbar-accent" style="background:linear-gradient(90deg,#7c3aed,rgba(255,255,255,.3),transparent)"></div>
+  <div class="kpi-strip"><div class="kpi" style="position:relative"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:#7c3aed"></div><div class="kv" style="color:#7c3aed">766</div><div class="kl">Total Submissions</div></div><div class="kpi" style="position:relative"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:#059669"></div><div class="kv" style="color:#059669">45</div><div class="kl">PWD Founders</div></div><div class="kpi" style="position:relative"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:#dc2626"></div><div class="kv" style="color:#dc2626">55</div><div class="kl">Refugee Founders</div></div><div class="kpi" style="position:relative"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:#d97706"></div><div class="kv" style="color:#d97706">95.6%</div><div class="kl">Female Founders</div></div><div class="kpi" style="position:relative"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:#7c3aed"></div><div class="kv" style="color:#7c3aed">86.9%</div><div class="kl">Youth (18–35)</div></div><div class="kpi" style="position:relative"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:#ea580c"></div><div class="kv" style="color:#ea580c">Central</div><div class="kl">Primary Region</div></div><div class="kpi" style="position:relative"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:#059669"></div><div class="kv" style="color:#059669">883</div><div class="kl">FTE Workers</div></div></div>
+  <div class="tcol">
+    
+<div class="panel">
+  <div class="ph" style="background:var(--mkazi)">Sector &amp; Subsector Breakdown</div>
+  <div class="pb">
+    <div class="sh">Top Sectors</div>
+    <div class="hr"><div class="hl">Trade & Services</div><div class="ht"><div class="hf" style="width:100.0%;background:var(--mkazi)"></div></div><div class="hn">401·52.3%</div></div><div class="hr"><div class="hl">Fashion & Design</div><div class="ht"><div class="hf" style="width:47.1%;background:var(--mkazi);opacity:0.75"></div></div><div class="hn">189·24.7%</div></div><div class="hr"><div class="hl">Agriculture</div><div class="ht"><div class="hf" style="width:18.5%;background:var(--mkazi);opacity:0.60"></div></div><div class="hn">74·9.7%</div></div><div class="hr"><div class="hl">Light Manufacturing</div><div class="ht"><div class="hf" style="width:11.0%;background:var(--mkazi);opacity:0.45"></div></div><div class="hn">44·5.7%</div></div><div class="hr"><div class="hl">Others / Events</div><div class="ht"><div class="hf" style="width:9.2%;background:var(--mkazi);opacity:0.35"></div></div><div class="hn">37·4.8%</div></div><div class="hr"><div class="hl">Health</div><div class="ht"><div class="hf" style="width:5.0%;background:var(--mkazi);opacity:0.35"></div></div><div class="hn">20·2.6%</div></div>
+    <div class="dv"></div>
+    <div class="sh">Context</div>
+    <div style="font-size:.68rem;color:var(--muted);line-height:1.55">
+      Mkazipreneur serves <strong>Central Uganda</strong>. 766 EOI submissions with
+      95.6% female founders and 86.9% youth (18–35).
+      Average biennial revenue: UGX 5.0M.
+    </div>
+  </div>
+</div>
+    
+<div class="panel">
+  <div class="ph" style="background:var(--mkazi)">Location &amp; Groups</div>
+  <div class="pb">
+    <div class="sh">Top Districts</div>
+    <div class="hr"><div class="hl">Kampala</div><div class="ht"><div class="hf" style="width:100.0%;background:var(--mkazi)"></div></div><div class="hn">293</div></div><div class="hr"><div class="hl">Wakiso</div><div class="ht"><div class="hf" style="width:75.4%;background:var(--mkazi);opacity:0.78"></div></div><div class="hn">221</div></div><div class="hr"><div class="hl">Mukono</div><div class="ht"><div class="hf" style="width:58.4%;background:var(--mkazi);opacity:0.66"></div></div><div class="hn">171</div></div><div class="hr"><div class="hl">Buikwe</div><div class="ht"><div class="hf" style="width:22.9%;background:var(--mkazi);opacity:0.54"></div></div><div class="hn">67</div></div><div class="hr"><div class="hl">Luwero</div><div class="ht"><div class="hf" style="width:1.0%;background:var(--mkazi);opacity:0.42"></div></div><div class="hn">3</div></div><div class="hr"><div class="hl">Luuka</div><div class="ht"><div class="hf" style="width:0.7%;background:var(--mkazi);opacity:0.35"></div></div><div class="hn">2</div></div><div class="hr"><div class="hl">Mpigi</div><div class="ht"><div class="hf" style="width:0.7%;background:var(--mkazi);opacity:0.35"></div></div><div class="hn">2</div></div>
+    <div class="dv"></div>
+    <div class="sh">Groups &amp; Collectives</div>
+    <div class="null-box"><div class="null-v">0</div><div>No formal collectives identified</div><div>Individual / SME submissions only</div></div>
+    <div class="smr"><div><div class="sm-v" style="color:var(--mkazi)">70</div><div class="sm-l">URSB Reg.</div></div><div><div class="sm-v" style="color:var(--green)">45</div><div class="sm-l">PWD</div></div><div><div class="sm-v" style="color:var(--red)">55</div><div class="sm-l">Refugees</div></div><div><div class="sm-v" style="color:var(--gold)">5.0M</div><div class="sm-l">Avg Rev UGX</div></div><div><div class="sm-v" style="color:var(--orange)">92</div><div class="sm-l">PTE Workers</div></div></div>
+  </div>
+</div>
+    
+<div class="panel">
+  <div class="ph" style="background:var(--mkazi)">Archetypes &amp; Demographics</div>
+  <div class="pb">
+    <div style="text-align:center;font-size:.8rem;font-weight:700;margin-bottom:.3rem">
+      <span style="color:var(--gold)">♀ 95.6% Female</span>&nbsp;·&nbsp;
+      <span style="color:var(--mkazi)">♂ 4.4% Male</span>
+    </div>
+    <div class="gb"><div class="gf" style="width:95.6%"></div><div style="flex:1;background:var(--mkazi)"></div></div>
+    <div class="dv"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem">
+      <div>
+        <div class="sh">Age of Lead Founder</div>
+        <div class="hr"><div class="hl sm">18-25</div><div class="ht"><div class="hf" style="width:38.2%;background:var(--mkazi)"></div></div><div class="hn">179·25.3%</div></div><div class="hr"><div class="hl sm">26-35</div><div class="ht"><div class="hf" style="width:100.0%;background:var(--mkazi)"></div></div><div class="hn">469·66.2%</div></div><div class="hr"><div class="hl sm">36-45</div><div class="ht"><div class="hf" style="width:7.0%;background:var(--mkazi)"></div></div><div class="hn">33·4.7%</div></div><div class="hr"><div class="hl sm">46-55</div><div class="ht"><div class="hf" style="width:4.5%;background:var(--mkazi)"></div></div><div class="hn">21·3.0%</div></div><div class="hr"><div class="hl sm">56+</div><div class="ht"><div class="hf" style="width:1.3%;background:var(--mkazi)"></div></div><div class="hn">6·0.8%</div></div>
+      </div>
+      <div>
+        <div class="sh">Youth Highlight</div>
+        <div class="highlight-box" style="background:var(--mkazi-lt)">
+          <div class="highlight-val" style="color:var(--mkazi)">86.9%</div>
+          <div class="highlight-sub">Youth founders (18–35)</div>
+        </div>
+        <div class="sh">Employment</div>
+        <div class="hr"><div class="hl sm">FTE</div>
+          <div class="ht"><div class="hf" style="width:100%;background:var(--mkazi)"></div></div>
+          <div class="hn">883</div></div>
+        <div class="hr"><div class="hl sm">PTE</div>
+          <div class="ht"><div class="hf" style="width:10.4%;background:var(--mkazi);opacity:.6"></div></div>
+          <div class="hn">92</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+  </div>
+</div>
+</div>
+
+<div id="tab-excel" class="section">
+<div class="page">
+  <div class="tbar" style="background:linear-gradient(135deg,#14532d,#15803d)">
+    <h1>ExcelHort · MSME Portfolio Summary</h1>
+    <span class="tbar-meta">10X EOI Raw Data · Western Uganda · March 2026</span>
+  </div>
+  <div class="tbar-accent" style="background:linear-gradient(90deg,#15803d,rgba(255,255,255,.3),transparent)"></div>
+  <div class="kpi-strip"><div class="kpi" style="position:relative"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:#15803d"></div><div class="kv" style="color:#15803d">722</div><div class="kl">Total Submissions</div></div><div class="kpi" style="position:relative"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:#059669"></div><div class="kv" style="color:#059669">5</div><div class="kl">PWD Founders</div></div><div class="kpi" style="position:relative"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:#dc2626"></div><div class="kv" style="color:#dc2626">235</div><div class="kl">Refugee Founders</div></div><div class="kpi" style="position:relative"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:#d97706"></div><div class="kv" style="color:#d97706">98.2%</div><div class="kl">Female Founders</div></div><div class="kpi" style="position:relative"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:#15803d"></div><div class="kv" style="color:#15803d">93.5%</div><div class="kl">Youth (18–35)</div></div><div class="kpi" style="position:relative"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:#ea580c"></div><div class="kv" style="color:#ea580c">Western</div><div class="kl">Primary Region</div></div><div class="kpi" style="position:relative"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:#059669"></div><div class="kv" style="color:#059669">732</div><div class="kl">FTE Workers</div></div></div>
+  <div class="tcol">
+    
+<div class="panel">
+  <div class="ph" style="background:var(--excel)">Sector &amp; Subsector Breakdown</div>
+  <div class="pb">
+    <div class="sh">Top Sectors</div>
+    <div class="hr"><div class="hl">Trade & Services</div><div class="ht"><div class="hf" style="width:100.0%;background:var(--excel)"></div></div><div class="hn">313·43.4%</div></div><div class="hr"><div class="hl">Agriculture</div><div class="ht"><div class="hf" style="width:70.9%;background:var(--excel);opacity:0.75"></div></div><div class="hn">222·30.7%</div></div><div class="hr"><div class="hl">Fashion & Design</div><div class="ht"><div class="hf" style="width:43.8%;background:var(--excel);opacity:0.60"></div></div><div class="hn">137·19.0%</div></div><div class="hr"><div class="hl">Others / Events</div><div class="ht"><div class="hf" style="width:6.4%;background:var(--excel);opacity:0.45"></div></div><div class="hn">20·2.8%</div></div><div class="hr"><div class="hl">Light Manufacturing</div><div class="ht"><div class="hf" style="width:6.4%;background:var(--excel);opacity:0.35"></div></div><div class="hn">20·2.8%</div></div><div class="hr"><div class="hl">Health</div><div class="ht"><div class="hf" style="width:2.6%;background:var(--excel);opacity:0.35"></div></div><div class="hn">8·1.1%</div></div>
+    <div class="dv"></div>
+    <div class="sh">Context</div>
+    <div style="font-size:.68rem;color:var(--muted);line-height:1.55">
+      ExcelHort serves <strong>Western Uganda</strong>. 722 EOI submissions with
+      98.2% female founders and 93.5% youth (18–35).
+      Average biennial revenue: UGX 9.7M.
+    </div>
+  </div>
+</div>
+    
+<div class="panel">
+  <div class="ph" style="background:var(--excel)">Location &amp; Groups</div>
+  <div class="pb">
+    <div class="sh">Top Districts</div>
+    <div class="hr"><div class="hl">Isingiro</div><div class="ht"><div class="hf" style="width:100.0%;background:var(--excel)"></div></div><div class="hn">286</div></div><div class="hr"><div class="hl">Kamwenge</div><div class="ht"><div class="hf" style="width:64.3%;background:var(--excel);opacity:0.78"></div></div><div class="hn">184</div></div><div class="hr"><div class="hl">Kyegegwa</div><div class="ht"><div class="hf" style="width:55.6%;background:var(--excel);opacity:0.66"></div></div><div class="hn">159</div></div><div class="hr"><div class="hl">Kiryandongo</div><div class="ht"><div class="hf" style="width:31.1%;background:var(--excel);opacity:0.54"></div></div><div class="hn">89</div></div><div class="hr"><div class="hl">Mbarara</div><div class="ht"><div class="hf" style="width:1.0%;background:var(--excel);opacity:0.42"></div></div><div class="hn">3</div></div><div class="hr"><div class="hl">Kampala</div><div class="ht"><div class="hf" style="width:0.3%;background:var(--excel);opacity:0.35"></div></div><div class="hn">1</div></div>
+    <div class="dv"></div>
+    <div class="sh">Groups &amp; Collectives</div>
+    <div class="null-box"><div class="null-v">0</div><div>No formal collectives identified</div><div>Individual / SME submissions only</div></div>
+    <div class="smr"><div><div class="sm-v" style="color:var(--excel)">6</div><div class="sm-l">URSB Reg.</div></div><div><div class="sm-v" style="color:var(--green)">5</div><div class="sm-l">PWD</div></div><div><div class="sm-v" style="color:var(--red)">235</div><div class="sm-l">Refugees</div></div><div><div class="sm-v" style="color:var(--gold)">9.7M</div><div class="sm-l">Avg Rev UGX</div></div><div><div class="sm-v" style="color:var(--orange)">165</div><div class="sm-l">PTE Workers</div></div></div>
+  </div>
+</div>
+    
+<div class="panel">
+  <div class="ph" style="background:var(--excel)">Archetypes &amp; Demographics</div>
+  <div class="pb">
+    <div style="text-align:center;font-size:.8rem;font-weight:700;margin-bottom:.3rem">
+      <span style="color:var(--gold)">♀ 98.2% Female</span>&nbsp;·&nbsp;
+      <span style="color:var(--excel)">♂ 1.8% Male</span>
+    </div>
+    <div class="gb"><div class="gf" style="width:98.2%"></div><div style="flex:1;background:var(--excel)"></div></div>
+    <div class="dv"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem">
+      <div>
+        <div class="sh">Age of Lead Founder</div>
+        <div class="hr"><div class="hl sm">18-25</div><div class="ht"><div class="hf" style="width:71.0%;background:var(--excel)"></div></div><div class="hn">255·40.5%</div></div><div class="hr"><div class="hl sm">26-35</div><div class="ht"><div class="hf" style="width:100.0%;background:var(--excel)"></div></div><div class="hn">359·57.0%</div></div><div class="hr"><div class="hl sm">36-45</div><div class="ht"><div class="hf" style="width:4.2%;background:var(--excel)"></div></div><div class="hn">15·2.4%</div></div><div class="hr"><div class="hl sm">46-55</div><div class="ht"><div class="hf" style="width:0.0%;background:var(--excel)"></div></div><div class="hn">0·0.0%</div></div><div class="hr"><div class="hl sm">56+</div><div class="ht"><div class="hf" style="width:0.3%;background:var(--excel)"></div></div><div class="hn">1·0.2%</div></div>
+      </div>
+      <div>
+        <div class="sh">Youth Highlight</div>
+        <div class="highlight-box" style="background:var(--excel-lt)">
+          <div class="highlight-val" style="color:var(--excel)">93.5%</div>
+          <div class="highlight-sub">Youth founders (18–35)</div>
+        </div>
+        <div class="sh">Employment</div>
+        <div class="hr"><div class="hl sm">FTE</div>
+          <div class="ht"><div class="hf" style="width:100%;background:var(--excel)"></div></div>
+          <div class="hn">732</div></div>
+        <div class="hr"><div class="hl sm">PTE</div>
+          <div class="ht"><div class="hf" style="width:22.5%;background:var(--excel);opacity:.6"></div></div>
+          <div class="hn">165</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+  </div>
+</div>
+</div>
+
+<div id="tab-stan" class="section">
+<div class="page">
+  <div class="tbar" style="background:linear-gradient(135deg,#1d4ed8,#2563eb)">
+    <h1>Stanbic Bank Incubator · MSME Portfolio Summary</h1>
+    <span class="tbar-meta">10X EOI Raw Data · Central Uganda · March 2026</span>
+  </div>
+  <div class="tbar-accent" style="background:linear-gradient(90deg,#2563eb,rgba(255,255,255,.3),transparent)"></div>
+  <div class="kpi-strip"><div class="kpi" style="position:relative"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:#2563eb"></div><div class="kv" style="color:#2563eb">713</div><div class="kl">Total Submissions</div></div><div class="kpi" style="position:relative"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:#059669"></div><div class="kv" style="color:#059669">39</div><div class="kl">PWD Founders</div></div><div class="kpi" style="position:relative"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:#dc2626"></div><div class="kv" style="color:#dc2626">61</div><div class="kl">Refugee Founders</div></div><div class="kpi" style="position:relative"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:#d97706"></div><div class="kv" style="color:#d97706">89.9%</div><div class="kl">Female Founders</div></div><div class="kpi" style="position:relative"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:#2563eb"></div><div class="kv" style="color:#2563eb">80.4%</div><div class="kl">Youth (18–35)</div></div><div class="kpi" style="position:relative"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:#ea580c"></div><div class="kv" style="color:#ea580c">Central</div><div class="kl">Primary Region</div></div><div class="kpi" style="position:relative"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:#059669"></div><div class="kv" style="color:#059669">877</div><div class="kl">FTE Workers</div></div></div>
+  <div class="tcol">
+    
+<div class="panel">
+  <div class="ph" style="background:var(--stan)">Sector &amp; Subsector Breakdown</div>
+  <div class="pb">
+    <div class="sh">Top Sectors</div>
+    <div class="hr"><div class="hl">Trade & Services</div><div class="ht"><div class="hf" style="width:100.0%;background:var(--stan)"></div></div><div class="hn">261·36.6%</div></div><div class="hr"><div class="hl">Fashion & Design</div><div class="ht"><div class="hf" style="width:85.8%;background:var(--stan);opacity:0.75"></div></div><div class="hn">224·31.4%</div></div><div class="hr"><div class="hl">Agriculture</div><div class="ht"><div class="hf" style="width:39.1%;background:var(--stan);opacity:0.60"></div></div><div class="hn">102·14.3%</div></div><div class="hr"><div class="hl">Others / Events</div><div class="ht"><div class="hf" style="width:20.3%;background:var(--stan);opacity:0.45"></div></div><div class="hn">53·7.4%</div></div><div class="hr"><div class="hl">Light Manufacturing</div><div class="ht"><div class="hf" style="width:19.5%;background:var(--stan);opacity:0.35"></div></div><div class="hn">51·7.2%</div></div><div class="hr"><div class="hl">Health</div><div class="ht"><div class="hf" style="width:7.7%;background:var(--stan);opacity:0.35"></div></div><div class="hn">20·2.8%</div></div>
+    <div class="dv"></div>
+    <div class="sh">Context</div>
+    <div style="font-size:.68rem;color:var(--muted);line-height:1.55">
+      Stanbic Bank Incubator serves <strong>Central Uganda</strong>. 713 EOI submissions with
+      89.9% female founders and 80.4% youth (18–35).
+      Average biennial revenue: UGX 3.4M.
+    </div>
+  </div>
+</div>
+    
+<div class="panel">
+  <div class="ph" style="background:var(--stan)">Location &amp; Groups</div>
+  <div class="pb">
+    <div class="sh">Top Districts</div>
+    <div class="hr"><div class="hl">Wakiso</div><div class="ht"><div class="hf" style="width:100.0%;background:var(--stan)"></div></div><div class="hn">517</div></div><div class="hr"><div class="hl">Kampala</div><div class="ht"><div class="hf" style="width:16.8%;background:var(--stan);opacity:0.78"></div></div><div class="hn">87</div></div><div class="hr"><div class="hl">Nakasongola</div><div class="ht"><div class="hf" style="width:9.1%;background:var(--stan);opacity:0.66"></div></div><div class="hn">47</div></div><div class="hr"><div class="hl">Luwero</div><div class="ht"><div class="hf" style="width:6.4%;background:var(--stan);opacity:0.54"></div></div><div class="hn">33</div></div><div class="hr"><div class="hl">Mukono</div><div class="ht"><div class="hf" style="width:4.6%;background:var(--stan);opacity:0.42"></div></div><div class="hn">24</div></div><div class="hr"><div class="hl">Buikwe</div><div class="ht"><div class="hf" style="width:0.6%;background:var(--stan);opacity:0.35"></div></div><div class="hn">3</div></div><div class="hr"><div class="hl">Mubende</div><div class="ht"><div class="hf" style="width:0.2%;background:var(--stan);opacity:0.35"></div></div><div class="hn">1</div></div>
+    <div class="dv"></div>
+    <div class="sh">Groups &amp; Collectives</div>
+    <div class="null-box"><div class="null-v">0</div><div>No formal collectives identified</div><div>Individual / SME submissions only</div></div>
+    <div class="smr"><div><div class="sm-v" style="color:var(--stan)">30</div><div class="sm-l">URSB Reg.</div></div><div><div class="sm-v" style="color:var(--green)">39</div><div class="sm-l">PWD</div></div><div><div class="sm-v" style="color:var(--red)">61</div><div class="sm-l">Refugees</div></div><div><div class="sm-v" style="color:var(--gold)">3.4M</div><div class="sm-l">Avg Rev UGX</div></div><div><div class="sm-v" style="color:var(--orange)">331</div><div class="sm-l">PTE Workers</div></div></div>
+  </div>
+</div>
+    
+<div class="panel">
+  <div class="ph" style="background:var(--stan)">Archetypes &amp; Demographics</div>
+  <div class="pb">
+    <div style="text-align:center;font-size:.8rem;font-weight:700;margin-bottom:.3rem">
+      <span style="color:var(--gold)">♀ 89.9% Female</span>&nbsp;·&nbsp;
+      <span style="color:var(--stan)">♂ 10.1% Male</span>
+    </div>
+    <div class="gb"><div class="gf" style="width:89.9%"></div><div style="flex:1;background:var(--stan)"></div></div>
+    <div class="dv"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem">
+      <div>
+        <div class="sh">Age of Lead Founder</div>
+        <div class="hr"><div class="hl sm">18-25</div><div class="ht"><div class="hf" style="width:79.8%;background:var(--stan)"></div></div><div class="hn">256·37.4%</div></div><div class="hr"><div class="hl sm">26-35</div><div class="ht"><div class="hf" style="width:100.0%;background:var(--stan)"></div></div><div class="hn">321·46.9%</div></div><div class="hr"><div class="hl sm">36-45</div><div class="ht"><div class="hf" style="width:24.3%;background:var(--stan)"></div></div><div class="hn">78·11.4%</div></div><div class="hr"><div class="hl sm">46-55</div><div class="ht"><div class="hf" style="width:6.5%;background:var(--stan)"></div></div><div class="hn">21·3.1%</div></div><div class="hr"><div class="hl sm">56+</div><div class="ht"><div class="hf" style="width:2.5%;background:var(--stan)"></div></div><div class="hn">8·1.2%</div></div>
+      </div>
+      <div>
+        <div class="sh">Youth Highlight</div>
+        <div class="highlight-box" style="background:var(--stan-lt)">
+          <div class="highlight-val" style="color:var(--stan)">80.4%</div>
+          <div class="highlight-sub">Youth founders (18–35)</div>
+        </div>
+        <div class="sh">Employment</div>
+        <div class="hr"><div class="hl sm">FTE</div>
+          <div class="ht"><div class="hf" style="width:100%;background:var(--stan)"></div></div>
+          <div class="hn">877</div></div>
+        <div class="hr"><div class="hl sm">PTE</div>
+          <div class="ht"><div class="hf" style="width:37.7%;background:var(--stan);opacity:.6"></div></div>
+          <div class="hn">331</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+  </div>
+</div>
+</div>
+
+<div id="tab-pedn" class="section">
+<div class="page">
+  <div class="tbar" style="background:linear-gradient(135deg,#15803d,#16a34a)">
+    <h1>PEDN · MSME Portfolio Summary</h1>
+    <span class="tbar-meta">10X EOI Raw Data · Eastern Uganda · March 2026</span>
+  </div>
+  <div class="tbar-accent" style="background:linear-gradient(90deg,#16a34a,rgba(255,255,255,.3),transparent)"></div>
+  <div class="kpi-strip"><div class="kpi" style="position:relative"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:#16a34a"></div><div class="kv" style="color:#16a34a">679</div><div class="kl">Total Submissions</div></div><div class="kpi" style="position:relative"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:#059669"></div><div class="kv" style="color:#059669">25</div><div class="kl">PWD Founders</div></div><div class="kpi" style="position:relative"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:#dc2626"></div><div class="kv" style="color:#dc2626">2</div><div class="kl">Refugee Founders</div></div><div class="kpi" style="position:relative"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:#d97706"></div><div class="kv" style="color:#d97706">89.2%</div><div class="kl">Female Founders</div></div><div class="kpi" style="position:relative"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:#16a34a"></div><div class="kv" style="color:#16a34a">61.6%</div><div class="kl">Youth (18–35)</div></div><div class="kpi" style="position:relative"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:#ea580c"></div><div class="kv" style="color:#ea580c">Eastern</div><div class="kl">Primary Region</div></div><div class="kpi" style="position:relative"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:#059669"></div><div class="kv" style="color:#059669">1,266</div><div class="kl">FTE Workers</div></div></div>
+  <div class="tcol">
+    
+<div class="panel">
+  <div class="ph" style="background:var(--pedn)">Sector &amp; Subsector Breakdown</div>
+  <div class="pb">
+    <div class="sh">Top Sectors</div>
+    <div class="hr"><div class="hl">Agriculture</div><div class="ht"><div class="hf" style="width:100.0%;background:var(--pedn)"></div></div><div class="hn">586·86.3%</div></div><div class="hr"><div class="hl">Trade & Services</div><div class="ht"><div class="hf" style="width:15.5%;background:var(--pedn);opacity:0.75"></div></div><div class="hn">91·13.4%</div></div><div class="hr"><div class="hl">Fashion & Design</div><div class="ht"><div class="hf" style="width:0.2%;background:var(--pedn);opacity:0.60"></div></div><div class="hn">1·0.1%</div></div><div class="hr"><div class="hl">Health</div><div class="ht"><div class="hf" style="width:0.2%;background:var(--pedn);opacity:0.45"></div></div><div class="hn">1·0.1%</div></div>
+    <div class="dv"></div>
+    <div class="sh">Context</div>
+    <div style="font-size:.68rem;color:var(--muted);line-height:1.55">
+      PEDN serves <strong>Eastern Uganda</strong>. 679 EOI submissions with
+      89.2% female founders and 61.6% youth (18–35).
+      Average biennial revenue: UGX 5.3M.
+    </div>
+  </div>
+</div>
+    
+<div class="panel">
+  <div class="ph" style="background:var(--pedn)">Location &amp; Groups</div>
+  <div class="pb">
+    <div class="sh">Top Districts</div>
+    <div class="hr"><div class="hl">Pallisa</div><div class="ht"><div class="hf" style="width:100.0%;background:var(--pedn)"></div></div><div class="hn">132</div></div><div class="hr"><div class="hl">Tororo</div><div class="ht"><div class="hf" style="width:97.0%;background:var(--pedn);opacity:0.78"></div></div><div class="hn">128</div></div><div class="hr"><div class="hl">Bulambuli</div><div class="ht"><div class="hf" style="width:93.9%;background:var(--pedn);opacity:0.66"></div></div><div class="hn">124</div></div><div class="hr"><div class="hl">Sironko</div><div class="ht"><div class="hf" style="width:93.2%;background:var(--pedn);opacity:0.54"></div></div><div class="hn">123</div></div><div class="hr"><div class="hl">Mbale</div><div class="ht"><div class="hf" style="width:71.2%;background:var(--pedn);opacity:0.42"></div></div><div class="hn">94</div></div><div class="hr"><div class="hl">Busia</div><div class="ht"><div class="hf" style="width:48.5%;background:var(--pedn);opacity:0.35"></div></div><div class="hn">64</div></div><div class="hr"><div class="hl">Kapchorwa</div><div class="ht"><div class="hf" style="width:9.8%;background:var(--pedn);opacity:0.35"></div></div><div class="hn">13</div></div>
+    <div class="dv"></div>
+    <div class="sh">Groups &amp; Collectives</div>
+    <div class="null-box"><div class="null-v">0</div><div>No formal collectives identified</div><div>Individual / SME submissions only</div></div>
+    <div class="smr"><div><div class="sm-v" style="color:var(--pedn)">8</div><div class="sm-l">URSB Reg.</div></div><div><div class="sm-v" style="color:var(--green)">25</div><div class="sm-l">PWD</div></div><div><div class="sm-v" style="color:var(--red)">2</div><div class="sm-l">Refugees</div></div><div><div class="sm-v" style="color:var(--gold)">5.3M</div><div class="sm-l">Avg Rev UGX</div></div><div><div class="sm-v" style="color:var(--orange)">551</div><div class="sm-l">PTE Workers</div></div></div>
+  </div>
+</div>
+    
+<div class="panel">
+  <div class="ph" style="background:var(--pedn)">Archetypes &amp; Demographics</div>
+  <div class="pb">
+    <div style="text-align:center;font-size:.8rem;font-weight:700;margin-bottom:.3rem">
+      <span style="color:var(--gold)">♀ 89.2% Female</span>&nbsp;·&nbsp;
+      <span style="color:var(--pedn)">♂ 10.8% Male</span>
+    </div>
+    <div class="gb"><div class="gf" style="width:89.2%"></div><div style="flex:1;background:var(--pedn)"></div></div>
+    <div class="dv"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem">
+      <div>
+        <div class="sh">Age of Lead Founder</div>
+        <div class="hr"><div class="hl sm">18-25</div><div class="ht"><div class="hf" style="width:38.6%;background:var(--pedn)"></div></div><div class="hn">110·18.3%</div></div><div class="hr"><div class="hl sm">26-35</div><div class="ht"><div class="hf" style="width:100.0%;background:var(--pedn)"></div></div><div class="hn">285·47.4%</div></div><div class="hr"><div class="hl sm">36-45</div><div class="ht"><div class="hf" style="width:35.1%;background:var(--pedn)"></div></div><div class="hn">100·16.6%</div></div><div class="hr"><div class="hl sm">46-55</div><div class="ht"><div class="hf" style="width:21.8%;background:var(--pedn)"></div></div><div class="hn">62·10.3%</div></div><div class="hr"><div class="hl sm">56+</div><div class="ht"><div class="hf" style="width:15.4%;background:var(--pedn)"></div></div><div class="hn">44·7.3%</div></div>
+      </div>
+      <div>
+        <div class="sh">Youth Highlight</div>
+        <div class="highlight-box" style="background:var(--pedn-lt)">
+          <div class="highlight-val" style="color:var(--pedn)">61.6%</div>
+          <div class="highlight-sub">Youth founders (18–35)</div>
+        </div>
+        <div class="sh">Employment</div>
+        <div class="hr"><div class="hl sm">FTE</div>
+          <div class="ht"><div class="hf" style="width:100%;background:var(--pedn)"></div></div>
+          <div class="hn">1,266</div></div>
+        <div class="hr"><div class="hl sm">PTE</div>
+          <div class="ht"><div class="hf" style="width:43.5%;background:var(--pedn);opacity:.6"></div></div>
+          <div class="hn">551</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+  </div>
+</div>
+</div>
+
+<div id="tab-chal" class="section">
+<div class="page">
+  <div class="tbar" style="background:linear-gradient(135deg,#991b1b,#dc2626)">
+    <h1>Challenges Uganda · MSME Portfolio Summary</h1>
+    <span class="tbar-meta">10X EOI Raw Data · Northern Uganda · March 2026</span>
+  </div>
+  <div class="tbar-accent" style="background:linear-gradient(90deg,#dc2626,rgba(255,255,255,.3),transparent)"></div>
+  <div class="kpi-strip"><div class="kpi" style="position:relative"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:#dc2626"></div><div class="kv" style="color:#dc2626">479</div><div class="kl">Total Submissions</div></div><div class="kpi" style="position:relative"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:#059669"></div><div class="kv" style="color:#059669">99</div><div class="kl">PWD Founders</div></div><div class="kpi" style="position:relative"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:#dc2626"></div><div class="kv" style="color:#dc2626">52</div><div class="kl">Refugee Founders</div></div><div class="kpi" style="position:relative"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:#d97706"></div><div class="kv" style="color:#d97706">94.7%</div><div class="kl">Female Founders</div></div><div class="kpi" style="position:relative"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:#dc2626"></div><div class="kv" style="color:#dc2626">88.7%</div><div class="kl">Youth (18–35)</div></div><div class="kpi" style="position:relative"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:#ea580c"></div><div class="kv" style="color:#ea580c">Northern</div><div class="kl">Primary Region</div></div><div class="kpi" style="position:relative"><div style="position:absolute;top:0;left:0;right:0;height:3px;background:#059669"></div><div class="kv" style="color:#059669">533</div><div class="kl">FTE Workers</div></div></div>
+  <div class="tcol">
+    
+<div class="panel">
+  <div class="ph" style="background:var(--chal)">Sector &amp; Subsector Breakdown</div>
+  <div class="pb">
+    <div class="sh">Top Sectors</div>
+    <div class="hr"><div class="hl">Trade & Services</div><div class="ht"><div class="hf" style="width:100.0%;background:var(--chal)"></div></div><div class="hn">253·52.8%</div></div><div class="hr"><div class="hl">Fashion & Design</div><div class="ht"><div class="hf" style="width:50.6%;background:var(--chal);opacity:0.75"></div></div><div class="hn">128·26.7%</div></div><div class="hr"><div class="hl">Agriculture</div><div class="ht"><div class="hf" style="width:33.2%;background:var(--chal);opacity:0.60"></div></div><div class="hn">84·17.5%</div></div><div class="hr"><div class="hl">Others / Events</div><div class="ht"><div class="hf" style="width:2.8%;background:var(--chal);opacity:0.45"></div></div><div class="hn">7·1.5%</div></div><div class="hr"><div class="hl">Light Manufacturing</div><div class="ht"><div class="hf" style="width:1.6%;background:var(--chal);opacity:0.35"></div></div><div class="hn">4·0.8%</div></div><div class="hr"><div class="hl">Health</div><div class="ht"><div class="hf" style="width:1.2%;background:var(--chal);opacity:0.35"></div></div><div class="hn">3·0.6%</div></div>
+    <div class="dv"></div>
+    <div class="sh">Context</div>
+    <div style="font-size:.68rem;color:var(--muted);line-height:1.55">
+      Challenges Uganda serves <strong>Northern Uganda</strong>. 479 EOI submissions with
+      94.7% female founders and 88.7% youth (18–35).
+      Average biennial revenue: UGX 5.2M.
+    </div>
+  </div>
+</div>
+    
+<div class="panel">
+  <div class="ph" style="background:var(--chal)">Location &amp; Groups</div>
+  <div class="pb">
+    <div class="sh">Top Districts</div>
+    <div class="hr"><div class="hl">Gulu</div><div class="ht"><div class="hf" style="width:100.0%;background:var(--chal)"></div></div><div class="hn">123</div></div><div class="hr"><div class="hl">Budaka</div><div class="ht"><div class="hf" style="width:63.4%;background:var(--chal);opacity:0.78"></div></div><div class="hn">78</div></div><div class="hr"><div class="hl">Lamwo</div><div class="ht"><div class="hf" style="width:58.5%;background:var(--chal);opacity:0.66"></div></div><div class="hn">72</div></div><div class="hr"><div class="hl">Nwoya</div><div class="ht"><div class="hf" style="width:50.4%;background:var(--chal);opacity:0.54"></div></div><div class="hn">62</div></div><div class="hr"><div class="hl">Omoro</div><div class="ht"><div class="hf" style="width:40.7%;background:var(--chal);opacity:0.42"></div></div><div class="hn">50</div></div><div class="hr"><div class="hl">Kitgum</div><div class="ht"><div class="hf" style="width:26.0%;background:var(--chal);opacity:0.35"></div></div><div class="hn">32</div></div><div class="hr"><div class="hl">Wakiso</div><div class="ht"><div class="hf" style="width:15.4%;background:var(--chal);opacity:0.35"></div></div><div class="hn">19</div></div>
+    <div class="dv"></div>
+    <div class="sh">Groups &amp; Collectives</div>
+    <div class="null-box"><div class="null-v">0</div><div>No formal collectives identified</div><div>Individual / SME submissions only</div></div>
+    <div class="smr"><div><div class="sm-v" style="color:var(--chal)">6</div><div class="sm-l">URSB Reg.</div></div><div><div class="sm-v" style="color:var(--green)">99</div><div class="sm-l">PWD</div></div><div><div class="sm-v" style="color:var(--red)">52</div><div class="sm-l">Refugees</div></div><div><div class="sm-v" style="color:var(--gold)">5.2M</div><div class="sm-l">Avg Rev UGX</div></div><div><div class="sm-v" style="color:var(--orange)">229</div><div class="sm-l">PTE Workers</div></div></div>
+  </div>
+</div>
+    
+<div class="panel">
+  <div class="ph" style="background:var(--chal)">Archetypes &amp; Demographics</div>
+  <div class="pb">
+    <div style="text-align:center;font-size:.8rem;font-weight:700;margin-bottom:.3rem">
+      <span style="color:var(--gold)">♀ 94.7% Female</span>&nbsp;·&nbsp;
+      <span style="color:var(--chal)">♂ 5.3% Male</span>
+    </div>
+    <div class="gb"><div class="gf" style="width:94.7%"></div><div style="flex:1;background:var(--chal)"></div></div>
+    <div class="dv"></div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.6rem">
+      <div>
+        <div class="sh">Age of Lead Founder</div>
+        <div class="hr"><div class="hl sm">18-25</div><div class="ht"><div class="hf" style="width:63.4%;background:var(--chal)"></div></div><div class="hn">163·36.9%</div></div><div class="hr"><div class="hl sm">26-35</div><div class="ht"><div class="hf" style="width:100.0%;background:var(--chal)"></div></div><div class="hn">257·58.1%</div></div><div class="hr"><div class="hl sm">36-45</div><div class="ht"><div class="hf" style="width:7.0%;background:var(--chal)"></div></div><div class="hn">18·4.1%</div></div><div class="hr"><div class="hl sm">46-55</div><div class="ht"><div class="hf" style="width:1.6%;background:var(--chal)"></div></div><div class="hn">4·0.9%</div></div><div class="hr"><div class="hl sm">56+</div><div class="ht"><div class="hf" style="width:0.0%;background:var(--chal)"></div></div><div class="hn">0·0.0%</div></div>
+      </div>
+      <div>
+        <div class="sh">Youth Highlight</div>
+        <div class="highlight-box" style="background:var(--chal-lt)">
+          <div class="highlight-val" style="color:var(--chal)">88.7%</div>
+          <div class="highlight-sub">Youth founders (18–35)</div>
+        </div>
+        <div class="sh">Employment</div>
+        <div class="hr"><div class="hl sm">FTE</div>
+          <div class="ht"><div class="hf" style="width:100%;background:var(--chal)"></div></div>
+          <div class="hn">533</div></div>
+        <div class="hr"><div class="hl sm">PTE</div>
+          <div class="ht"><div class="hf" style="width:43.0%;background:var(--chal);opacity:.6"></div></div>
+          <div class="hn">229</div></div>
+      </div>
+    </div>
+  </div>
+</div>
+  </div>
+</div>
+</div>
+<script>
+
+const IDS=['ov','dfcu','mubs','mkazi','excel','stan','pedn','chal'];
+const CLS=['t-ov','t-dfcu','t-mubs','t-mkazi','t-excel','t-stan','t-pedn','t-chal'];
+function ST(id){
+  IDS.forEach(t=>document.getElementById('tab-'+t).classList.remove('active'));
+  document.querySelectorAll('.nav-tab').forEach(el=>CLS.forEach(c=>el.classList.remove(c)));
+  document.getElementById('tab-'+id).classList.add('active');
+  const i=IDS.indexOf(id);
+  document.querySelectorAll('.nav-tab')[i].classList.add(CLS[i]);
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+
+</script>
+</body>
+</html>
