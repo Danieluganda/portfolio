@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Portfolio Intelligence Dashboard</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
-  <script src="data.js"></script>
+  <script src="data.js?v=20260605-devices-eso"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     body { font-family: 'Segoe UI', system-ui, -apple-system, sans-serif; background: #F1F5F9; color: #1E293B; min-height: 100vh; }
@@ -286,6 +286,1130 @@
 
     @media(max-width:1100px){ .three-col{grid-template-columns:1fr 1fr;} .kpi-strip-7{grid-template-columns:repeat(4,1fr);} }
     @media(max-width:700px) { .three-col{grid-template-columns:1fr;}    .kpi-strip-7{grid-template-columns:repeat(2,1fr);} }
+
+    /* ─── Time Period Filter Bar ─── */
+    .time-filter-bar {
+      background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+      padding: 8px 24px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      overflow-x: auto;
+      scrollbar-width: thin;
+      border-bottom: 1px solid #334155;
+    }
+    .tf-label {
+      font-size: .65rem; font-weight: 700; text-transform: uppercase;
+      letter-spacing: .08em; color: #64748B; white-space: nowrap;
+      padding-right: 8px; border-right: 1px solid #334155;
+      margin-right: 4px; flex-shrink: 0;
+    }
+    .tf-btn {
+      font-size: .68rem; font-weight: 600; padding: 4px 11px;
+      border-radius: 20px; border: 1.5px solid #334155;
+      background: transparent; color: #94A3B8;
+      cursor: pointer; white-space: nowrap; transition: all .15s;
+      flex-shrink: 0;
+    }
+    .tf-btn:hover { border-color: #60A5FA; color: #BFDBFE; }
+    .tf-btn.active {
+      background: #1D4ED8; border-color: #3B82F6;
+      color: #fff; box-shadow: 0 0 8px rgba(59,130,246,.4);
+    }
+    .tf-badge {
+      margin-left: auto; font-size: .6rem; font-weight: 700;
+      padding: 3px 9px; border-radius: 20px;
+      background: rgba(59,130,246,.15); color: #93C5FD;
+      border: 1px solid rgba(59,130,246,.3); white-space: nowrap; flex-shrink: 0;
+    }
+
+    /* ─── Archetype Cards ─── */
+    .arch-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(140px,1fr)); gap: 8px; margin-bottom: 10px; }
+    .arch-card {
+      border-radius: 10px; padding: 10px 12px; border: 1.5px solid;
+      position: relative; overflow: hidden;
+    }
+    .arch-card::before {
+      content: ''; position: absolute; top: -20px; right: -20px;
+      width: 60px; height: 60px; border-radius: 50%;
+      opacity: .12;
+    }
+    .arch-card .arch-icon { font-size: 1.4rem; margin-bottom: 6px; display: block; }
+    .arch-card .arch-count { font-size: 1.45rem; font-weight: 800; line-height: 1; display: block; }
+    .arch-card .arch-pct { font-size: .6rem; font-weight: 600; opacity: .75; }
+    .arch-card .arch-name { font-size: .65rem; font-weight: 700; text-transform: uppercase; letter-spacing: .06em; margin-top: 3px; display: block; }
+    .arch-card .arch-def { font-size: .57rem; color: #64748B; line-height: 1.4; margin-top: 4px; }
+    .arch-gig { background: #FFF7ED; border-color: #FDBA74; color: #9A3412; }
+    .arch-gig::before { background: #F97316; }
+    .arch-boot { background: #EFF6FF; border-color: #93C5FD; color: #1D4ED8; }
+    .arch-boot::before { background: #3B82F6; }
+    .arch-sme { background: #F0FDF4; border-color: #86EFAC; color: #15803D; }
+    .arch-sme::before { background: #22C55E; }
+    .arch-inv { background: #F8FAFC; border-color: #CBD5E1; color: #475569; }
+    .arch-inv::before { background: #94A3B8; }
+    .arch-gaz { background: #FDF4FF; border-color: #D8B4FE; color: #7E22CE; }
+    .arch-gaz::before { background: #A855F7; }
+    .arch-norev { background: #FFF1F2; border-color: #FDA4AF; color: #BE123C; }
+    .arch-norev::before { background: #F43F5E; }
+
+    /* ─── Cohorts ─── */
+    .cohort-timeline { display: flex; flex-direction: column; gap: 10px; }
+    .cohort-item {
+      background: #fff; border-radius: 10px; border: 1px solid #E2E8F0;
+      padding: 12px 16px; display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center; gap: 14px;
+      box-shadow: 0 1px 3px rgba(0,0,0,.05);
+    }
+    .cohort-dot { width: 12px; height: 12px; border-radius: 50%; flex-shrink: 0; }
+    .cohort-name { font-size: .82rem; font-weight: 700; color: #1E293B; }
+    .cohort-meta { font-size: .67rem; color: #64748B; margin-top: 2px; }
+    .cohort-badge { font-size: .6rem; font-weight: 700; padding: 3px 9px; border-radius: 20px; white-space: nowrap; }
+    .badge-active { background: #D1FAE5; color: #065F46; }
+    .badge-upcoming { background: #DBEAFE; color: #1E40AF; }
+    .badge-completed { background: #F1F5F9; color: #475569; }
+    .cohort-progress { height: 5px; background: #E2E8F0; border-radius: 3px; overflow: hidden; margin-top: 6px; }
+    .cohort-progress-fill { height: 100%; border-radius: 3px; transition: width .4s; }
+
+    /* ─── Digital Credit ─── */
+    .credit-card {
+      background: #fff; border-radius: 10px; border: 1.5px solid #E2E8F0;
+      padding: 14px 16px; box-shadow: 0 1px 4px rgba(0,0,0,.06);
+    }
+    .credit-total { font-size: 2rem; font-weight: 800; color: #1D4ED8; line-height: 1; }
+    .credit-row { display: grid; grid-template-columns: 130px 1fr 80px 80px; align-items: center; gap: 8px; margin-bottom: 6px; }
+    .credit-eso { font-size: .75rem; font-weight: 600; color: #1E293B; }
+    .credit-amt { font-size: .72rem; font-weight: 700; color: #1D4ED8; text-align: right; }
+    .credit-count { font-size: .68rem; color: #64748B; text-align: right; }
+
+    /* ─── ESO Targets ─── */
+    .target-row {
+      display: grid; grid-template-columns: 130px auto 1fr auto;
+      align-items: center; gap: 8px; margin-bottom: 8px;
+    }
+    .target-label { font-size: .72rem; font-weight: 600; color: #1E293B; }
+    .target-pct-badge { font-size: .65rem; font-weight: 800; padding: 2px 8px; border-radius: 20px; white-space: nowrap; }
+    .tgt-green { background: #D1FAE5; color: #065F46; }
+    .tgt-amber { background: #FEF3C7; color: #92400E; }
+    .tgt-red   { background: #FEE2E2; color: #991B1B; }
+    .target-track { height: 10px; background: #E8EDF2; border-radius: 3px; overflow: hidden; position: relative; }
+    .target-fill { height: 100%; border-radius: 3px; transition: width .4s; }
+    .target-marker {
+      position: absolute; top: -3px; bottom: -3px; width: 2px;
+      background: #DC2626; border-radius: 1px;
+    }
+    .target-vals { font-size: .62rem; color: #64748B; white-space: nowrap; text-align: right; }
+
+    /* Clean dashboard polish */
+    :root {
+      --page-bg: #F6F8FB;
+      --surface: #FFFFFF;
+      --surface-soft: #F8FAFC;
+      --line: #E2E8F0;
+      --line-strong: #CBD5E1;
+      --text: #0F172A;
+      --muted: #64748B;
+      --muted-soft: #94A3B8;
+      --accent-blue: #2563EB;
+      --accent-green: #059669;
+      --accent-orange: #EA580C;
+      --accent-purple: #7C3AED;
+      --accent-teal: #0F766E;
+      --radius: 8px;
+      --shadow-soft: 0 1px 2px rgba(15, 23, 42, .06);
+    }
+
+    body { background: var(--page-bg); color: var(--text); }
+    .header {
+      background: #FFFFFF;
+      color: var(--text);
+      padding: 12px 24px;
+      border-bottom: 1px solid var(--line);
+      box-shadow: none;
+    }
+    .header-left h1 { font-size: 1rem; letter-spacing: 0; }
+    .header-left .sub { color: var(--muted); }
+    .header-right { gap: 8px; }
+    .pill {
+      background: #EFF6FF;
+      color: #1D4ED8;
+      border: 1px solid #BFDBFE;
+      border-radius: 999px;
+    }
+    .btn-refresh {
+      background: #FFFFFF;
+      color: #475569;
+      border-color: var(--line-strong);
+      border-radius: 7px;
+    }
+    .btn-refresh:hover { border-color: #93C5FD; color: #1D4ED8; background: #EFF6FF; }
+
+    .type-tabs-bar {
+      background: #FFFFFF;
+      border-bottom: 1px solid var(--line);
+      padding: 0 24px;
+    }
+    .type-tab-btn {
+      color: #475569;
+      padding: 11px 18px;
+      font-size: .78rem;
+      letter-spacing: 0;
+      border-bottom-width: 2px;
+    }
+    .type-tab-btn:hover { color: var(--accent-blue); background: #F8FAFC; }
+    .type-tab-btn.active { color: #1D4ED8; border-bottom-color: #2563EB; }
+
+    .sub-tabs-bar {
+      background: #F8FAFC;
+      border-bottom: 1px solid var(--line);
+      min-height: 40px;
+      padding: 0 24px;
+    }
+    .sub-tab-btn {
+      color: #64748B;
+      padding: 9px 14px;
+      font-size: .76rem;
+      border-bottom-width: 2px;
+    }
+    .sub-tab-btn:hover { color: #1D4ED8; background: #FFFFFF; }
+    .sub-tab-btn.active { color: #1D4ED8; border-bottom-color: #2563EB; background: #FFFFFF; }
+
+    .time-filter-bar {
+      background: #FFFFFF;
+      border-bottom: 1px solid var(--line);
+      padding: 8px 24px;
+      gap: 7px;
+    }
+    .tf-label {
+      color: var(--muted);
+      border-right-color: var(--line);
+    }
+    .tf-btn {
+      color: #475569;
+      border: 1px solid var(--line-strong);
+      background: #FFFFFF;
+      border-radius: 7px;
+      padding: 5px 10px;
+    }
+    .tf-btn:hover { color: #1D4ED8; border-color: #93C5FD; background: #EFF6FF; }
+    .tf-btn.active {
+      color: #FFFFFF;
+      background: #2563EB;
+      border-color: #2563EB;
+      box-shadow: none;
+    }
+    .tf-badge {
+      color: #1D4ED8;
+      background: #EFF6FF;
+      border-color: #BFDBFE;
+    }
+
+    .content { max-width: 1320px; padding: 22px 24px 36px; }
+    .section-hdr { margin-bottom: 14px; }
+    .section-hdr h2 { font-size: 1.05rem; letter-spacing: 0; }
+
+    .card,
+    .kpi,
+    .kpi-box,
+    .port-header,
+    .col-section,
+    .credit-card,
+    .cohort-item {
+      border-radius: var(--radius);
+      border: 1px solid var(--line);
+      box-shadow: var(--shadow-soft);
+    }
+    .card { padding: 16px; }
+    .card h3 {
+      color: #334155;
+      font-size: .68rem;
+      letter-spacing: .04em;
+      margin-bottom: 12px;
+    }
+
+    .port-header { margin-bottom: 12px; }
+    .port-bar-strip { height: 0; display: none; }
+    .port-title-area { padding: 14px 16px; }
+    .port-title { font-size: 1.05rem; font-weight: 750; letter-spacing: 0; }
+    .port-filename {
+      color: var(--muted);
+      text-decoration: none;
+      font-size: .68rem;
+    }
+
+    .kpi-row,
+    .kpi-strip-7 { gap: 10px; margin-bottom: 12px; }
+    .kpi { padding: 14px 15px; border-left-width: 3px; }
+    .kpi-box {
+      padding: 11px 9px 10px;
+      text-align: left;
+      border-top: 3px solid #CBD5E1;
+      box-shadow: none;
+    }
+    .kpi-box.ko { border-top-color: var(--accent-orange); }
+    .kpi-box.kb { border-top-color: var(--accent-blue); }
+    .kpi-box.kr { border-top-color: #DC2626; }
+    .kpi-box.kp { border-top-color: var(--accent-purple); }
+    .kpi-box.kg { border-top-color: var(--accent-green); }
+    .kpi-box.kt { border-top-color: var(--accent-teal); }
+    .kpi-box.ka { border-top-color: #D97706; }
+    .kpi-box.kk { border-top-color: #DB2777; }
+    .kpi-box .kv { font-size: 1.18rem; color: var(--text) !important; }
+    .kpi-box .kl { font-size: .56rem; color: var(--muted); letter-spacing: .05em; }
+
+    .three-col { gap: 12px; }
+    .col-section { overflow: hidden; }
+    .col-hdr {
+      background: #FFFFFF !important;
+      color: #334155;
+      padding: 10px 14px 8px;
+      border-top: 3px solid #CBD5E1;
+      border-bottom: 1px solid var(--line);
+      font-size: .64rem;
+      letter-spacing: .05em;
+    }
+    .green-hdr  { border-top-color: var(--accent-green); }
+    .orange-hdr { border-top-color: var(--accent-orange); }
+    .purple-hdr { border-top-color: var(--accent-purple); }
+    .teal-hdr   { border-top-color: var(--accent-teal); }
+    .indigo-hdr { border-top-color: var(--accent-blue); }
+    .col-body { padding: 12px 14px 14px; }
+    .sub-hdr {
+      border-bottom: 1px solid var(--line);
+      color: #334155 !important;
+      padding: 7px 0 5px;
+      margin-bottom: 8px;
+      letter-spacing: .05em;
+    }
+
+    .activity-strip { gap: 8px; margin: 0 0 12px; }
+    .act-card {
+      background: #FFFFFF;
+      border-color: var(--line);
+      border-radius: 7px;
+      padding: 8px 9px;
+    }
+    .act-card.act-green,
+    .act-card.act-blue { background: #FFFFFF; border-color: var(--line); }
+
+    .bar-row { margin-bottom: 6px; gap: 8px; }
+    .bar-track { background: #E5EAF1; border-radius: 3px; }
+    .bar-fill { border-radius: 3px; }
+    .bar-name { color: #1F2937; font-size: .71rem; }
+    .bar-stat { color: var(--muted); }
+    .no-data-note { color: var(--muted-soft); }
+
+    .device-drill-panel {
+      border-left-color: var(--line);
+      background: #F8FAFC;
+      margin: 2px 0 8px 8px;
+      padding-left: 12px;
+    }
+    .drill-label { color: var(--muted); }
+
+    .arch-card {
+      border-radius: 8px;
+      background: #FFFFFF !important;
+      border-color: var(--line) !important;
+      color: #334155 !important;
+    }
+    .arch-card::before,
+    .arch-card .arch-icon { display: none; }
+
+    @media(max-width:1100px){
+      .content { padding: 18px 16px 28px; }
+      .header, .type-tabs-bar, .sub-tabs-bar, .time-filter-bar { padding-left: 16px; padding-right: 16px; }
+    }
+
+    .landing-grid { display: grid; gap: 12px; margin-bottom: 12px; }
+    .landing-grid.two { grid-template-columns: 1.15fr .85fr; }
+    .landing-grid.three { grid-template-columns: repeat(3, 1fr); }
+    .landing-grid.four { grid-template-columns: repeat(4, 1fr); }
+    .landing-card {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-soft);
+      padding: 14px;
+    }
+    .landing-card h3 {
+      font-size: .68rem;
+      color: #334155;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      margin-bottom: 10px;
+    }
+    .metric-card {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      border-top: 3px solid #CBD5E1;
+      padding: 12px;
+      min-height: 82px;
+    }
+    .metric-card .metric-value {
+      display: block;
+      font-size: 1.35rem;
+      line-height: 1;
+      font-weight: 800;
+      color: var(--text);
+      margin-bottom: 6px;
+    }
+    .metric-card .metric-label {
+      display: block;
+      font-size: .62rem;
+      color: var(--muted);
+      font-weight: 750;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+    }
+    .metric-card .metric-note {
+      display: block;
+      font-size: .66rem;
+      color: var(--muted-soft);
+      margin-top: 5px;
+    }
+    .metric-card.blue { border-top-color: var(--accent-blue); }
+    .metric-card.green { border-top-color: var(--accent-green); }
+    .metric-card.orange { border-top-color: var(--accent-orange); }
+    .metric-card.purple { border-top-color: var(--accent-purple); }
+    .metric-card.teal { border-top-color: var(--accent-teal); }
+    .metric-card.red { border-top-color: #DC2626; }
+    .funnel {
+      display: grid;
+      grid-template-columns: repeat(5, 1fr);
+      gap: 8px;
+      align-items: stretch;
+    }
+    .funnel-step {
+      position: relative;
+      background: #F8FAFC;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      padding: 12px 10px;
+      min-height: 92px;
+    }
+    .funnel-step::after {
+      content: '';
+      position: absolute;
+      right: -7px;
+      top: 50%;
+      width: 10px;
+      height: 10px;
+      border-top: 1px solid var(--line-strong);
+      border-right: 1px solid var(--line-strong);
+      transform: translateY(-50%) rotate(45deg);
+      background: #F8FAFC;
+      z-index: 2;
+    }
+    .funnel-step:last-child::after { display: none; }
+    .funnel-label {
+      display: block;
+      font-size: .62rem;
+      color: var(--muted);
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .05em;
+      margin-bottom: 8px;
+    }
+    .funnel-value {
+      display: block;
+      font-size: 1.18rem;
+      font-weight: 850;
+      color: var(--text);
+      line-height: 1;
+    }
+    .funnel-rate {
+      display: block;
+      margin-top: 7px;
+      font-size: .66rem;
+      color: var(--muted);
+    }
+    .snapshot-list { display: grid; gap: 7px; }
+    .snapshot-row {
+      display: grid;
+      grid-template-columns: minmax(96px, 1fr) 1.4fr auto;
+      gap: 8px;
+      align-items: center;
+      font-size: .72rem;
+    }
+    .snapshot-row span:first-child {
+      color: #1F2937;
+      font-weight: 650;
+      overflow: hidden;
+      text-overflow: ellipsis;
+      white-space: nowrap;
+    }
+    .snapshot-row strong {
+      color: var(--muted);
+      font-size: .68rem;
+      font-variant-numeric: tabular-nums;
+    }
+    .mini-track {
+      height: 7px;
+      background: #E5EAF1;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+    .mini-fill { height: 100%; border-radius: 3px; background: var(--accent-blue); }
+    .insight-list { display: grid; gap: 8px; }
+    .insight {
+      border: 1px solid var(--line);
+      border-left: 3px solid var(--accent-blue);
+      background: #F8FAFC;
+      border-radius: 7px;
+      padding: 9px 10px;
+      font-size: .75rem;
+      color: #334155;
+      line-height: 1.45;
+    }
+    .insight.good { border-left-color: var(--accent-green); }
+    .insight.warn { border-left-color: var(--accent-orange); }
+    .insight.info { border-left-color: var(--accent-blue); }
+    .summary-extra {
+      display: none;
+    }
+    .summary-extra.open {
+      display: block;
+    }
+    .summary-toggle {
+      width: 100%;
+      margin-top: 4px;
+      padding: 7px 10px;
+      border: 1px solid #BFDBFE;
+      border-radius: 7px;
+      background: #EFF6FF;
+      color: #1D4ED8;
+      font-size: .7rem;
+      font-weight: 750;
+      cursor: pointer;
+    }
+    .summary-toggle:hover {
+      background: #DBEAFE;
+      border-color: #93C5FD;
+    }
+    @media(max-width:1100px){
+      .landing-grid.two,
+      .landing-grid.three,
+      .landing-grid.four { grid-template-columns: 1fr 1fr; }
+      .funnel { grid-template-columns: 1fr; }
+      .funnel-step::after { display: none; }
+    }
+    @media(max-width:700px){
+      .landing-grid.two,
+      .landing-grid.three,
+      .landing-grid.four { grid-template-columns: 1fr; }
+      .snapshot-row { grid-template-columns: 1fr; }
+    }
+
+    /* App-wide layout refresh */
+    html { scroll-behavior: smooth; }
+    body {
+      font-size: 14px;
+      line-height: 1.45;
+      background:
+        linear-gradient(180deg, #F8FAFC 0%, #F3F6FA 360px, #F6F8FB 100%);
+    }
+    .header,
+    .type-tabs-bar,
+    .sub-tabs-bar,
+    .time-filter-bar {
+      backdrop-filter: saturate(150%) blur(10px);
+    }
+    .header {
+      min-height: 58px;
+      gap: 18px;
+    }
+    .header-left {
+      min-width: 0;
+    }
+    .header-left h1 {
+      font-size: 1.04rem;
+      line-height: 1.15;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .header-left .sub {
+      font-size: .7rem;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .header-right {
+      flex-shrink: 0;
+    }
+    .type-tabs-bar {
+      position: sticky;
+      top: 58px;
+      z-index: 160;
+      box-shadow: 0 1px 0 rgba(15, 23, 42, .04);
+    }
+    .sub-tabs-bar {
+      position: sticky;
+      top: 99px;
+      z-index: 150;
+      box-shadow: 0 1px 0 rgba(15, 23, 42, .04);
+    }
+    .time-filter-bar {
+      position: sticky;
+      top: 139px;
+      z-index: 140;
+      box-shadow: 0 1px 0 rgba(15, 23, 42, .04);
+    }
+    .type-tabs-bar,
+    .sub-tabs-bar,
+    .time-filter-bar {
+      scrollbar-width: none;
+    }
+    .type-tabs-bar::-webkit-scrollbar,
+    .sub-tabs-bar::-webkit-scrollbar,
+    .time-filter-bar::-webkit-scrollbar {
+      display: none;
+    }
+    .type-tab-btn,
+    .sub-tab-btn,
+    .tf-btn,
+    .btn-refresh {
+      outline: none;
+    }
+    .type-tab-btn:focus-visible,
+    .sub-tab-btn:focus-visible,
+    .tf-btn:focus-visible,
+    .btn-refresh:focus-visible {
+      box-shadow: 0 0 0 3px rgba(37, 99, 235, .18);
+      border-radius: 7px;
+    }
+
+    .content {
+      max-width: 1280px;
+      padding-top: 20px;
+    }
+    .panel.active {
+      animation: panelFade .16s ease-out;
+    }
+    @keyframes panelFade {
+      from { opacity: .75; transform: translateY(3px); }
+      to { opacity: 1; transform: none; }
+    }
+    .section-hdr {
+      align-items: flex-start;
+      justify-content: space-between;
+      border-bottom: 1px solid var(--line);
+      padding-bottom: 10px;
+    }
+    .section-hdr h2,
+    .port-title {
+      letter-spacing: 0;
+    }
+
+    .kpi-row,
+    .kpi-strip-7,
+    .landing-grid.three,
+    .landing-grid.four {
+      grid-template-columns: repeat(auto-fit, minmax(170px, 1fr));
+    }
+    .kpi-box,
+    .metric-card {
+      min-width: 0;
+    }
+    .kpi-box .kv,
+    .metric-card .metric-value {
+      overflow-wrap: anywhere;
+    }
+    .kpi-box .kl,
+    .metric-card .metric-label {
+      line-height: 1.25;
+    }
+
+    .three-col {
+      grid-template-columns: repeat(12, minmax(0, 1fr));
+      align-items: stretch;
+    }
+    .three-col > .col-section {
+      grid-column: span 4;
+      min-width: 0;
+    }
+    .three-col > .col-section[style*="span 2"] {
+      grid-column: span 8 !important;
+    }
+    .col-section,
+    .landing-card,
+    .card {
+      min-width: 0;
+    }
+    .col-section {
+      contain: layout paint;
+    }
+    .col-body {
+      overflow: hidden;
+    }
+    .col-hdr,
+    .card h3,
+    .landing-card h3 {
+      line-height: 1.25;
+    }
+
+    .bar-row,
+    .device-expand-row .bar-row {
+      grid-template-columns: minmax(120px, 1.1fr) minmax(96px, 1.4fr) max-content;
+    }
+    .device-expand-row .bar-row {
+      grid-template-columns: minmax(120px, 1.1fr) minmax(96px, 1.4fr) max-content 14px;
+    }
+    .bar-track,
+    .mini-track {
+      min-width: 72px;
+    }
+    .bar-stat,
+    .snapshot-row strong,
+    .eso-stat,
+    .dw-stat,
+    .credit-amt,
+    .credit-count {
+      font-variant-numeric: tabular-nums;
+    }
+    .device-drill-panel.open {
+      max-height: 520px;
+      overflow-y: auto;
+    }
+
+    .chart-wrap {
+      min-height: 220px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .chart-wrap canvas {
+      width: 100% !important;
+    }
+    .chart-wrap.squat {
+      min-height: 190px;
+    }
+    .landing-card .chart-wrap {
+      margin-top: 4px;
+    }
+
+    .activity-strip {
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)) !important;
+    }
+    .eso-perf-row {
+      grid-template-columns: minmax(120px, 1.15fr) minmax(90px, 1fr) 56px 64px 64px;
+    }
+    .dev-weekly-row {
+      grid-template-columns: minmax(110px, 1fr) minmax(90px, 1fr) 54px 44px 44px;
+    }
+    .credit-row {
+      grid-template-columns: minmax(120px, 1fr) minmax(90px, 1.4fr) max-content max-content;
+    }
+    .target-row {
+      grid-template-columns: minmax(120px, 1fr) max-content minmax(120px, 1.5fr) max-content;
+    }
+    .section-footer {
+      grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
+    }
+    .eso-summary-table {
+      min-width: 720px;
+      border: 1px solid var(--line);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+    .eso-summary-table th,
+    .eso-summary-table td {
+      border-bottom: 1px solid var(--line);
+      vertical-align: middle;
+    }
+    .eso-summary-table tbody tr:hover {
+      background: #F8FAFC;
+    }
+
+    .no-data {
+      background: #fff;
+      border: 1px solid var(--line);
+      border-radius: var(--radius);
+      box-shadow: var(--shadow-soft);
+      margin-top: 36px;
+    }
+
+    @media(max-width:1100px) {
+      .type-tabs-bar { top: 58px; }
+      .sub-tabs-bar { top: 98px; }
+      .time-filter-bar { top: 137px; }
+      .three-col > .col-section,
+      .three-col > .col-section[style*="span 2"] {
+        grid-column: span 6 !important;
+      }
+      .eso-perf-row,
+      .dev-weekly-row,
+      .credit-row,
+      .target-row {
+        grid-template-columns: 1fr;
+        gap: 5px;
+      }
+      .eso-perf-row .eso-stat,
+      .dev-weekly-row .dw-stat,
+      .credit-amt,
+      .credit-count {
+        text-align: left;
+      }
+    }
+    @media(max-width:760px) {
+      .header {
+        position: static;
+        align-items: flex-start;
+        flex-direction: column;
+        min-height: 0;
+      }
+      .header-right {
+        width: 100%;
+        justify-content: space-between;
+      }
+      .type-tabs-bar,
+      .sub-tabs-bar,
+      .time-filter-bar {
+        position: static;
+      }
+      .content {
+        padding: 14px 12px 28px;
+      }
+      .section-hdr {
+        flex-direction: column;
+        gap: 8px;
+      }
+      .three-col {
+        grid-template-columns: 1fr;
+      }
+      .three-col > .col-section,
+      .three-col > .col-section[style*="span 2"] {
+        grid-column: 1 / -1 !important;
+      }
+      .bar-row,
+      .device-expand-row .bar-row,
+      .snapshot-row {
+        grid-template-columns: 1fr;
+        align-items: stretch;
+      }
+      .bar-stat,
+      .snapshot-row strong {
+        text-align: left;
+      }
+      .funnel-step {
+        min-height: 76px;
+      }
+      .chart-wrap,
+      .chart-wrap.squat {
+        min-height: 170px;
+      }
+    }
+
+    /* Responsive hardening */
+    img,
+    canvas,
+    svg,
+    table {
+      max-width: 100%;
+    }
+    .header,
+    .type-tabs-bar,
+    .sub-tabs-bar,
+    .time-filter-bar,
+    .content {
+      min-width: 0;
+    }
+    .type-tabs-bar,
+    .sub-tabs-bar,
+    .time-filter-bar {
+      scroll-snap-type: x proximity;
+    }
+    .type-tab-btn,
+    .sub-tab-btn,
+    .tf-btn {
+      scroll-snap-align: start;
+    }
+    .landing-grid.two {
+      grid-template-columns: minmax(0, 1.1fr) minmax(280px, .9fr);
+    }
+    .landing-grid.three,
+    .landing-grid.four {
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+    }
+    .kpi-strip-7 {
+      grid-template-columns: repeat(7, minmax(0, 1fr));
+      gap: 8px;
+    }
+    .kpi-box {
+      padding: 10px 8px 9px;
+      min-height: 60px;
+    }
+    .kpi-box .kv {
+      font-size: 1.08rem;
+    }
+    .kpi-box .kl {
+      font-size: .52rem;
+      letter-spacing: .04em;
+    }
+    .funnel {
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr));
+    }
+    .funnel-step::after {
+      display: none;
+    }
+    .chart-wrap {
+      width: 100%;
+      min-width: 0;
+      overflow: hidden;
+    }
+    .chart-wrap canvas {
+      min-width: 0;
+      max-width: 100%;
+    }
+    .bar-name,
+    .credit-eso,
+    .target-label,
+    .cohort-name,
+    .sub-tab-btn,
+    .type-tab-btn {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .bar-name,
+    .credit-eso,
+    .target-label,
+    .cohort-name {
+      white-space: nowrap;
+    }
+
+    @media(max-width:1280px) {
+      .content {
+        max-width: 100%;
+      }
+      .landing-grid.two,
+      .landing-grid.three,
+      .landing-grid.four {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .landing-grid.two > .landing-card,
+      .landing-grid.three > .landing-card,
+      .landing-grid.four > .landing-card {
+        min-width: 0;
+      }
+    }
+
+    @media(max-width:980px) {
+      .header {
+        gap: 12px;
+      }
+      .header-left h1 {
+        font-size: .98rem;
+      }
+      .header-right {
+        gap: 6px;
+      }
+      .pill,
+      .btn-refresh {
+        font-size: .66rem;
+        padding: 5px 9px;
+      }
+      .type-tab-btn {
+        padding: 10px 14px;
+      }
+      .sub-tab-btn {
+        padding: 8px 12px;
+      }
+      .kpi-row,
+      .kpi-strip-7 {
+        grid-template-columns: repeat(3, minmax(0, 1fr));
+      }
+      .landing-grid.two,
+      .landing-grid.three,
+      .landing-grid.four {
+        grid-template-columns: 1fr 1fr;
+      }
+      .three-col {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .three-col > .col-section,
+      .three-col > .col-section[style*="span 2"] {
+        grid-column: auto !important;
+      }
+      .col-section[style*="grid-column:span 2"],
+      .col-section[style*="grid-column: span 2"] {
+        grid-column: 1 / -1 !important;
+      }
+    }
+
+    @media(max-width:640px) {
+      body {
+        font-size: 13px;
+      }
+      .header {
+        padding: 10px 12px;
+      }
+      .header-left,
+      .header-right {
+        width: 100%;
+      }
+      .header-left h1,
+      .header-left .sub {
+        white-space: normal;
+        overflow: visible;
+      }
+      .header-right {
+        display: grid;
+        grid-template-columns: 1fr auto;
+        align-items: center;
+      }
+      .pill {
+        min-width: 0;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+      }
+      .btn-refresh {
+        white-space: nowrap;
+      }
+      .type-tabs-bar,
+      .sub-tabs-bar,
+      .time-filter-bar {
+        padding-left: 10px;
+        padding-right: 10px;
+      }
+      .type-tab-btn,
+      .sub-tab-btn,
+      .tf-btn {
+        flex: 0 0 auto;
+        max-width: 72vw;
+      }
+      .content {
+        padding: 12px 10px 26px;
+      }
+      .section-hdr {
+        align-items: stretch;
+      }
+      .section-hdr h2 {
+        font-size: 1rem;
+      }
+      .kpi-row,
+      .kpi-strip-7,
+      .landing-grid.two,
+      .landing-grid.three,
+      .landing-grid.four,
+      .three-col,
+      .funnel,
+      .arch-grid,
+      .activity-strip {
+        grid-template-columns: 1fr !important;
+      }
+      .col-section,
+      .col-section[style*="grid-column"],
+      .three-col > .col-section,
+      .three-col > .col-section[style*="span 2"] {
+        grid-column: 1 / -1 !important;
+      }
+      .port-title-area,
+      .col-body,
+      .landing-card,
+      .card {
+        padding-left: 12px;
+        padding-right: 12px;
+      }
+      .port-title {
+        font-size: .96rem;
+        line-height: 1.25;
+        overflow-wrap: anywhere;
+      }
+      .kpi-box {
+        min-height: 70px;
+      }
+      .kpi-box .kv,
+      .metric-card .metric-value {
+        font-size: 1.08rem;
+      }
+      .bar-row,
+      .device-expand-row .bar-row,
+      .credit-row,
+      .target-row,
+      .snapshot-row,
+      .cohort-item {
+        grid-template-columns: 1fr !important;
+      }
+      .cohort-item {
+        gap: 8px;
+        padding: 12px;
+      }
+      .cohort-dot {
+        display: none;
+      }
+      .bar-name,
+      .credit-eso,
+      .target-label,
+      .cohort-name {
+        white-space: normal;
+      }
+      .bar-track,
+      .mini-track,
+      .target-track {
+        width: 100%;
+        min-width: 0;
+      }
+      .bar-stat,
+      .credit-amt,
+      .credit-count,
+      .target-vals,
+      .snapshot-row strong {
+        text-align: left;
+      }
+      .chart-wrap,
+      .chart-wrap.squat,
+      .chart-wrap.tall {
+        min-height: 180px;
+      }
+      .chart-wrap canvas {
+        max-height: 230px;
+      }
+      .eso-summary-table {
+        min-width: 680px;
+      }
+    }
+
+    @media(max-width:420px) {
+      .header-right {
+        grid-template-columns: 1fr;
+      }
+      .btn-refresh {
+        width: 100%;
+      }
+      .type-tab-btn,
+      .sub-tab-btn,
+      .tf-btn {
+        max-width: 82vw;
+        padding-left: 10px;
+        padding-right: 10px;
+      }
+      .tf-label {
+        display: none;
+      }
+      .tf-badge {
+        margin-left: 0;
+      }
+      .content {
+        padding-left: 8px;
+        padding-right: 8px;
+      }
+      .landing-card,
+      .card,
+      .col-section,
+      .port-header,
+      .kpi-box,
+      .metric-card {
+        border-radius: 7px;
+      }
+      .chart-wrap,
+      .chart-wrap.squat,
+      .chart-wrap.tall {
+        min-height: 160px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -304,11 +1428,111 @@
 <div class="type-tabs-bar" id="type-tabs-bar"></div>
 <div class="sub-tabs-bar"  id="sub-tabs-bar"></div>
 
+<!-- Time Period Filter Bar -->
+<div class="time-filter-bar" id="time-filter-bar">
+  <span class="tf-label">Period</span>
+  <button class="tf-btn active" data-period="all"    onclick="setTimePeriod(this,'all')">All Time</button>
+  <button class="tf-btn"        data-period="today"  onclick="setTimePeriod(this,'today')">Today</button>
+  <button class="tf-btn"        data-period="yday"   onclick="setTimePeriod(this,'yday')">Yesterday</button>
+  <button class="tf-btn"        data-period="week"   onclick="setTimePeriod(this,'week')">This Week</button>
+  <button class="tf-btn"        data-period="lweek"  onclick="setTimePeriod(this,'lweek')">Last Week</button>
+  <button class="tf-btn"        data-period="month"  onclick="setTimePeriod(this,'month')">This Month</button>
+  <button class="tf-btn"        data-period="lmonth" onclick="setTimePeriod(this,'lmonth')">Last Month</button>
+  <button class="tf-btn"        data-period="qtr"    onclick="setTimePeriod(this,'qtr')">This Quarter</button>
+  <button class="tf-btn"        data-period="lqtr"   onclick="setTimePeriod(this,'lqtr')">Last Quarter</button>
+  <span class="tf-badge" id="tf-badge">All Records</span>
+</div>
+
 <div class="content" id="main-content">
   <!-- panels injected by JS -->
 </div>
 
 <script>
+/* ─── Global Time Period Filter ─── */
+window.TIME_FILTER = 'all';
+window.recalculatePortfolio = function(p, period) {
+  if (period === 'all' || !p.raw_records || p.raw_records.length === 0) return p;
+
+  // Deep clone to avoid mutating the all-time original data
+  const p_dyn = JSON.parse(JSON.stringify(p));
+  
+  const now = new Date();
+  const start = new Date(now);
+  start.setHours(0,0,0,0);
+  let end = new Date(start);
+  end.setDate(end.getDate() + 1);
+
+  if (period === 'today') {}
+  else if (period === 'yday') { start.setDate(start.getDate()-1); end.setDate(end.getDate()-1); }
+  else if (period === 'week') { const d = start.getDay()||7; start.setDate(start.getDate() - d + 1); }
+  else if (period === 'lweek') { const d = start.getDay()||7; start.setDate(start.getDate() - d - 6); end.setDate(end.getDate() - d - 6 + 7); }
+  else if (period === 'month') { start.setDate(1); }
+  else if (period === 'lmonth') { start.setMonth(start.getMonth()-1); start.setDate(1); end = new Date(now); end.setDate(1); }
+  else if (period === 'qtr') { start.setMonth(Math.floor(start.getMonth()/3)*3); start.setDate(1); }
+  else if (period === 'lqtr') { start.setMonth(Math.floor(start.getMonth()/3)*3 - 3); start.setDate(1); end = new Date(start); end.setMonth(end.getMonth()+3); }
+
+  const records = p.raw_records.filter(r => {
+    if (!r.date) return false;
+    const rd = new Date(r.date);
+    return rd >= start && rd < end;
+  });
+
+  const agg = (key) => records.reduce((acc, r) => {
+    if (r[key]) acc[r[key]] = (acc[r[key]] || 0) + 1;
+    return acc;
+  }, {});
+
+  p_dyn.sectors = agg('sector');
+  p_dyn.districts = agg('district');
+  p_dyn.archetypes = agg('archetype');
+  
+  // Re-aggregate gender globally or within founders if necessary
+  const genAgg = agg('gender');
+  if (p_dyn.gender) p_dyn.gender = genAgg;
+  if (p_dyn.founders) {
+      if (!p_dyn.founders.gender) p_dyn.founders.gender = {};
+      p_dyn.founders.gender = genAgg;
+      const f = genAgg.Female || 0;
+      const m = genAgg.Male || 0;
+      p_dyn.founders.female_pct = (f+m) > 0 ? Number(((f/(f+m))*100).toFixed(1)) : 0;
+  }
+
+  p_dyn.stats.total = records.length;
+  p_dyn.stats.record_count = records.length;
+  p_dyn.stats.clean = records.length;
+
+  if (p_dyn.revenue && p.revenue) {
+    const revs = records.map(r => r.revenue).filter(v => v>0).sort((a,b)=>a-b);
+    p_dyn.revenue.count = revs.length;
+    p_dyn.revenue.mean = revs.length ? Math.floor(revs.reduce((a,b)=>a+b,0)/revs.length) : 0;
+    p_dyn.revenue.median = revs.length ? revs[Math.floor(revs.length/2)] : 0;
+  }
+  if (p_dyn.funding && p.funding) {
+    const funds = records.map(r => r.funding).filter(v => v>0).sort((a,b)=>a-b);
+    p_dyn.funding.count = funds.length;
+    p_dyn.funding.mean = funds.length ? Math.floor(funds.reduce((a,b)=>a+b,0)/funds.length) : 0;
+    p_dyn.funding.median = funds.length ? funds[Math.floor(funds.length/2)] : 0;
+  }
+  return p_dyn;
+};
+
+window.setTimePeriod = function(btn, period) {
+  window.TIME_FILTER = period;
+  document.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+  const labels = {
+    all:'All Records', today:'Today Only', yday:'Yesterday',
+    week:'This Week', lweek:'Last Week', month:'This Month',
+    lmonth:'Last Month', qtr:'This Quarter', lqtr:'Last Quarter'
+  };
+  const badge = document.getElementById('tf-badge');
+  if (badge) badge.textContent = labels[period] || 'All Records';
+
+  if (typeof window.triggerActivePanelReRender === 'function') {
+      window.triggerActivePanelReRender();
+  }
+};
+
 (function () {
   'use strict';
 
@@ -366,9 +1590,261 @@
     '56+':      '#172554',
   };
 
+  /* ─────────────────────────────────────────────────────────────
+     ARCHETYPE CARD DEFINITIONS
+  ───────────────────────────────────────────────────────────── */
+  const ARCH_META = {
+    'Gig Workers':       { cls:'arch-gig',   icon:'⚙️',  def:'Self-employed with inconsistent revenue streams. Hustling but not yet structured.' },
+    'Bootstrappers':     { cls:'arch-boot',  icon:'🔧',  def:'Growing businesses with some revenue and reinvestment. Structured but pre-scale.' },
+    'Bootstrappers SME': { cls:'arch-sme',   icon:'🏗️',  def:'Established SMEs generating consistent revenue. Ready for growth capital.' },
+    'Invisibles':        { cls:'arch-inv',   icon:'👁️',  def:'Unregistered or informal businesses with no formal identity. Hardest to reach.' },
+    'Gazelles':          { cls:'arch-gaz',   icon:'🦁',  def:'High-growth businesses with strong revenue trajectory. Investment-ready.' },
+    'No Revenue Data':   { cls:'arch-norev', icon:'❓',  def:'Businesses with incomplete revenue information. Needs follow-up.' },
+  };
+
+  function archetypeCardsHTML(archetypes, total) {
+    if (!archetypes || !Object.keys(archetypes).length)
+      return '<div class="no-data-note">No archetype data available</div>';
+    const order = ['Gazelles','Bootstrappers SME','Bootstrappers','Gig Workers','Invisibles','No Revenue Data'];
+    const sorted = order.filter(k => archetypes[k]).concat(
+      Object.keys(archetypes).filter(k => !order.includes(k))
+    );
+    return '<div class="arch-grid">' + sorted.map(k => {
+      const count = archetypes[k] || 0;
+      const pct   = total > 0 ? (count/total*100).toFixed(1) : '0';
+      const meta  = ARCH_META[k] || { cls:'arch-inv', icon:'📊', def:'' };
+      return `<div class="arch-card ${meta.cls}">
+        <span class="arch-icon">${meta.icon}</span>
+        <span class="arch-count">${count.toLocaleString()}</span>
+        <span class="arch-pct">${pct}% of portfolio</span>
+        <span class="arch-name">${k}</span>
+        <div class="arch-def">${meta.def}</div>
+      </div>`;
+    }).join('') + '</div>';
+  }
+
+  /* ─────────────────────────────────────────────────────────────
+     ESO TARGETS BUILDER
+  ───────────────────────────────────────────────────────────── */
+  function targetRowsHTML(targets) {
+    if (!targets || !targets.length) return '<div class="no-data-note">No targets configured</div>';
+    return targets.map(t => {
+      const pct   = t.target > 0 ? Math.min(t.actual / t.target * 100, 100) : 0;
+      const pctStr= pct.toFixed(0);
+      const cls   = pct >= 90 ? 'tgt-green' : pct >= 70 ? 'tgt-amber' : 'tgt-red';
+      const color = pct >= 90 ? '#10B981' : pct >= 70 ? '#F59E0B' : '#EF4444';
+      return `<div class="target-row">
+        <span class="target-label">${t.label}</span>
+        <span class="target-pct-badge ${cls}">${pctStr}%</span>
+        <div class="target-track">
+          <div class="target-fill" style="width:${pct.toFixed(1)}%;background:${color}"></div>
+        </div>
+        <span class="target-vals">${(t.actual||0).toLocaleString()} / ${(t.target||0).toLocaleString()}</span>
+      </div>`;
+    }).join('');
+  }
+
+  function buildTargetsPanel(p) {
+    const targets = p.targets || [];
+    if (!targets.length) return '';
+    return `<div class="col-section" style="margin-top:12px">
+      <div class="col-hdr" style="background:#1D4ED8">ESO TARGETS — ${(p.eso || p.name).toUpperCase()}</div>
+      <div class="col-body">${targetRowsHTML(targets)}</div>
+    </div>`;
+  }
+
+  /* ─────────────────────────────────────────────────────────────
+     COHORT BUILDER
+  ───────────────────────────────────────────────────────────── */
+  function buildCohortsHTML(cohorts) {
+    if (!cohorts || !cohorts.length)
+      return '<div class="no-data-note" style="padding:20px">No acceleration cohorts recorded yet.</div>';
+
+    const now = new Date();
+    const statusOf = c => {
+      const s = new Date(c.start_date), e = new Date(c.end_date);
+      if (now < s) return { label:'Upcoming', cls:'badge-upcoming', color:'#3B82F6', pct:0 };
+      if (now > e) return { label:'Completed', cls:'badge-completed', color:'#64748B', pct:100 };
+      const pct = Math.min((now-s)/(e-s)*100,100);
+      return { label:'Active', cls:'badge-active', color:'#10B981', pct };
+    };
+
+    const byEso = {};
+    cohorts.forEach(c => {
+      (byEso[c.eso] = byEso[c.eso]||[]).push(c);
+    });
+
+    const COHORT_COLORS = ['#3B82F6','#10B981','#F59E0B','#8B5CF6','#EF4444','#EC4899','#14B8A6','#F97316'];
+    const esoList = Object.keys(byEso);
+
+    // KPI strip
+    const active    = cohorts.filter(c => statusOf(c).label === 'Active').length;
+    const upcoming  = cohorts.filter(c => statusOf(c).label === 'Upcoming').length;
+    const completed = cohorts.filter(c => statusOf(c).label === 'Completed').length;
+    const totalPart = cohorts.reduce((s,c) => s + (c.participants||0), 0);
+
+    const kpis = `<div class="kpi-strip-7" style="margin-bottom:16px">
+      ${kpiBox(cohorts.length,  'Total Cohorts',  'ko')}
+      ${kpiBox(active,          'Active Now',      'kg')}
+      ${kpiBox(upcoming,        'Upcoming',        'kb')}
+      ${kpiBox(completed,       'Completed',       'kp')}
+      ${kpiBox(totalPart,       'Total Participants','kt')}
+      ${kpiBox(esoList.length,  'ESOs Running',    'kr')}
+      ${kpiBox(new Date().toLocaleDateString('en-UG',{day:'2-digit',month:'short',year:'numeric'}), 'As of Today', 'ka')}
+    </div>`;
+
+    // Timeline per cohort
+    const timeline = cohorts
+      .slice().sort((a,b) => new Date(a.start_date) - new Date(b.start_date))
+      .map((c, i) => {
+        const st = statusOf(c);
+        const esoIdx = esoList.indexOf(c.eso);
+        const color = COHORT_COLORS[esoIdx % COHORT_COLORS.length];
+        return `<div class="cohort-item">
+          <div class="cohort-dot" style="background:${color}"></div>
+          <div>
+            <div class="cohort-name">${c.name}</div>
+            <div class="cohort-meta">
+              ${c.eso} &nbsp;·&nbsp; ${c.start_date} → ${c.end_date}
+              &nbsp;·&nbsp; ${(c.participants||0).toLocaleString()} participants
+              ${c.sector ? `&nbsp;·&nbsp; <em>${c.sector}</em>` : ''}
+            </div>
+            <div class="cohort-progress">
+              <div class="cohort-progress-fill" style="width:${st.pct.toFixed(0)}%;background:${st.color}"></div>
+            </div>
+          </div>
+          <span class="cohort-badge ${st.cls}">${st.label}</span>
+        </div>`;
+      }).join('');
+
+    // By ESO breakdown
+    const byEsoRows = esoList.map((eso, i) => {
+      const cs = byEso[eso];
+      const act = cs.filter(c => statusOf(c).label==='Active').length;
+      const parts = cs.reduce((s,c) => s+(c.participants||0), 0);
+      const color = COHORT_COLORS[i % COHORT_COLORS.length];
+      return `<div class="bar-row">
+        <div class="bar-track"><div class="bar-fill" style="width:${Math.min(parts/Math.max(totalPart,1)*100,100).toFixed(1)}%;background:${color}"></div></div>
+        <span class="bar-name">${eso}</span>
+        <span class="bar-stat">${parts} pax &ensp; ${act} active</span>
+      </div>`;
+    }).join('');
+
+    return `
+      <div class="port-header">
+        <div class="port-bar-strip"><div class="port-bar-orange"></div><div class="port-bar-blue"></div></div>
+        <div class="port-title-area">
+          <div class="port-title">Acceleration Cohorts — Programme Overview</div>
+          <div class="port-filename">10X Digital Economy · All ESOs · ${new Date().toLocaleDateString('en-UG',{month:'long',year:'numeric'})}</div>
+        </div>
+      </div>
+      ${kpis}
+      <div class="three-col">
+        <div class="col-section" style="grid-column:span 2">
+          <div class="col-hdr" style="background:#0F766E">COHORT TIMELINE</div>
+          <div class="col-body"><div class="cohort-timeline">${timeline}</div></div>
+        </div>
+        <div class="col-section">
+          <div class="col-hdr" style="background:#7C3AED">PARTICIPANTS BY ESO</div>
+          <div class="col-body">${byEsoRows || '<div class="no-data-note">No ESO data</div>'}</div>
+        </div>
+      </div>`;
+  }
+
+  /* ─────────────────────────────────────────────────────────────
+     DIGITAL CREDIT BUILDER
+  ───────────────────────────────────────────────────────────── */
+  function buildDigitalCreditHTML(creditData) {
+    if (!creditData || !creditData.eso_credit) {
+      return `<div class="no-data" style="padding:60px 24px;text-align:center">
+        <div style="font-size:3rem;margin-bottom:16px">💳</div>
+        <h2 style="font-size:1.3rem;font-weight:700;margin-bottom:12px">Digital Credit Data</h2>
+        <p style="color:#64748B;font-size:.9rem">Add <code>digital_credit</code> entries to data.js to populate this view.</p>
+      </div>`;
+    }
+
+    const esoCredit   = creditData.eso_credit || [];
+    const total       = esoCredit.reduce((s,e) => s + (e.businesses||0), 0);
+    const totalAmt    = esoCredit.reduce((s,e) => s + (e.amount_ugx||0), 0);
+    const totalAmtStr = fmt(totalAmt);
+    const avgAmt      = total > 0 ? (totalAmt/total) : 0;
+    const avgAmtStr   = fmt(Math.round(avgAmt));
+    const nEsos       = esoCredit.length;
+    const maxAmt      = Math.max(...esoCredit.map(e => e.amount_ugx||0), 1);
+
+    const CREDIT_COLORS = ['#1D4ED8','#0EA5E9','#10B981','#7C3AED','#F59E0B','#EF4444','#EC4899','#14B8A6'];
+
+    // Breakdown by credit type
+    const byType = {};
+    esoCredit.forEach(e => {
+      (e.breakdown||[]).forEach(b => {
+        byType[b.type] = (byType[b.type]||0) + (b.count||0);
+      });
+    });
+    const typeTotal = Object.values(byType).reduce((a,b)=>a+b,0)||1;
+
+    // ESO rows
+    const esoRows = esoCredit
+      .slice().sort((a,b) => (b.amount_ugx||0)-(a.amount_ugx||0))
+      .map((e,i) => {
+        const color = CREDIT_COLORS[i % CREDIT_COLORS.length];
+        const amtStr = fmt(e.amount_ugx || 0);
+        const w = Math.min((e.amount_ugx||0)/maxAmt*100,100).toFixed(1);
+        return `<div class="credit-row">
+          <span class="credit-eso">${e.eso}</span>
+          <div class="bar-track" style="height:8px"><div class="bar-fill" style="width:${w}%;background:${color}"></div></div>
+          <span class="credit-amt">UGX ${amtStr}</span>
+          <span class="credit-count">${(e.businesses||0).toLocaleString()} biz</span>
+        </div>`;
+      }).join('');
+
+    return `
+      <div class="port-header">
+        <div class="port-bar-strip"><div style="width:40%;background:#1D4ED8"></div><div style="flex:1;background:#E2E8F0"></div></div>
+        <div class="port-title-area">
+          <div class="port-title">Digital Credit — Businesses Reached</div>
+          <div class="port-filename">10X Digital Economy · All ESO Partners · ${new Date().toLocaleDateString('en-UG',{month:'long',year:'numeric'})}</div>
+        </div>
+      </div>
+
+      <div class="kpi-strip-7" style="margin-bottom:16px">
+        ${kpiBox(total.toLocaleString(),     'Businesses w/ Credit', 'kb')}
+        ${kpiBox('UGX '+totalAmtStr,          'Total Credit Disbursed','ko')}
+        ${kpiBox('UGX '+avgAmtStr,            'Avg Credit / Business', 'kg')}
+        ${kpiBox(nEsos,                        'ESO Partners',          'kp')}
+        ${kpiBox(creditData.period||'2025–26','Programme Period',      'kt')}
+        ${kpiBox(creditData.credit_types||(Object.keys(byType).length)||'—', 'Credit Types', 'kr')}
+        ${kpiBox(creditData.repayment_rate ? creditData.repayment_rate+'%' : '—', 'Avg Repayment', 'ka')}
+      </div>
+
+      <div class="three-col">
+        <div class="col-section" style="grid-column:span 2">
+          <div class="col-hdr" style="background:#1D4ED8">CREDIT BY ESO PARTNER</div>
+          <div class="col-body">
+            <div class="credit-row" style="margin-bottom:8px">
+              <span style="font-size:.6rem;color:#94A3B8;font-weight:700">ESO</span>
+              <span></span>
+              <span style="font-size:.6rem;color:#94A3B8;text-align:right">Amount</span>
+              <span style="font-size:.6rem;color:#94A3B8;text-align:right">Businesses</span>
+            </div>
+            ${esoRows || '<div class="no-data-note">No credit data</div>'}
+          </div>
+        </div>
+        <div class="col-section">
+          <div class="col-hdr" style="background:#065F46">CREDIT TYPE BREAKDOWN</div>
+          <div class="col-body">
+            ${Object.keys(byType).length
+              ? barRowsHTML(byType, {'Loan':'#3B82F6','Grant':'#10B981','SACCO':'#F59E0B','MFI':'#8B5CF6'}, typeTotal, 10)
+              : '<div class="no-data-note">No type breakdown available</div>'}
+          </div>
+        </div>
+      </div>`;
+  }
+
   /* ═══════════════════════════════════════════════════════════════
      CHART REGISTRY
   ═══════════════════════════════════════════════════════════════ */
+
   const _charts = {};
 
   function destroyPanel(prefix) {
@@ -492,9 +1968,6 @@
   ═══════════════════════════════════════════════════════════════ */
   function fmt(n) {
     n = Number(n) || 0;
-    if (n >= 1e9) return (n / 1e9).toFixed(1) + 'B';
-    if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
-    if (n >= 1e3) return (n / 1e3).toFixed(0) + 'K';
     return n.toLocaleString();
   }
 
@@ -729,11 +2202,11 @@
       <!-- ROW 2: Top performers this week | last week | this month -->
       <div class="three-col" style="margin-top:12px">
         <div class="col-section">
-          <div class="col-hdr teal-hdr">&#127942; TOP ESOs — THIS WEEK</div>
+          <div class="col-hdr teal-hdr">TOP ESOs — THIS WEEK</div>
           <div class="col-body">${topWeekRows}</div>
         </div>
         <div class="col-section">
-          <div class="col-hdr indigo-hdr">&#127942; TOP ESOs — THIS MONTH</div>
+          <div class="col-hdr indigo-hdr">TOP ESOs — THIS MONTH</div>
           <div class="col-body">${topMonthRows}</div>
         </div>
         <div class="col-section">
@@ -776,13 +2249,44 @@
     const esoObj = {};
     ESO_ORDER.forEach(p => { esoObj[p.eso || p.name] = p.stats.total; });
 
-    // Combined sectors & districts
-    const sectors   = {};
-    const districts = {};
+    // Combined sectors, subsectors & districts
+    const sectors     = {};
+    const subsectors  = {};
+    const districts   = {};
+    const gender      = {};
+    const ageBands    = {};
+    const tinStatus   = {};
+    const nssfStatus  = {};
     portfolios.forEach(p => {
       Object.entries(p.sectors   || {}).forEach(([k, v]) => { sectors[k]   = (sectors[k]   || 0) + v; });
+      Object.entries(p.subsectors|| {}).forEach(([k, v]) => { subsectors[k]= (subsectors[k]|| 0) + v; });
       Object.entries(p.districts || {}).forEach(([k, v]) => { districts[k] = (districts[k] || 0) + v; });
+      Object.entries((p.founders && p.founders.gender) || {}).forEach(([k, v]) => { gender[k] = (gender[k] || 0) + v; });
+      Object.entries(p.age_bands || {}).forEach(([k, v]) => { ageBands[k] = (ageBands[k] || 0) + v; });
+      Object.entries(p.tin_status || {}).forEach(([k, v]) => { tinStatus[k] = (tinStatus[k] || 0) + v; });
+      Object.entries(p.nssf_status || {}).forEach(([k, v]) => { nssfStatus[k] = (nssfStatus[k] || 0) + v; });
     });
+    const youthCount = (ageBands['18–25'] || 0) + (ageBands['26–35'] || 0);
+    const youthPct = total > 0 ? (youthCount / total * 100).toFixed(1) : '0.0';
+    const tinYes = tinStatus.Yes || tinStatus.YES || tinStatus.yes || 0;
+    const nssfYes = nssfStatus.Yes || nssfStatus.YES || nssfStatus.yes || 0;
+    const tinPct = total > 0 ? (tinYes / total * 100).toFixed(1) : '0.0';
+    const nssfPct = total > 0 ? (nssfYes / total * 100).toFixed(1) : '0.0';
+    const topEso = ESO_ORDER[0];
+    const lowestVolume = ESO_ORDER[ESO_ORDER.length - 1];
+    const highestUrsb = ESO_ORDER.slice().sort((a, b) => (b.ursb_pct || 0) - (a.ursb_pct || 0))[0];
+    const lowestUrsb = ESO_ORDER.slice().sort((a, b) => (a.ursb_pct || 0) - (b.ursb_pct || 0))[0];
+    const topDistrict = sorted(districts, 1)[0];
+    const topSector = sorted(sectors, 1)[0];
+    const rawDetailMissing = portfolios.filter(p => ((p.raw_records || [])[0] && Object.keys((p.raw_records || [])[0]).length <= 3)).length;
+    const founderAnomalies = portfolios.filter(p => (p.total_founders || 0) > (p.stats.total || 0) * 3);
+    const hasDateFields = portfolios.some(p => (p.raw_records || []).some(r => r.date || r.d || r._submission_time || r.submission_time));
+    const signalCard = (label, value, note, color) => `
+      <div class="insight ${color || 'info'}">
+        <strong style="display:block;color:#0F172A;margin-bottom:2px">${label}</strong>
+        <span style="font-size:.9rem;font-weight:800;color:#1E293B">${value}</span>
+        <span style="display:block;margin-top:2px">${note}</span>
+      </div>`;
 
     // Coloured bar-strip proportional to each ESO share
     const stripDivs = ESO_ORDER.map((p, i) => {
@@ -791,7 +2295,7 @@
     }).join('');
 
     // ESO summary mini-cards
-    const esoCards = ESO_ORDER.map((p, i) => {
+    const esoCardHTML = (p, i) => {
       const c       = ESO_COL[i % ESO_COL.length];
       const fPct    = (p.founders && p.founders.female_pct != null) ? p.founders.female_pct.toFixed(0) + '%' : '—';
       const topSec  = Object.entries(p.sectors || {}).sort((a, b) => b[1] - a[1])[0];
@@ -808,7 +2312,12 @@
           ${topSec ? `<span style="color:#475569;font-style:italic">${topSec[0]}</span>` : ''}
         </div>
       </div>`;
-    }).join('');
+    };
+    const esoCards = ESO_ORDER.slice(0, 5).map(esoCardHTML).join('');
+    const esoCardsRest = ESO_ORDER.slice(5).map((p, i) => esoCardHTML(p, i + 5)).join('');
+    const esoSummaryNote = ESO_ORDER.length > 5
+      ? `<button type="button" class="summary-toggle" onclick="const panel=this.previousElementSibling;panel.classList.toggle('open');this.textContent=panel.classList.contains('open')?'Show top 5 only':'Show all ${ESO_ORDER.length} ESOs';">Show all ${ESO_ORDER.length} ESOs</button>`
+      : '';
 
     // URSB rates bar rows (manual — not using barRowsHTML to allow % display)
     const ursbRateRows = ESO_ORDER
@@ -842,6 +2351,55 @@
         ${kpiBox(totalRef,          'Refugees',            'kt')}
       </div>
 
+      <div class="landing-grid three">
+        <div class="landing-card">
+          <h3>Demographic Snapshot</h3>
+          <div class="chart-wrap squat"><canvas id="_eoi-gender"></canvas></div>
+          <div class="sub-hdr purple-txt" style="margin-top:10px">AGE GROUPS</div>
+          <div class="chart-wrap squat"><canvas id="_eoi-age"></canvas></div>
+          <div class="insight info" style="margin-top:8px">${fmt(youthCount)} applicants are in the 18-35 age bands (${youthPct}% of EOIs).</div>
+        </div>
+        <div class="landing-card">
+          <h3>Conversion Readiness</h3>
+          <div class="chart-wrap squat"><canvas id="_eoi-readiness"></canvas></div>
+          <div class="snapshot-list" style="margin-top:8px">
+            <div class="snapshot-row"><span>URSB Registered</span><div class="mini-track"><div class="mini-fill" style="width:${ursbPct}%;background:#059669"></div></div><strong>${ursbPct}%</strong></div>
+            <div class="snapshot-row"><span>TIN Present</span><div class="mini-track"><div class="mini-fill" style="width:${tinPct}%;background:#2563EB"></div></div><strong>${tinPct}%</strong></div>
+            <div class="snapshot-row"><span>NSSF Present</span><div class="mini-track"><div class="mini-fill" style="width:${nssfPct}%;background:#7C3AED"></div></div><strong>${nssfPct}%</strong></div>
+          </div>
+        </div>
+        <div class="landing-card">
+          <h3>Performance Signals</h3>
+          <div class="insight-list">
+            ${topEso ? signalCard('Highest EOI Volume', topEso.eso || topEso.name, `${fmt(topEso.stats.total)} applications`, 'good') : ''}
+            ${highestUrsb ? signalCard('Highest URSB Rate', highestUrsb.eso || highestUrsb.name, `${highestUrsb.ursb_pct || 0}% registered`, 'info') : ''}
+            ${lowestUrsb ? signalCard('Lowest URSB Rate', lowestUrsb.eso || lowestUrsb.name, `${lowestUrsb.ursb_pct || 0}% registered`, 'warn') : ''}
+            ${lowestVolume ? signalCard('Lowest EOI Volume', lowestVolume.eso || lowestVolume.name, `${fmt(lowestVolume.stats.total)} applications`, 'info') : ''}
+          </div>
+        </div>
+      </div>
+
+      <div class="landing-grid two">
+        <div class="landing-card">
+          <h3>Data Quality Checks</h3>
+          <div class="insight-list">
+            ${signalCard('Generated Records', fmt(total), `${portfolios.length} EOI datasets included`, 'info')}
+            ${rawDetailMissing ? signalCard('Raw Detail Limitation', `${rawDetailMissing} datasets`, 'Generated EOI records contain only compact fields, so missing phone/name/district checks need extractor support.', 'warn') : signalCard('Raw Detail Availability', 'Available', 'Detailed raw records are present for completeness checks.', 'good')}
+            ${founderAnomalies.length ? signalCard('Founder Count Needs Review', `${founderAnomalies.length} dataset(s)`, founderAnomalies.map(p => p.eso || p.name).join(', '), 'warn') : signalCard('Founder Count Check', 'No major anomaly', 'No dataset has founders above 3x application count.', 'good')}
+            ${hasDateFields ? signalCard('Trend Readiness', 'Date fields found', 'EOI trend charts can be generated from submission dates.', 'good') : signalCard('Trend Readiness', 'Date fields missing', 'The generated EOI records do not include submission dates, so trend-over-time is hidden until extraction includes dates.', 'warn')}
+          </div>
+        </div>
+        <div class="landing-card">
+          <h3>Alerts &amp; Insights</h3>
+          <div class="insight-list">
+            ${topSector ? signalCard('Largest Sector', topSector[0], `${fmt(topSector[1])} applications`, 'good') : ''}
+            ${topDistrict ? signalCard('Largest District', topDistrict[0], `${fmt(topDistrict[1])} applications`, 'info') : ''}
+            ${Number(ursbPct) < 10 ? signalCard('Registration Gap', `${ursbPct}% URSB rate`, 'Registration support is likely a major follow-up opportunity.', 'warn') : signalCard('Registration Signal', `${ursbPct}% URSB rate`, 'URSB registration is visible across the EOI pool.', 'good')}
+            ${Number(femalePct) >= 70 ? signalCard('Gender Signal', `${femalePct}% female founders`, 'The EOI pool is strongly women-led.', 'good') : signalCard('Gender Signal', `${femalePct}% female founders`, 'Monitor gender balance across ESOs.', 'info')}
+          </div>
+        </div>
+      </div>
+
       <div class="three-col">
         <div class="col-section">
           <div class="col-hdr purple-hdr">APPLICATIONS BY ESO</div>
@@ -854,12 +2412,16 @@
           <div class="col-body">
             <div class="sub-hdr green-txt">TOP SECTORS — ALL ESOs</div>
             ${barRowsHTML(sectors, SECTOR_COLORS, total, 10)}
+            <div class="sub-hdr green-txt" style="margin-top:10px">TOP SUB SECTORS — ALL ESOs</div>
+            ${barRowsHTML(subsectors, null, total, 10)}
           </div>
         </div>
         <div class="col-section">
           <div class="col-hdr orange-hdr">ESO SUMMARY</div>
           <div class="col-body">
             ${esoCards}
+            <div class="summary-extra">${esoCardsRest}</div>
+            ${esoSummaryNote}
           </div>
         </div>
       </div>
@@ -922,6 +2484,54 @@
     const NID_COLORS    = { 'Has National ID': '#10B981', 'Missing ID': '#F59E0B' };
     const NIN_COLORS    = { 'Has NIN': '#10B981', 'No NIN': '#EF4444' };
 
+    const ARCHETYPE_COLORS = {
+      'Gazelles':          '#10B981',
+      'Bootstrappers SME': '#3B82F6',
+      'Bootstrappers':     '#60A5FA',
+      'Gig Workers':       '#F97316',
+      'Invisibles':        '#94A3B8',
+      'No Revenue Data':   '#CBD5E1',
+    };
+    const allEoi = (window.PORTFOLIO_DATA?.portfolios || []).filter(x => x.type === 'eoi');
+    const allTotal = allEoi.reduce((s, x) => s + (x.stats?.total || 0), 0);
+    const allUrsb = allEoi.reduce((s, x) => s + (x.stats?.ursb || 0), 0);
+    const allFemaleWeighted = allEoi.reduce((s, x) => {
+      const fp = x.founders?.female_pct || 0;
+      return s + fp * (x.stats?.total || 0) / 100;
+    }, 0);
+    const overallUrsbPct = allTotal ? (allUrsb / allTotal * 100) : 0;
+    const overallFemalePct = allTotal ? (allFemaleWeighted / allTotal * 100) : 0;
+    const esoShare = allTotal ? (total / allTotal * 100).toFixed(1) : '0.0';
+    const ursbGap = (parseFloat(ursbPct) - overallUrsbPct).toFixed(1);
+    const femaleGap = (parseFloat(femalePct) - overallFemalePct).toFixed(1);
+    const topSector = sorted(p.sectors || {}, 1)[0];
+    const topDistrict = sorted(p.districts || {}, 1)[0];
+    const youthCount = (p.age_bands?.['18–25'] || 0) + (p.age_bands?.['26–35'] || 0);
+    const youthPct = total ? (youthCount / total * 100).toFixed(1) : '0.0';
+    const tinYes = tinSt.Yes || tinSt.YES || tinSt.yes || 0;
+    const nssfYes = nssfSt.Yes || nssfSt.YES || nssfSt.yes || 0;
+    const tinPct = total ? (tinYes / total * 100).toFixed(1) : '0.0';
+    const nssfPct = total ? (nssfYes / total * 100).toFixed(1) : '0.0';
+    const dq = p.data_quality || {};
+    const compactRaw = ((p.raw_records || [])[0] && Object.keys((p.raw_records || [])[0]).length <= 3);
+    const founderCountFlag = (p.total_founders || 0) > total * 3;
+    const founderRatio = total ? ((p.total_founders || 0) / total).toFixed(2) : '0.00';
+    const derivedTargets = (p.targets || []).map(t => {
+      const label = String(t.label || '').toLowerCase();
+      let actual = t.actual || 0;
+      if (!actual && label.includes('youth')) actual = youthCount;
+      if (!actual && label.includes('ursb')) actual = ursb;
+      if (!actual && label.includes('pwd')) actual = pwd;
+      if (!actual && label.includes('refugee')) actual = refugees;
+      return { ...t, actual };
+    });
+    const insight = (label, value, note, tone = 'info') => `
+      <div class="insight ${tone}">
+        <strong style="display:block;color:#0F172A;margin-bottom:2px">${label}</strong>
+        <span style="font-size:.9rem;font-weight:800;color:#1E293B">${value}</span>
+        <span style="display:block;margin-top:2px">${note}</span>
+      </div>`;
+
     return `
       <div class="port-header">
         <div class="port-bar-strip"><div class="port-bar-orange"></div><div class="port-bar-blue"></div></div>
@@ -940,22 +2550,72 @@
         ${kpiBox(hasNin,                'Employees w/ NIN',  'ka')}
       </div>
 
-      <!-- ROW 1: Sectors | Archetypes | Founders -->
+      <div class="landing-grid three">
+        <div class="landing-card">
+          <h3>ESO Summary Insight</h3>
+          <div class="insight-list">
+            ${topSector ? insight('Strongest Sector', topSector[0], `${fmt(topSector[1])} applications`, 'good') : insight('Strongest Sector', 'No sector data', 'Sector field is empty for this ESO.', 'warn')}
+            ${topDistrict ? insight('Strongest District', topDistrict[0], `${fmt(topDistrict[1])} applications`, 'info') : insight('Strongest District', 'No district data', 'District field is empty for this ESO.', 'warn')}
+            ${insight('EOI Contribution', `${esoShare}% of EOI pool`, `${fmt(total)} of ${fmt(allTotal)} EOI applications`, 'info')}
+            ${parseFloat(ursbPct) < 10 ? insight('Registration Gap', `${ursbPct}% URSB`, 'Registration support should be prioritized.', 'warn') : insight('Registration Signal', `${ursbPct}% URSB`, 'This ESO has visible registration readiness.', 'good')}
+          </div>
+        </div>
+        <div class="landing-card">
+          <h3>Readiness Snapshot</h3>
+          <div class="snapshot-list">
+            <div class="snapshot-row"><span>URSB Registered</span><div class="mini-track"><div class="mini-fill" style="width:${ursbPct}%;background:#059669"></div></div><strong>${ursbPct}%</strong></div>
+            <div class="snapshot-row"><span>TIN Present</span><div class="mini-track"><div class="mini-fill" style="width:${tinPct}%;background:#2563EB"></div></div><strong>${tinPct}%</strong></div>
+            <div class="snapshot-row"><span>NSSF Present</span><div class="mini-track"><div class="mini-fill" style="width:${nssfPct}%;background:#7C3AED"></div></div><strong>${nssfPct}%</strong></div>
+            <div class="snapshot-row"><span>Youth 18-35</span><div class="mini-track"><div class="mini-fill" style="width:${youthPct}%;background:#EA580C"></div></div><strong>${youthPct}%</strong></div>
+          </div>
+        </div>
+        <div class="landing-card">
+          <h3>Against EOI Average</h3>
+          <div class="insight-list">
+            ${insight('URSB vs Overall', `${ursbGap >= 0 ? '+' : ''}${ursbGap} pts`, `Overall EOI URSB rate is ${overallUrsbPct.toFixed(1)}%.`, parseFloat(ursbGap) >= 0 ? 'good' : 'warn')}
+            ${insight('Female vs Overall', `${femaleGap >= 0 ? '+' : ''}${femaleGap} pts`, `Overall female-founder rate is ${overallFemalePct.toFixed(1)}%.`, parseFloat(femaleGap) >= 0 ? 'good' : 'info')}
+            ${insight('PWD Inclusion', fmt(pwd), `${total ? (pwd / total * 100).toFixed(1) : '0.0'}% of applications`, pwd ? 'info' : 'warn')}
+            ${insight('Refugee Inclusion', fmt(refugees), `${total ? (refugees / total * 100).toFixed(1) : '0.0'}% of applications`, refugees ? 'info' : 'warn')}
+          </div>
+        </div>
+      </div>
+
+      <div class="landing-grid two">
+        <div class="landing-card">
+          <h3>ESO Targets &amp; Progress</h3>
+          ${derivedTargets.length ? targetRowsHTML(derivedTargets) : '<div class="no-data-note">No targets configured for this ESO.</div>'}
+        </div>
+        <div class="landing-card">
+          <h3>Data Quality</h3>
+          <div class="insight-list">
+            ${compactRaw ? insight('Raw Detail Limitation', 'Compact records', 'Generated EOI records do not include enough raw fields for missing phone/name checks.', 'warn') : insight('Raw Detail', 'Available', 'Detailed raw records are present for this ESO.', 'good')}
+            ${founderCountFlag ? insight('Founder Count Needs Review', `${founderRatio} per application`, `${fmt(p.total_founders || 0)} founders against ${fmt(total)} applications.`, 'warn') : insight('Founder Ratio', `${founderRatio} per application`, `${fmt(p.total_founders || 0)} founders against ${fmt(total)} applications.`, 'good')}
+            ${Object.keys(dq).length ? insight('Missing Core Fields', fmt((dq.missing_business_name || 0) + (dq.missing_district || 0) + (dq.missing_sector || 0)), `Business name: ${fmt(dq.missing_business_name || 0)}, district: ${fmt(dq.missing_district || 0)}, sector: ${fmt(dq.missing_sector || 0)}.`, ((dq.missing_business_name || 0) + (dq.missing_district || 0) + (dq.missing_sector || 0)) ? 'warn' : 'good') : ''}
+            ${Object.keys(dq).length ? insight('Founder Completeness', fmt((dq.missing_founder_name || 0) + (dq.missing_founder_phone || 0) + (dq.missing_founder_gender || 0)), `Name: ${fmt(dq.missing_founder_name || 0)}, phone: ${fmt(dq.missing_founder_phone || 0)}, gender: ${fmt(dq.missing_founder_gender || 0)}.`, ((dq.missing_founder_name || 0) + (dq.missing_founder_phone || 0) + (dq.missing_founder_gender || 0)) ? 'warn' : 'good') : ''}
+            ${Object.keys(dq).length ? insight('Duplicate Founder Phones', fmt(dq.duplicate_founder_phones || 0), 'Phone numbers appearing on more than one founder record.', (dq.duplicate_founder_phones || 0) ? 'warn' : 'good') : ''}
+            ${Object.keys(idSt).length ? insight('National ID Field', 'Available', `${fmt(hasNid)} records have National ID.`, 'good') : insight('National ID Field', 'Missing', 'No National ID aggregate found for this ESO.', 'warn')}
+            ${Object.keys(ninSt).length ? insight('Employee NIN Field', 'Available', `${fmt(hasNin)} records have NIN.`, 'good') : insight('Employee NIN Field', 'Missing', 'No employee NIN aggregate found for this ESO.', 'warn')}
+          </div>
+        </div>
+      </div>
+
+      <!-- ARCHETYPE CARDS ROW -->
+      <div class="col-section" style="margin-bottom:12px">
+        <div class="col-hdr orange-hdr">MSME ARCHETYPES — ${p.eso || p.name}</div>
+        <div class="col-body">
+          ${archetypeCardsHTML(p.archetypes || {}, total)}
+          <div class="sub-hdr orange-txt" style="margin-top:8px">FUNDING NEEDS (UGX)</div>
+          ${barRowsHTML(p.funding_bands || {}, null, total, 6)}
+        </div>
+      </div>
+
+      <!-- ROW 1: Sectors | Founders | Location -->
       <div class="three-col">
         <div class="col-section">
           <div class="col-hdr green-hdr">SECTOR BREAKDOWN</div>
           <div class="col-body">
             <div class="sub-hdr green-txt">TOP SECTORS</div>
             ${barRowsHTML(p.sectors || {}, SECTOR_COLORS, total, 10)}
-          </div>
-        </div>
-        <div class="col-section">
-          <div class="col-hdr orange-hdr">MSME ARCHETYPES</div>
-          <div class="col-body">
-            <div class="sub-hdr orange-txt">BUSINESS STAGE</div>
-            ${barRowsHTML(p.archetypes || {}, ARCHETYPE_COLORS, total, 6)}
-            <div class="sub-hdr orange-txt" style="margin-top:10px">FUNDING NEEDS (UGX)</div>
-            ${barRowsHTML(p.funding_bands || {}, null, total, 6)}
           </div>
         </div>
         <div class="col-section">
@@ -968,47 +2628,66 @@
             ${ageBandRowsHTML(p.age_bands || {}, Object.values(p.age_bands || {}).reduce((a,b)=>a+b,1))}
           </div>
         </div>
-      </div>
-
-      <!-- ROW 2: Location (wide) | ID & Registration -->
-      <div class="three-col" style="margin-top:12px">
-        <div class="col-section" style="grid-column:span 2">
+        <div class="col-section">
           <div class="col-hdr teal-hdr">DISTRIBUTION BY LOCATION</div>
           <div class="col-body">
             <div class="sub-hdr teal-txt">TOP DISTRICTS</div>
-            ${districtBarRowsHTML(p.districts || {}, 15)}
+            ${districtBarRowsHTML(p.districts || {}, 8)}
           </div>
           <div class="section-footer">
-            <span><strong>${ursb}</strong>URSB Reg.</span>
-            <span><strong>${pwd}</strong>PWD</span>
-            <span><strong>${refugees}</strong>Refugees</span>
-            <span><strong>${p.total_founders || 0}</strong>Total Founders</span>
+            <strong>${ursb}</strong>URSB<br>
+            <strong>${pwd}</strong>PWD<br>
+            <strong>${refugees}</strong>Refugees<br>
+            <strong>${p.total_founders || 0}</strong>Founders
+          </div>
+        </div>
+      </div>
+
+      <!-- ROW 2: ID & Registration | Targets -->
+      <div class="three-col" style="margin-top:12px">
+        <div class="col-section" style="grid-column:span 2">
+          <div class="col-hdr indigo-hdr">ID &amp; REGISTRATION STATUS</div>
+          <div class="col-body">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px">
+              <div>
+                <div class="sub-hdr indigo-txt">TAX ID (TIN)</div>
+                ${Object.keys(tinSt).length ? barRowsHTML(tinSt, YES_NO_COLORS, tinTotal, 5) : '<div class="no-data-note">No TIN data</div>'}
+              </div>
+              <div>
+                <div class="sub-hdr indigo-txt">NSSF NUMBER</div>
+                ${Object.keys(nssfSt).length ? barRowsHTML(nssfSt, YES_NO_COLORS, nssfTotal, 5) : '<div class="no-data-note">No NSSF data</div>'}
+              </div>
+              <div>
+                <div class="sub-hdr indigo-txt">NATIONAL ID</div>
+                ${Object.keys(idSt).length ? barRowsHTML(idSt, NID_COLORS, idTotal, 2) : '<div class="no-data-note">No National ID data</div>'}
+              </div>
+              <div>
+                <div class="sub-hdr indigo-txt">EMPLOYEE NIN</div>
+                ${Object.keys(ninSt).length ? barRowsHTML(ninSt, NIN_COLORS, ninTotal, 2) : '<div class="no-data-note">No NIN data</div>'}
+              </div>
+            </div>
           </div>
         </div>
         <div class="col-section">
-          <div class="col-hdr indigo-hdr">ID &amp; REGISTRATION</div>
+          <div class="col-hdr" style="background:#1D4ED8">ESO TARGETS</div>
           <div class="col-body">
-            <div class="sub-hdr indigo-txt">TAX ID (TIN)</div>
-            ${Object.keys(tinSt).length ? barRowsHTML(tinSt, YES_NO_COLORS, tinTotal, 5) : '<div class="no-data-note">No TIN data</div>'}
-            <div class="sub-hdr indigo-txt" style="margin-top:8px">NSSF NUMBER</div>
-            ${Object.keys(nssfSt).length ? barRowsHTML(nssfSt, YES_NO_COLORS, nssfTotal, 5) : '<div class="no-data-note">No NSSF data</div>'}
-            <div class="sub-hdr indigo-txt" style="margin-top:8px">NATIONAL ID (FOUNDERS)</div>
-            ${Object.keys(idSt).length ? barRowsHTML(idSt, NID_COLORS, idTotal, 2) : '<div class="no-data-note">No National ID data</div>'}
-            <div class="sub-hdr indigo-txt" style="margin-top:8px">EMPLOYEE NIN</div>
-            ${Object.keys(ninSt).length ? barRowsHTML(ninSt, NIN_COLORS, ninTotal, 2) : '<div class="no-data-note">No NIN data</div>'}
+            ${derivedTargets.length ? targetRowsHTML(derivedTargets) :
+              `<div style="font-size:.68rem;color:#94A3B8;line-height:1.6;text-align:center;padding:16px 0">
+                Add <code style="background:#F1F5F9;padding:1px 5px;border-radius:3px;font-size:.7rem">targets</code> array to this ESO entry in data.js to track progress against goals.
+              </div>`
+            }
           </div>
         </div>
       </div>`;
   }
 
+
   /* ── Youth in Work ─────────────────────────────────────────────────────── */
   function buildYiwHTML(p) {
     const total       = p.stats.total;
-    const earnedPct   = (p.earned_income_pct   || 0).toFixed(1);
-    const improvedPct = (p.work_improved_pct   || 0).toFixed(1);
-    const foundPct    = (p.foundation_done_pct || 0).toFixed(1);
     const byEso       = p.by_eso || {};
     const esoTotal    = Object.values(byEso).reduce((s, d) => s + d.total, 0) || 1;
+    const weekly      = p.weekly_activity || {};
 
     const esoBars = Object.entries(byEso)
       .sort((a, b) => b[1].total - a[1].total)
@@ -1031,44 +2710,42 @@
         </div>
       </div>
       <div class="kpi-strip-7">
-        ${kpiBox(fmt(total),         'Assessments',        'ko')}
-        ${kpiBox(earnedPct + '%',    'Earned Income',      'kg')}
-        ${kpiBox(improvedPct + '%',  'Work Improved',      'kb')}
-        ${kpiBox(foundPct + '%',     'Foundation Done',    'kp')}
-        ${kpiBox(Object.keys(p.sectors   || {}).length, 'Sectors',  'kt')}
-        ${kpiBox(Object.keys(p.districts || {}).length, 'Districts','kr')}
-        ${kpiBox(Object.keys(byEso).length,             'ESOs',     'ka')}
+        ${kpiBox(fmt(total),                         'YIW Records',     'ko')}
+        ${kpiBox(fmt(weekly.apps_this_week || 0),    'This Week',       'kg')}
+        ${kpiBox(fmt(weekly.apps_last_week || 0),    'Last Week',       'kb')}
+        ${kpiBox(fmt(weekly.apps_this_month || 0),   'This Month',      'kp')}
+        ${kpiBox(Object.keys(byEso).length,          'ESOs',            'ka')}
+        ${kpiBox(fmt(esoTotal),                      'ESO-Mapped',      'kt')}
+        ${kpiBox(p.filename ? 'Kobo' : 'Local',      'Source',          'kr')}
       </div>
       <div class="three-col">
-        <div class="col-section">
+        <div class="col-section" style="grid-column:span 2">
           <div class="col-hdr teal-hdr">BY ESO PARTNER</div>
           <div class="col-body">${esoBars}</div>
         </div>
         <div class="col-section">
-          <div class="col-hdr green-hdr">SECTOR BREAKDOWN</div>
+          <div class="col-hdr green-hdr">SUBMISSION ACTIVITY</div>
           <div class="col-body">
-            <div class="sub-hdr green-txt">TOP SECTORS</div>
-            ${barRowsHTML(p.sectors || {}, SECTOR_COLORS, total, 10)}
-          </div>
-        </div>
-        <div class="col-section">
-          <div class="col-hdr orange-hdr">GEOGRAPHY &amp; INCOME</div>
-          <div class="col-body">
-            <div class="sub-hdr orange-txt">TOP DISTRICTS</div>
-            ${districtBarRowsHTML(p.districts || {}, 6)}
-            <div class="sub-hdr orange-txt" style="margin-top:10px">CURRENT INCOME LEVELS</div>
-            ${barRowsHTML(p.income_levels || {}, null, total, 8)}
+            ${barRowsHTML({
+              'This week': weekly.apps_this_week || 0,
+              'Last week': weekly.apps_last_week || 0,
+              'This month': weekly.apps_this_month || 0,
+            }, null, Math.max(weekly.apps_this_month || 0, weekly.apps_last_week || 0, weekly.apps_this_week || 0, 1), 3)}
           </div>
         </div>
       </div>`;
   }
 
   /* ── Business Needs Assessment ─────────────────────────────────────────── */
-  function buildBuzNeedsHTML(p) {
+  function buildBuzNeedsHTML(p, pid = 'business-needs') {
     const total   = p.stats.total;
     const byEso   = p.by_eso || {};
     const skills  = p.digital_skills || {};
     const esoTotal = Object.values(byEso).reduce((s, d) => s + d.total, 0) || 1;
+    const registeredCount = Math.round(total * ((p.registered_pct || 0) / 100));
+    const deviceNeedCount = Math.round(total * ((p.device_need_pct || 0) / 100));
+    const internetAlways = (p.internet_access || {})['Always'] || 0;
+    const mobilePayUsers = (p.mobile_payments || {})['Yes'] || 0;
 
     const esoBars = Object.entries(byEso)
       .sort((a, b) => b[1].total - a[1].total)
@@ -1083,6 +2760,12 @@
       }).join('') || '<div style="font-size:.7rem;color:#94A3B8;padding:4px 0">No ESO data</div>';
 
     const skillTotal = Object.values(skills).reduce((a, b) => a + b, 0) || 1;
+    const supportTotal = Object.values(p.support_needed || {}).reduce((a, b) => a + b, 0) || 1;
+    const constraintTotal = Object.values(p.business_constraints || {}).reduce((a, b) => a + b, 0) || 1;
+    const deviceTypeTotal = Object.values(p.device_types_needed || {}).reduce((a, b) => a + b, 0) || 1;
+    const budgetTotal = Object.values(p.device_budget || {}).reduce((a, b) => a + b, 0) || 1;
+    const internetTotal = Object.values(p.internet_access || {}).reduce((a, b) => a + b, 0) || 1;
+    const mobileTotal = Object.values(p.mobile_payments || {}).reduce((a, b) => a + b, 0) || 1;
 
     return `
       <div class="port-header">
@@ -1093,13 +2776,37 @@
         </div>
       </div>
       <div class="kpi-strip-7">
-        ${kpiBox(fmt(total),                          'Assessments',       'ko')}
-        ${kpiBox((p.registered_pct  || 0).toFixed(1)+'%', 'URSB Reg.',   'kg')}
-        ${kpiBox((p.device_need_pct || 0).toFixed(1)+'%', 'Need Device', 'kb')}
-        ${kpiBox((p.pwd_pct         || 0).toFixed(1)+'%', 'PWD',         'kp')}
-        ${kpiBox(p.stats.pwd || 0,                    'PWD Count',         'kr')}
-        ${kpiBox(p.stats.refugees || 0,               'Refugees',          'kt')}
-        ${kpiBox(Object.keys(byEso).length,           'ESOs',              'ka')}
+        ${kpiBox(fmt(total),                'Submissions',      'ko')}
+        ${kpiBox(fmt(registeredCount),      'Registered Biz',   'kg')}
+        ${kpiBox(fmt(deviceNeedCount),      'Need Device',      'kb')}
+        ${kpiBox(fmt(internetAlways),       'Always Online',    'kp')}
+        ${kpiBox(fmt(mobilePayUsers),       'Mobile Payments',  'kt')}
+        ${kpiBox(fmt(p.stats.pwd || 0),     'PWD Respondents',  'kr')}
+        ${kpiBox(Object.keys(byEso).length, 'ESOs',             'ka')}
+      </div>
+      <div class="landing-grid three">
+        <div class="landing-card">
+          <h3>Registration Status</h3>
+          <div class="chart-wrap squat"><canvas id="${pid}-bn-registration"></canvas></div>
+        </div>
+        <div class="landing-card">
+          <h3>Device Need</h3>
+          <div class="chart-wrap squat"><canvas id="${pid}-bn-device-need"></canvas></div>
+        </div>
+        <div class="landing-card">
+          <h3>Mobile Payments</h3>
+          <div class="chart-wrap squat"><canvas id="${pid}-bn-readiness"></canvas></div>
+        </div>
+      </div>
+      <div class="landing-grid two">
+        <div class="landing-card">
+          <h3>Support Requested</h3>
+          <div class="chart-wrap"><canvas id="${pid}-bn-support"></canvas></div>
+        </div>
+        <div class="landing-card">
+          <h3>Digital Skills Demand</h3>
+          <div class="chart-wrap"><canvas id="${pid}-bn-skills"></canvas></div>
+        </div>
       </div>
       <div class="three-col">
         <div class="col-section">
@@ -1111,25 +2818,96 @@
           </div>
         </div>
         <div class="col-section">
-          <div class="col-hdr green-hdr">SECTOR BREAKDOWN</div>
+          <div class="col-hdr green-hdr">BUSINESS PROFILE</div>
           <div class="col-body">
             <div class="sub-hdr green-txt">TOP SECTORS</div>
             ${barRowsHTML(p.sectors || {}, SECTOR_COLORS, total, 10)}
+            <div class="sub-hdr green-txt" style="margin-top:10px">BUSINESS AGE</div>
+            ${barRowsHTML(p.business_age || {}, null, total, 6)}
           </div>
         </div>
         <div class="col-section">
-          <div class="col-hdr orange-hdr">GEOGRAPHY &amp; DIGITAL SKILLS</div>
+          <div class="col-hdr orange-hdr">GEOGRAPHY &amp; GROWTH</div>
           <div class="col-body">
             <div class="sub-hdr orange-txt">TOP DISTRICTS</div>
             ${districtBarRowsHTML(p.districts || {}, 5)}
-            <div class="sub-hdr orange-txt" style="margin-top:10px">DIGITAL SKILLS DEMAND</div>
-            ${barRowsHTML(skills, null, skillTotal, 10)}
+            <div class="sub-hdr orange-txt" style="margin-top:10px">GROWTH STATUS</div>
+            ${barRowsHTML(p.growth_status || {}, null, total, 5)}
+          </div>
+        </div>
+      </div>
+      <div class="three-col" style="margin-top:12px">
+        <div class="col-section">
+          <div class="col-hdr teal-hdr">INCOME PROFILE</div>
+          <div class="col-body">
+            <div class="sub-hdr teal-txt">INCOME LEVELS</div>
+            ${barRowsHTML(p.income_levels || {}, null, total, 6)}
+            <div class="sub-hdr teal-txt" style="margin-top:10px">INCOME FREQUENCY</div>
+            ${barRowsHTML(p.income_frequency || {}, null, total, 6)}
+            <div class="sub-hdr teal-txt" style="margin-top:10px">INCOME STABILITY</div>
+            ${barRowsHTML(p.income_stability || {}, null, total, 6)}
+          </div>
+        </div>
+        <div class="col-section">
+          <div class="col-hdr purple-hdr">DIGITAL READINESS</div>
+          <div class="col-body">
+            <div class="sub-hdr purple-txt">INTERNET ACCESS</div>
+            ${barRowsHTML(p.internet_access || {}, null, internetTotal, 5)}
+            <div class="sub-hdr purple-txt" style="margin-top:10px">MOBILE / BUSINESS PAYMENTS</div>
+            ${barRowsHTML(p.mobile_payments || {}, {'Yes':'#10B981','No':'#EF4444'}, mobileTotal, 5)}
+            <div class="sub-hdr purple-txt" style="margin-top:10px">DIGITAL SKILLS DEMAND</div>
+            ${barRowsHTML(skills, null, skillTotal, 8)}
+          </div>
+        </div>
+        <div class="col-section">
+          <div class="col-hdr orange-hdr">SUPPORT &amp; DEVICES</div>
+          <div class="col-body">
+            <div class="sub-hdr orange-txt">SUPPORT REQUESTED</div>
+            ${barRowsHTML(p.support_needed || {}, null, supportTotal, 8)}
+            <div class="sub-hdr orange-txt" style="margin-top:10px">BUSINESS CONSTRAINTS</div>
+            ${barRowsHTML(p.business_constraints || {}, null, constraintTotal, 6)}
+            <div class="sub-hdr orange-txt" style="margin-top:10px">DEVICE TYPES NEEDED</div>
+            ${barRowsHTML(p.device_types_needed || {}, null, deviceTypeTotal, 6)}
+            <div class="sub-hdr orange-txt" style="margin-top:10px">DEVICE BUDGET</div>
+            ${barRowsHTML(p.device_budget || {}, null, budgetTotal, 5)}
           </div>
         </div>
       </div>`;
   }
 
   /* ── Digital Platforms ─────────────────────────────────────────────────── */
+  function initBusinessNeedsCharts(p, pid = 'business-needs') {
+    const total = p.stats?.total || 0;
+    const registeredCount = Math.round(total * ((p.registered_pct || 0) / 100));
+    const deviceNeedCount = Math.round(total * ((p.device_need_pct || 0) / 100));
+    const notRegistered = Math.max(total - registeredCount, 0);
+    const noDeviceNeed = Math.max(total - deviceNeedCount, 0);
+
+    donut(`${pid}-bn-registration`, {
+      'Registered': registeredCount,
+      'Not registered': notRegistered
+    }, {
+      'Registered': '#10B981',
+      'Not registered': '#CBD5E1'
+    });
+
+    donut(`${pid}-bn-device-need`, {
+      'Need device': deviceNeedCount,
+      'No device need': noDeviceNeed
+    }, {
+      'Need device': '#2563EB',
+      'No device need': '#CBD5E1'
+    });
+
+    donut(`${pid}-bn-readiness`, p.mobile_payments || {}, {
+      'Yes': '#0F766E',
+      'No': '#CBD5E1'
+    });
+
+    hBar(`${pid}-bn-support`, p.support_needed || {}, null, 8);
+    hBar(`${pid}-bn-skills`, p.digital_skills || {}, null, 8);
+  }
+
   function buildPlatformsHTML(p) {
     const total     = p.stats.total;
     const bp        = p.by_platform || {};
@@ -1138,6 +2916,13 @@
     const chapchap  = bp['ChapChap']                 || {};
     const flexipay  = bp['FlexiPay']                 || {};
     const ezyagric  = bp['EzyAgric']                 || {};
+    const adoptionFunnel = p.adoption_funnel || {};
+    const activeUsage = p.active_usage || {};
+    const businessImpact = p.business_impact || {};
+    const platformGeo = p.platform_geography || {};
+    const dataQuality = p.data_quality || {};
+    const availability = p.field_availability || {};
+    const platformMix = p.platform_totals || {};
 
     const xenteTotal = (xentePedn.total || 0) + (xenteStb.total || 0);
     const femalePct  = (p.female_pct || 0).toFixed(1);
@@ -1183,8 +2968,8 @@
     const ezyAvgItems  = (ezyagric.avg_items     || 0).toFixed(2);
     const ezyAvgCost   = ezyagric.avg_cost_ugx   || 0;
     const ezyDistricts = ezyagric.districts      || {};
-    const ezyTotalCostFmt = ezyCost   >= 1e6 ? (ezyCost/1e6).toFixed(1)+'M' : fmt(ezyCost);
-    const ezyAvgCostFmt   = ezyAvgCost >= 1e3 ? Math.round(ezyAvgCost/1e3)+'K' : fmt(Math.round(ezyAvgCost));
+    const ezyTotalCostFmt = fmt(ezyCost);
+    const ezyAvgCostFmt   = fmt(Math.round(ezyAvgCost));
 
     const stbMonthly  = xenteStb.monthly || {};
     const MONTH_ABBR  = {'01':'Jan','02':'Feb','03':'Mar','04':'Apr','05':'May','06':'Jun','07':'Jul','08':'Aug','09':'Sep','10':'Oct','11':'Nov','12':'Dec'};
@@ -1220,7 +3005,18 @@
         + '<div style="background:#E8EDF2;border-radius:3px;height:10px;overflow:hidden">'
         + '<div style="height:100%;width:' + pct + '%;background:' + c + ';border-radius:3px"></div></div>'
         + '</div>';
-    }).join('');
+      }).join('');
+    const funnelTotal = Object.values(adoptionFunnel).reduce((a,b)=>a+(Number(b)||0),0) || 1;
+    const geoTotal = Object.values(platformGeo).reduce((a,b)=>a+b,0) || 1;
+    const qualityTotal = Object.values(dataQuality).reduce((a,b)=>a+(Number(b)||0),0) || 1;
+    const impactValue = businessImpact.sales_revenue_ugx || 0;
+    const impactItems = businessImpact.orders_or_items || 0;
+    const insight = (label, value, note, tone = 'info') => `
+      <div class="insight ${tone}">
+        <strong style="display:block;color:#0F172A;margin-bottom:2px">${label}</strong>
+        <span style="font-size:.9rem;font-weight:800;color:#1E293B">${value}</span>
+        <span style="display:block;margin-top:2px">${note}</span>
+      </div>`;
 
     return `
       <div class="port-header">
@@ -1240,6 +3036,57 @@
         ${kpiBox(fmt(flexipay.total || 0), 'FlexiPay',          'kg')}
         ${kpiBox(fmt(ezyagric.total || 0), 'EzyAgric',          'ka')}
         ${kpiBox(femalePct + '%',          'Female',            'kk')}
+      </div>
+
+      <div class="landing-grid three">
+        <div class="landing-card">
+          <h3>Platform Adoption Funnel</h3>
+          ${barRowsHTML(adoptionFunnel, {
+            'Onboarded': '#2563EB',
+            'Completed Registration': '#10B981',
+            'Pending Validation': '#F59E0B',
+            'Business Activity Captured': '#7C3AED',
+            'Transactions / Items Captured': '#EA580C'
+          }, funnelTotal, 8)}
+        </div>
+        <div class="landing-card">
+          <h3>Active Usage</h3>
+          <div class="insight-list">
+            ${availability.active_usage
+              ? insight('Active Usage Fields', 'Available', 'Active/inactive usage fields are present in the source data.', 'good')
+              : insight('Active Usage Fields', 'Not available', 'The current platform files do not expose active users, inactive users, last active date, or usage frequency.', 'warn')}
+            ${insight('Trend Data', Object.keys(stbMonthly).length ? 'Partial' : 'Missing', Object.keys(stbMonthly).length ? 'Stanbic Xente monthly onboarding dates are available.' : 'No platform date fields are available for trend charts.', Object.keys(stbMonthly).length ? 'info' : 'warn')}
+            ${insight('Completion Signal', flexiPct + '%', `${fmt(flexiCompleted)} of ${fmt(flexiTotal)} FlexiPay users completed.`, Number(flexiPct) >= 70 ? 'good' : 'warn')}
+          </div>
+        </div>
+        <div class="landing-card">
+          <h3>Business Impact</h3>
+          <div class="insight-list">
+            ${insight('EzyAgric Items', fmt(impactItems), 'Items/orders captured from the EzyAgric platform sheet.', impactItems ? 'good' : 'warn')}
+            ${insight('EzyAgric Value', 'UGX ' + fmt(impactValue), 'Value captured from EzyAgric item cost fields.', impactValue ? 'good' : 'warn')}
+            ${insight('Other Impact Fields', 'Not available', 'Sales, digital records, loans accessed, and market linkages are not available in the current files.', 'warn')}
+          </div>
+        </div>
+      </div>
+
+      <div class="landing-grid three">
+        <div class="landing-card">
+          <h3>Platform Mix</h3>
+          ${barRowsHTML(platformMix, platformColors, total, 6)}
+        </div>
+        <div class="landing-card">
+          <h3>Geographic Performance</h3>
+          ${barRowsHTML(platformGeo, null, geoTotal, 10)}
+        </div>
+        <div class="landing-card">
+          <h3>Data Quality</h3>
+          ${barRowsHTML(dataQuality, null, qualityTotal, 8)}
+          <div class="insight warn" style="margin-top:8px">
+            <strong style="display:block;color:#0F172A;margin-bottom:2px">ChapChap Geography Check</strong>
+            <span style="font-size:.9rem;font-weight:800;color:#1E293B">${fmt(dataQuality.invalid_chapchap_district_labels || 0)}</span>
+            <span style="display:block;margin-top:2px">Timestamp-like labels were excluded from geography rankings.</span>
+          </div>
+        </div>
       </div>
 
       <div class="three-col">
@@ -1433,6 +3280,26 @@
     const esoWeekly       = p.eso_weekly       || {};
     const devWeekly       = p.device_weekly    || {};
     const priceStats      = p.price_stats      || {};
+    const readiness       = p.readiness        || {};
+    const affordability   = p.affordability    || {};
+    const priceByDevice   = p.price_by_device  || {};
+    const priceByEso      = p.price_by_eso     || {};
+    const topDeviceByEso  = p.top_device_by_eso || {};
+    const smartphoneShare = p.smartphone_share_by_eso || {};
+    const concentration   = p.demand_concentration || {};
+    const dataQuality     = p.data_quality     || {};
+    const availability    = p.field_availability || {};
+
+    const fallbackDeviceEso = () => {
+      if (Object.keys(esoHubs).length) return esoHubs;
+      const weeklyTotals = Object.fromEntries(
+        Object.entries(esoWeekly)
+          .map(([eso, d]) => [eso, d && typeof d === 'object' ? d.total || 0 : 0])
+          .filter(([, total]) => total > 0)
+      );
+      if (Object.keys(weeklyTotals).length) return weeklyTotals;
+      return p.name ? { [p.name.replace(/\s+Device Financing$/i, '')]: total } : {};
+    };
 
     const deviceTotal  = Object.values(deviceTypes).reduce((a,b)=>a+b,0)     || 1;
     const priceTotal   = Object.values(priceBands).reduce((a,b)=>a+b,0)      || 1;
@@ -1447,6 +3314,38 @@
     const appsMo  = weeklyAct.apps_this_month || 0;
     const avgPrice= priceStats.avg    ? 'UGX ' + fmt(priceStats.avg)    : '—';
     const medPrice= priceStats.median ? 'UGX ' + fmt(priceStats.median) : '—';
+
+    const readinessTotal = Object.values(readiness).reduce((a,b)=>a+b,0) || 1;
+    const readyPct = ((readiness.Ready || 0) / readinessTotal * 100).toFixed(1);
+    const high500Pct = ((affordability.above_500k || 0) / Math.max(total, 1) * 100).toFixed(1);
+    const high1mPct = ((affordability.above_1m || 0) / Math.max(total, 1) * 100).toFixed(1);
+    const missingQualityTotal = Object.entries(dataQuality)
+      .filter(([k]) => k !== 'duplicate_phone_numbers')
+      .reduce((s, [, v]) => s + (Number(v) || 0), 0);
+    const topDevice = Object.entries(deviceTypes).sort((a,b)=>b[1]-a[1])[0];
+    const topDistrict = Object.entries(p.districts || {}).sort((a,b)=>b[1]-a[1])[0];
+    const insight = (label, value, note, tone = 'info') => `
+      <div class="insight ${tone}">
+        <strong style="display:block;color:#0F172A;margin-bottom:2px">${label}</strong>
+        <span style="font-size:.9rem;font-weight:800;color:#1E293B">${value}</span>
+        <span style="display:block;margin-top:2px">${note}</span>
+      </div>`;
+    const priceRows = obj => Object.entries(obj || {}).slice(0, 6).map(([label, d]) => `
+      <div class="snapshot-row">
+        <span title="${label}">${label}</span>
+        <div class="mini-track"><div class="mini-fill" style="width:${Math.min((d.count || 0) / Math.max(total, 1) * 100, 100).toFixed(1)}%;background:#EA580C"></div></div>
+        <strong>UGX ${fmt(d.median || d.avg || 0)}</strong>
+      </div>`).join('') || '<div class="no-data-note">No price breakdown available</div>';
+    const partnerRows = Object.entries(topDeviceByEso || {}).slice(0, 8).map(([eso, device]) => {
+      const share = smartphoneShare[eso] != null ? smartphoneShare[eso] + '%' : 'N/A';
+      const price = priceByEso[eso]?.median ? 'UGX ' + fmt(priceByEso[eso].median) : 'N/A';
+      const count = esoHubs[eso] || esoWeekly[eso]?.total || priceByEso[eso]?.count || 0;
+      return `<div class="snapshot-row">
+        <span title="${eso}">${eso}</span>
+        <div class="mini-track"><div class="mini-fill" style="width:${Math.min(count / Math.max(total, 1) * 100, 100).toFixed(1)}%;background:#0F766E"></div></div>
+        <strong>${device} / ${share} / ${price}</strong>
+      </div>`;
+    }).join('') || '<div class="no-data-note">No partner device mix available</div>';
 
     const DEVICE_COLORS = {
       'Smartphone': '#3B82F6', 'Tablet': '#8B5CF6', 'Laptop': '#10B981',
@@ -1575,6 +3474,56 @@
         </div>
       </div>
 
+      <div class="landing-grid three">
+        <div class="landing-card">
+          <h3>Financing Readiness</h3>
+          ${barRowsHTML(readiness, {'Ready':'#10B981','Needs Follow-Up':'#F59E0B','Not Ready':'#EF4444'}, readinessTotal, 3)}
+          <div class="insight ${Number(readyPct) >= 50 ? 'good' : 'warn'}" style="margin-top:8px">
+            <strong style="display:block;color:#0F172A;margin-bottom:2px">Ready Applicants</strong>
+            <span style="font-size:.9rem;font-weight:800;color:#1E293B">${readyPct}%</span>
+            <span style="display:block;margin-top:2px">Based on ID document, SIM ownership, and requested device price.</span>
+          </div>
+        </div>
+        <div class="landing-card">
+          <h3>Affordability Risk</h3>
+          <div class="snapshot-list">
+            <div class="snapshot-row"><span>Above UGX 500,000</span><div class="mini-track"><div class="mini-fill" style="width:${high500Pct}%;background:#F59E0B"></div></div><strong>${high500Pct}%</strong></div>
+            <div class="snapshot-row"><span>Above UGX 1,000,000</span><div class="mini-track"><div class="mini-fill" style="width:${high1mPct}%;background:#EF4444"></div></div><strong>${high1mPct}%</strong></div>
+            <div class="snapshot-row"><span>Missing Price</span><div class="mini-track"><div class="mini-fill" style="width:${((affordability.missing_price || 0) / Math.max(total, 1) * 100).toFixed(1)}%;background:#94A3B8"></div></div><strong>${fmt(affordability.missing_price || 0)}</strong></div>
+          </div>
+          <div class="sub-hdr orange-txt" style="margin-top:10px">MEDIAN PRICE BY DEVICE</div>
+          ${priceRows(priceByDevice)}
+        </div>
+        <div class="landing-card">
+          <h3>Demand Concentration</h3>
+          <div class="insight-list">
+            ${insight('Top Device', topDevice ? topDevice[0] : 'No data', topDevice ? `${fmt(topDevice[1])} requests` : 'Device type field is empty.', topDevice ? 'good' : 'warn')}
+            ${insight('Top District', topDistrict ? topDistrict[0] : 'No data', topDistrict ? `${fmt(topDistrict[1])} applications` : 'District field is empty.', topDistrict ? 'info' : 'warn')}
+            ${insight('Top 3 Districts', (concentration.top3_districts_pct || 0) + '%', `${fmt(concentration.top3_districts_count || 0)} applications`, (concentration.top3_districts_pct || 0) > 60 ? 'warn' : 'info')}
+            ${insight('Top 3 ESOs/Hubs', (concentration.top3_esos_pct || 0) + '%', `${fmt(concentration.top3_esos_count || 0)} applications`, (concentration.top3_esos_pct || 0) > 60 ? 'warn' : 'info')}
+          </div>
+        </div>
+      </div>
+
+      <div class="landing-grid two">
+        <div class="landing-card">
+          <h3>Partner Operational View</h3>
+          <div class="snapshot-list">
+            ${partnerRows}
+          </div>
+          <div class="no-data-note" style="margin-top:8px">Format: top device / smartphone share / median price.</div>
+        </div>
+        <div class="landing-card">
+          <h3>Data Quality &amp; Field Availability</h3>
+          <div class="insight-list">
+            ${insight('Missing Core Fields', fmt(missingQualityTotal), `Phone: ${fmt(dataQuality.missing_phone || 0)}, district: ${fmt(dataQuality.missing_district || 0)}, device: ${fmt(dataQuality.missing_device_type || 0)}, price: ${fmt(dataQuality.missing_price || 0)}.`, missingQualityTotal ? 'warn' : 'good')}
+            ${insight('Duplicate Phone Numbers', fmt(dataQuality.duplicate_phone_numbers || 0), 'Phone numbers appearing on more than one device application.', (dataQuality.duplicate_phone_numbers || 0) ? 'warn' : 'good')}
+            ${insight('Demographics', availability.demographics ? 'Available' : 'Not available', availability.demographics ? 'Gender and age fields are present.' : 'The device Kobo forms do not expose gender or age fields.', availability.demographics ? 'good' : 'warn')}
+            ${insight('Approval Funnel', availability.approval_funnel ? 'Available' : 'Not available', availability.approval_funnel ? 'Approval/eligibility fields are present.' : 'The device Kobo forms do not expose eligibility, approval, disbursement, rejection, or pending fields.', availability.approval_funnel ? 'good' : 'warn')}
+          </div>
+        </div>
+      </div>
+
       <!-- ROW 1: Location | ESO Performance Ranking -->
       <div class="three-col">
         <div class="col-section" style="grid-column:span 2">
@@ -1609,7 +3558,7 @@
                   const w     = Math.min(count/deviceTotal*100,100).toFixed(1);
                   const pct   = (count/deviceTotal*100).toFixed(1);
                   const color = DEVICE_COLORS[device] || PALETTE[i % PALETTE.length];
-                  const esoD  = deviceByEso[device] || {};
+                  const esoD  = deviceByEso[device] || fallbackDeviceEso();
                   const esoT  = Object.values(esoD).reduce((a,b)=>a+b,0) || 1;
                   return `<div class="device-expand-row" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">
                     <div class="bar-row">
@@ -1669,13 +3618,13 @@
       <!-- ROW 3: Top ESOs This Week | Top ESOs Last Week | Device Weekly Breakdown -->
       <div class="three-col" style="margin-top:12px">
         <div class="col-section">
-          <div class="col-hdr indigo-hdr">🏆 TOP ESOs — THIS WEEK</div>
+          <div class="col-hdr indigo-hdr">TOP ESOs — THIS WEEK</div>
           <div class="col-body">
             ${topWkRows}
           </div>
         </div>
         <div class="col-section">
-          <div class="col-hdr purple-hdr">🏆 TOP ESOs — LAST WEEK</div>
+          <div class="col-hdr purple-hdr">TOP ESOs — LAST WEEK</div>
           <div class="col-body">
             ${topLwkRows}
           </div>
@@ -1851,57 +3800,423 @@
   }
 
   function buildOverviewHTML(portfolios) {
-    const totalAll = portfolios.reduce((s, p) => s + p.stats.total, 0);
-    const totalFTE = portfolios.reduce((s, p) => s + (p.fte || 0), 0);
+    const byType = type => portfolios.filter(p => p.type === type);
+    const totalOf = list => list.reduce((s, p) => s + (p.stats?.total || 0), 0);
+    const sumObj = objects => objects.reduce((acc, obj) => {
+      Object.entries(obj || {}).forEach(([k, v]) => {
+        const val = (v && typeof v === 'object') ? (v.total || 0) : v;
+        if (Number(val) > 0) acc[k] = (acc[k] || 0) + Number(val);
+      });
+      return acc;
+    }, {});
+    const topEntries = (obj, n = 5) => Object.entries(obj || {})
+      .filter(([, v]) => Number(v) > 0)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, n);
+    const pct = (num, den) => den > 0 ? (num / den * 100).toFixed(1) + '%' : '0.0%';
+    const labelClean = label => String(label || '')
+      .replace(/_/g, ' ')
+      .replace(/\s+/g, ' ')
+      .replace(/\b\w/g, m => m.toUpperCase());
+    const metric = (value, label, note, color) => `
+      <div class="metric-card ${color || 'blue'}">
+        <span class="metric-value">${value}</span>
+        <span class="metric-label">${label}</span>
+        ${note ? `<span class="metric-note">${note}</span>` : ''}
+      </div>`;
+    const listRows = (entries, total, color = '#2563EB') => entries.length
+      ? `<div class="snapshot-list">${entries.map(([label, count]) => `
+          <div class="snapshot-row">
+            <span title="${label}">${labelClean(label)}</span>
+            <div class="mini-track"><div class="mini-fill" style="width:${Math.min(count / Math.max(total, 1) * 100, 100).toFixed(1)}%;background:${color}"></div></div>
+            <strong>${fmt(count)}</strong>
+          </div>`).join('')}</div>`
+      : '<div class="no-data-note">No data available</div>';
+
+    const eoi = byType('eoi').concat(byType('segmentation'));
+    const devices = byType('devices');
+    const platforms = byType('platforms');
+    const credit = byType('digital_credit');
+    const needs = byType('buz_needs');
+
+    const totalEoi = totalOf(eoi);
+    const totalBusinesses = totalOf(needs) || eoi.reduce((s, p) => s + (p.stats?.ursb || 0), 0);
+    const totalDevices = totalOf(devices);
+    const totalPlatformUsers = totalOf(platforms);
+    const totalCreditUsers = credit.reduce((s, p) => s + (p.eso_credit || []).reduce((x, e) => x + (e.businesses || e.eligible || 0), 0), 0);
+    const gender = sumObj(eoi.map(p => p.founders?.gender || p.gender || {}));
+    const ageGroups = sumObj(eoi.map(p => p.age_bands || {}));
+    const regions = sumObj(eoi.map(p => p.districts || {}));
+    const deviceTypes = sumObj(devices.map(p => p.device_types || {}));
+    const platformTotals = platforms.reduce((acc, p) => {
+      Object.entries(p.by_platform || {}).forEach(([name, data]) => acc[name] = (acc[name] || 0) + (data.total || 0));
+      return acc;
+    }, {});
+    const platformAdoption = platformTotals;
+    const creditProviders = credit.reduce((acc, p) => {
+      (p.eso_credit || []).forEach(e => {
+        (e.breakdown || []).forEach(b => acc[b.type] = (acc[b.type] || 0) + (b.count || 0));
+        if (e.businesses) acc[e.eso || 'Digital Credit'] = (acc[e.eso || 'Digital Credit'] || 0) + e.businesses;
+      });
+      return acc;
+    }, {});
+    const actualNeeds = needs.reduce((acc, p) => {
+      const total = p.stats?.total || 0;
+      Object.entries(p.support_needed || {}).forEach(([k, v]) => {
+        acc[k] = (acc[k] || 0) + v;
+      });
+      Object.entries(p.business_constraints || {}).forEach(([k, v]) => {
+        acc[k] = (acc[k] || 0) + v;
+      });
+      if (p.device_need_pct != null) acc['Need a device'] = (acc['Need a device'] || 0) + Math.round(total * p.device_need_pct / 100);
+      if (p.registered_pct != null) acc['Registered business'] = (acc['Registered business'] || 0) + Math.round(total * p.registered_pct / 100);
+      if (p.stats?.pwd) acc['PWD respondents'] = (acc['PWD respondents'] || 0) + p.stats.pwd;
+      Object.entries(p.income_levels || {}).forEach(([k, v]) => {
+        acc[labelClean(k)] = (acc[labelClean(k)] || 0) + v;
+      });
+      return acc;
+    }, {});
+    const maxFunnel = Math.max(totalEoi, 1);
+    const funnel = [['EOI', totalEoi], ['Device', totalDevices], ['Platform', totalPlatformUsers], ['Credit', totalCreditUsers]];
+    const topRegion = topEntries(regions, 1)[0] || ['No region data', 0];
+    const topPlatform = topEntries(platformTotals, 1)[0] || ['No platform data', 0];
 
     return `
       <div class="section-hdr">
-        <h2>All Portfolios — Combined Overview</h2>
+        <h2>Programme Landing Page</h2>
         <span class="type-badge badge-all">${portfolios.length} datasets</span>
       </div>
 
-      <div class="kpi-row">
-        ${portfolios.map((p, i) => {
-          const colors = ['blue','green','amber','violet','pink','teal'];
-          return kpi(p.name, fmt(p.stats.total), fmt(p.stats.clean) + ' clean records', colors[i % colors.length]);
-        }).join('')}
-        ${kpi('Grand Total', fmt(totalAll), 'across all portfolios', 'blue')}
-        ${totalFTE > 0 ? kpi('Total FTE', fmt(totalFTE), 'full-time jobs supported', 'green') : ''}
+      <div class="landing-grid three">
+        ${metric(fmt(totalEoi), 'Total EOIs', `${eoi.length} ESO groups`, 'blue')}
+        ${metric(fmt(totalBusinesses), 'Business Needs Records', 'Submissions, not unique businesses', 'green')}
+        ${metric(fmt(totalDevices), 'Total Devices', `${fmt(Object.values(deviceTypes).reduce((a,b)=>a+b,0))} requested`, 'orange')}
+        ${metric(fmt(totalPlatformUsers), 'Platform Users', `${Object.keys(platformTotals).length} platforms`, 'purple')}
+        ${metric(fmt(totalCreditUsers), 'Digital Credit Users', totalCreditUsers ? 'Tracked providers' : 'No credit users recorded', 'teal')}
       </div>
 
-      <div class="cg cg-2">
-        <div class="card">
-          <h3>Portfolio Size Comparison</h3>
-          <div class="chart-wrap"><canvas id="_ov-sizes"></canvas></div>
-        </div>
-        <div class="card">
-          <h3>Combined Sector Distribution</h3>
-          <div class="chart-wrap"><canvas id="_ov-sectors-donut"></canvas></div>
+      <div class="landing-card" style="margin-bottom:12px">
+        <h3>Transformation Funnel</h3>
+        <div class="funnel">
+          ${funnel.map(([label, value]) => `
+            <div class="funnel-step">
+              <span class="funnel-label">${label}</span>
+              <span class="funnel-value">${fmt(value)}</span>
+              <span class="funnel-rate">${pct(value, maxFunnel)} of EOI base</span>
+            </div>`).join('')}
         </div>
       </div>
 
-      <div class="card" style="margin-bottom:18px">
-        <h3>Sector Breakdown by Portfolio (Grouped)</h3>
-        <div class="chart-wrap" style="max-height:none"><canvas id="_ov-sectors-grouped" style="max-height:340px"></canvas></div>
+      <div class="landing-grid three">
+        <div class="landing-card">
+          <h3>Demographic Snapshot</h3>
+          <div class="sub-hdr indigo-txt">Gender Split</div>
+          ${listRows(topEntries(gender, 4), Object.values(gender).reduce((a,b)=>a+b,0), '#2563EB')}
+          <div class="sub-hdr indigo-txt" style="margin-top:10px">Age Groups</div>
+          ${listRows(topEntries(ageGroups, 5), Object.values(ageGroups).reduce((a,b)=>a+b,0), '#7C3AED')}
+        </div>
+        <div class="landing-card">
+          <h3>Business Needs Snapshot</h3>
+          ${listRows(topEntries(actualNeeds, 5), Math.max(...Object.values(actualNeeds), 1), '#059669')}
+        </div>
+        <div class="landing-card">
+          <h3>Platform Adoption Snapshot</h3>
+          ${listRows(topEntries(platformAdoption, 5), Math.max(...Object.values(platformAdoption), 1), '#7C3AED')}
+        </div>
       </div>
 
-      <div class="cg cg-2">
-        <div class="card">
-          <h3>Combined Gender Distribution</h3>
-          <div class="chart-wrap squat"><canvas id="_ov-gender"></canvas></div>
+      <div class="landing-grid four">
+        <div class="landing-card">
+          <h3>Digital Credit Snapshot</h3>
+          ${listRows(topEntries(creditProviders, 5), Math.max(...Object.values(creditProviders), 1), '#0F766E')}
         </div>
-        <div class="card">
-          <h3>Combined Location Distribution</h3>
-          <div class="chart-wrap squat"><canvas id="_ov-location"></canvas></div>
+        <div class="landing-card">
+          <h3>Geographic Performance</h3>
+          ${listRows(topEntries(regions, 8), Object.values(regions).reduce((a,b)=>a+b,0), '#EA580C')}
+        </div>
+        <div class="landing-card">
+          <h3>Device Snapshot</h3>
+          ${listRows(topEntries(deviceTypes, 5), Object.values(deviceTypes).reduce((a,b)=>a+b,0), '#2563EB')}
+        </div>
+      </div>
+
+      <div class="landing-grid three">
+        <div class="landing-card">
+          <h3>EOIs Over Time</h3>
+          <div class="chart-wrap squat"><canvas id="_ov-eoi-trend"></canvas></div>
+        </div>
+        <div class="landing-card">
+          <h3>Platform Adoption Over Time</h3>
+          <div class="chart-wrap squat"><canvas id="_ov-platform-trend"></canvas></div>
+        </div>
+      </div>
+
+      <div class="landing-card">
+        <h3>Alerts &amp; Insights</h3>
+        <div class="insight-list">
+          <div class="insight good">${topPlatform[0]} is the strongest tracked platform signal with ${fmt(topPlatform[1])} users.</div>
+          <div class="insight info">${topRegion[0]} leads geographic activity with ${fmt(topRegion[1])} records.</div>
+          <div class="insight info">Named needs and credit-provider counts only show when those exact fields are present in the source data.</div>
         </div>
       </div>
     `;
+  }
+
+  function buildIntelligenceHTML(portfolios) {
+    const active = portfolios.filter(p => p.type !== 'yiw');
+    const byType = type => active.filter(p => p.type === type);
+    const totalOf = list => list.reduce((s, p) => s + (p.stats?.total || 0), 0);
+    const sumObj = objects => objects.reduce((acc, obj) => {
+      Object.entries(obj || {}).forEach(([k, v]) => {
+        const val = Number(v && typeof v === 'object' ? (v.total || 0) : v) || 0;
+        if (val) acc[k] = (acc[k] || 0) + val;
+      });
+      return acc;
+    }, {});
+    const topEntries = (obj, n = 8) => Object.entries(obj || {}).sort((a, b) => b[1] - a[1]).slice(0, n);
+    const pctText = (a, b) => b ? (a / b * 100).toFixed(1) + '%' : '0.0%';
+    const clean = s => String(s || 'Unknown').replace(/_/g, ' ').replace(/\s+/g, ' ').trim();
+    const metric = (value, label, note, color) => `
+      <div class="metric-card ${color || 'blue'}">
+        <span class="metric-value">${value}</span>
+        <span class="metric-label">${label}</span>
+        ${note ? `<span class="metric-note">${note}</span>` : ''}
+      </div>`;
+    const insight = (label, value, note, tone = 'info') => `
+      <div class="insight ${tone}">
+        <strong style="display:block;color:#0F172A;margin-bottom:2px">${label}</strong>
+        <span style="font-size:.9rem;font-weight:800;color:#1E293B">${value}</span>
+        <span style="display:block;margin-top:2px">${note}</span>
+      </div>`;
+    const rows = (entries, total, color = '#2563EB') => entries.length
+      ? `<div class="snapshot-list">${entries.map(([label, count]) => `
+          <div class="snapshot-row">
+            <span title="${clean(label)}">${clean(label)}</span>
+            <div class="mini-track"><div class="mini-fill" style="width:${Math.min(count / Math.max(total, 1) * 100, 100).toFixed(1)}%;background:${color}"></div></div>
+            <strong>${fmt(count)}</strong>
+          </div>`).join('')}</div>`
+      : '<div class="no-data-note">No data available</div>';
+
+    const eoi = byType('eoi');
+    const needs = byType('buz_needs');
+    const devices = byType('devices');
+    const platforms = byType('platforms');
+    const credit = byType('digital_credit');
+    const totalEoi = totalOf(eoi);
+    const totalNeeds = totalOf(needs);
+    const totalDevices = totalOf(devices);
+    const totalPlatforms = totalOf(platforms);
+    const totalCredit = totalOf(credit);
+
+    const quality = {};
+    active.forEach(p => {
+      const dq = p.data_quality || {};
+      Object.entries(dq).forEach(([k, v]) => quality[k] = (quality[k] || 0) + (Number(v) || 0));
+      const sample = (p.raw_records || [])[0] || {};
+      if (!p.raw_records || !p.raw_records.length) quality.datasets_without_raw_records = (quality.datasets_without_raw_records || 0) + 1;
+      if (p.raw_records && p.raw_records.length && !('d' in sample)) quality.datasets_without_dates = (quality.datasets_without_dates || 0) + 1;
+      if (p.field_availability?.approval_funnel === false) quality.datasets_without_approval_fields = (quality.datasets_without_approval_fields || 0) + 1;
+      if (p.field_availability?.demographics === false) quality.datasets_without_demographics = (quality.datasets_without_demographics || 0) + 1;
+    });
+    const qualityTotal = Object.values(quality).reduce((a, b) => a + b, 0);
+    const duplicateSignals = (quality.duplicate_phone_numbers || 0) + (quality.duplicate_founder_phones || 0);
+    const districtTotals = sumObj(active.map(p => p.districts || {}));
+
+    const esoMap = {};
+    active.filter(p => p.eso).forEach(p => {
+      const eso = p.eso;
+      esoMap[eso] = esoMap[eso] || { eoi: 0, buz_needs: 0, devices: 0, platforms: 0, digital_credit: 0, quality: 0 };
+      esoMap[eso][p.type] = (esoMap[eso][p.type] || 0) + (p.stats?.total || 0);
+      esoMap[eso].quality += Object.values(p.data_quality || {}).reduce((a, b) => a + (Number(b) || 0), 0);
+    });
+    const esoRows = Object.entries(esoMap).sort((a, b) => (b[1].eoi + b[1].devices + b[1].buz_needs) - (a[1].eoi + a[1].devices + a[1].buz_needs)).slice(0, 12)
+      .map(([eso, d]) => `<tr>
+        <td>${eso}</td>
+        <td>${fmt(d.eoi || 0)}</td>
+        <td>${fmt(d.buz_needs || 0)}</td>
+        <td>${fmt(d.devices || 0)}</td>
+        <td>${fmt(d.platforms || 0)}</td>
+        <td>${fmt(d.digital_credit || 0)}</td>
+        <td>${fmt(d.quality || 0)}</td>
+      </tr>`).join('');
+
+    const conversionRows = [
+      ['EOI to Business Needs', totalEoi, totalNeeds, 'Approximate only: forms are not linked by stable person/business ID.'],
+      ['Business Needs to Devices', totalNeeds, totalDevices, 'Approximate only: no shared unique applicant ID across forms.'],
+      ['Devices to Platforms', totalDevices, totalPlatforms, 'Approximate only: platform data is aggregate/onboarding-oriented.'],
+      ['Platforms to Credit', totalPlatforms, totalCredit, 'Credit status fields are incomplete in current source data.'],
+    ];
+    const alertItems = [
+      duplicateSignals ? insight('Duplicate Signals', fmt(duplicateSignals), 'Duplicate phone indicators found across EOI and Devices quality checks.', 'warn') : insight('Duplicate Signals', '0', 'No duplicate phone signals found in quality metrics.', 'good'),
+      quality.datasets_without_raw_records ? insight('Raw Record Gaps', fmt(quality.datasets_without_raw_records), 'Some datasets do not expose raw records for detailed quality checks.', 'warn') : insight('Raw Record Coverage', 'Available', 'All active datasets expose some raw record detail.', 'good'),
+      totalCredit === 0 ? insight('Credit Outcome Gap', 'No credit users recorded', 'Digital credit exists as a page but current source data has no approved/actual credit counts.', 'warn') : insight('Credit Outcome Signal', fmt(totalCredit), 'Digital credit users are available.', 'good'),
+      quality.datasets_without_approval_fields ? insight('Approval Funnel Missing', fmt(quality.datasets_without_approval_fields), 'Some forms do not have eligibility/approval/disbursement/rejection fields.', 'warn') : '',
+      topEntries(districtTotals, 1)[0] ? insight('Highest Geography Signal', topEntries(districtTotals, 1)[0][0], `${fmt(topEntries(districtTotals, 1)[0][1])} records`, 'info') : '',
+    ].join('');
+
+    return `
+      <div class="section-hdr">
+        <h2>Portfolio Intelligence Center</h2>
+        <span class="type-badge badge-all">${active.length} active datasets</span>
+      </div>
+
+      <div class="landing-grid three">
+        ${metric(fmt(qualityTotal), 'Quality Signals', 'Missing, duplicate, and unavailable-field counts', 'orange')}
+        ${metric(fmt(Object.keys(esoMap).length), 'ESO 360 Profiles', 'Partners with linked portfolio records', 'blue')}
+        ${metric(fmt(duplicateSignals), 'Duplicate Signals', 'Phone duplication indicators', duplicateSignals ? 'red' : 'green')}
+        ${metric(fmt(Object.keys(districtTotals).length), 'Geographies', 'District/location labels found', 'teal')}
+        ${metric(fmt(totalEoi), 'EOI Base', 'Entry-point records', 'purple')}
+        ${metric(fmt(totalDevices), 'Device Demand', 'Device financing records', 'green')}
+      </div>
+
+      <div class="landing-grid two">
+        <div class="landing-card">
+          <h3>App-Wide Data Quality</h3>
+          ${rows(topEntries(quality, 10), Math.max(...Object.values(quality), 1), '#EA580C')}
+        </div>
+        <div class="landing-card">
+          <h3>Alerts &amp; Insights Center</h3>
+          <div class="insight-list">${alertItems}</div>
+        </div>
+      </div>
+
+      <div class="landing-card" style="margin-bottom:12px">
+        <h3>Cross-Portfolio Conversion Signals</h3>
+        <div class="funnel">
+          ${conversionRows.map(([label, base, next, note]) => `
+            <div class="funnel-step">
+              <span class="funnel-label">${label}</span>
+              <span class="funnel-value">${pctText(next, base)}</span>
+              <span class="funnel-rate">${fmt(next)} of ${fmt(base)} records</span>
+              <span class="funnel-rate">${note}</span>
+            </div>`).join('')}
+        </div>
+      </div>
+
+      <div class="landing-grid two">
+        <div class="landing-card">
+          <h3>ESO 360 View</h3>
+          <div style="overflow-x:auto">
+            <table class="eso-summary-table" style="border-collapse:collapse;width:100%">
+              <thead><tr><th>ESO</th><th>EOI</th><th>Needs</th><th>Devices</th><th>Platforms</th><th>Credit</th><th>Quality</th></tr></thead>
+              <tbody>${esoRows || '<tr><td colspan="7">No ESO-linked data available</td></tr>'}</tbody>
+            </table>
+          </div>
+        </div>
+        <div class="landing-card">
+          <h3>Geographic Performance</h3>
+          ${rows(topEntries(districtTotals, 12), Math.max(...Object.values(districtTotals), 1), '#0F766E')}
+        </div>
+      </div>
+
+      <div class="landing-grid three">
+        <div class="landing-card">
+          <h3>Export &amp; Reporting</h3>
+          <div class="insight-list">
+            ${insight('CSV Exports', 'Available', 'Use the buttons below to download app-wide quality and ESO 360 summary CSVs.', 'good')}
+            <button class="summary-toggle" onclick="downloadQualityCSV()">Download Quality CSV</button>
+            <button class="summary-toggle" onclick="downloadEso360CSV()">Download ESO 360 CSV</button>
+          </div>
+        </div>
+        <div class="landing-card">
+          <h3>Role-Based Views</h3>
+          <div class="insight-list">
+            ${insight('Leadership View', 'Current Overview', 'All Portfolios and Intelligence Center cover high-level monitoring.', 'good')}
+            ${insight('Operations View', 'Partially available', 'Devices and EOI now include readiness and quality follow-up signals.', 'info')}
+            ${insight('Admin/Data View', 'Available here', 'Data quality indicators are centralized in this Intelligence page.', 'good')}
+          </div>
+        </div>
+        <div class="landing-card">
+          <h3>Map Readiness</h3>
+          <div class="insight-list">
+            ${insight('District Rankings', 'Available', 'A full map still needs a boundary/geojson layer; rankings are available now.', 'info')}
+            ${insight('Coverage Labels', fmt(Object.keys(districtTotals).length), 'Unique district/location labels found across active datasets.', 'good')}
+          </div>
+        </div>
+      </div>`;
+  }
+
+  function initEoiOverviewCharts(portfolios) {
+    const sumObj = getter => portfolios.reduce((acc, p) => {
+      Object.entries(getter(p) || {}).forEach(([k, v]) => {
+        if (Number(v) > 0) acc[k] = (acc[k] || 0) + Number(v);
+      });
+      return acc;
+    }, {});
+    const total = portfolios.reduce((s, p) => s + (p.stats?.total || 0), 0);
+    const totalUrsb = portfolios.reduce((s, p) => s + (p.stats?.ursb || 0), 0);
+    const gender = sumObj(p => p.founders?.gender || {});
+    const ageBands = sumObj(p => p.age_bands || {});
+    const tinStatus = sumObj(p => p.tin_status || {});
+    const nssfStatus = sumObj(p => p.nssf_status || {});
+    const tinYes = tinStatus.Yes || tinStatus.YES || tinStatus.yes || 0;
+    const nssfYes = nssfStatus.Yes || nssfStatus.YES || nssfStatus.yes || 0;
+
+    donut('_eoi-gender', gender, GENDER_COLORS);
+    hBar('_eoi-age', ageBands, AGE_COLORS, 6);
+    hBar('_eoi-readiness', {
+      'URSB registered': totalUrsb,
+      'TIN present': tinYes,
+      'NSSF present': nssfYes
+    }, {
+      'URSB registered': '#059669',
+      'TIN present': '#2563EB',
+      'NSSF present': '#7C3AED'
+    }, 3);
   }
 
   /* ═══════════════════════════════════════════════════════════════
      CHART INITIALIZATION  (overview tab only — portfolio tabs use CSS bars)
   ═══════════════════════════════════════════════════════════════ */
   function initOverviewCharts(portfolios) {
+    const monthKey = value => {
+      if (!value) return null;
+      const d = new Date(value);
+      if (Number.isNaN(d.getTime())) return null;
+      return d.toISOString().slice(0, 7);
+    };
+    const monthCounts = records => records.reduce((acc, r) => {
+      const k = monthKey(r.date || r.d || r._submission_time || r.submission_time);
+      if (k) acc[k] = (acc[k] || 0) + 1;
+      return acc;
+    }, {});
+    const weeklyFallback = p => ({
+      'Last week': p.weekly_activity?.apps_last_week || 0,
+      'This week': p.weekly_activity?.apps_this_week || 0,
+      'This month': p.weekly_activity?.apps_this_month || 0,
+    });
+    const line = (id, obj, color) => {
+      const entries = Object.entries(obj || {}).filter(([, v]) => Number(v) > 0).sort((a, b) => a[0].localeCompare(b[0]));
+      if (!entries.length) return;
+      makeChart(id, 'line', entries.map(e => e[0]), [{
+        data: entries.map(e => e[1]),
+        borderColor: color,
+        backgroundColor: color + '22',
+        fill: true,
+        tension: .35,
+        pointRadius: 2,
+      }], {
+        plugins: { legend: { display: false } },
+        scales: {
+          x: { grid: { display: false }, ticks: { font: { size: 10 }, maxRotation: 0 } },
+          y: { grid: { color: '#EEF2F7' }, ticks: { font: { size: 10 } } }
+        }
+      });
+    };
+    const eoiRecords = portfolios.filter(p => p.type === 'eoi' || p.type === 'segmentation').flatMap(p => p.raw_records || []);
+    const eoiTrend = monthCounts(eoiRecords);
+    const platformTrend = {};
+    portfolios.filter(p => p.type === 'platforms').forEach(p => {
+      Object.values(p.by_platform || {}).forEach(platform => {
+        Object.entries(platform.monthly || {}).forEach(([month, count]) => {
+          platformTrend[month] = (platformTrend[month] || 0) + count;
+        });
+      });
+    });
+    line('_ov-eoi-trend', Object.keys(eoiTrend).length ? eoiTrend : weeklyFallback({ weekly_activity: {} }), '#2563EB');
+    line('_ov-platform-trend', platformTrend, '#7C3AED');
+    return;
+
     /* Portfolio sizes bar */
     const names  = portfolios.map(p => p.name);
     const sizes  = portfolios.map(p => p.stats.total);
@@ -1963,15 +4278,16 @@
   /* ═══════════════════════════════════════════════════════════════
      TWO-TIER NAVIGATION
   ═══════════════════════════════════════════════════════════════ */
-  const TYPE_ORDER = ['eoi','foundation','yiw','buz_needs','devices','platforms','growth_plans'];
+  const TYPE_ORDER = ['eoi','buz_needs','devices','platforms','digital_credit'];
   const TYPE_LABELS = {
     eoi:          'EOI & Segmentation',
     foundation:   'Foundation',
-    yiw:          'Youth in Work',
     buz_needs:    'Business Needs',
     devices:      'Devices',
     platforms:    'Platforms',
     growth_plans: 'Growth Plans',
+    cohorts:      'Acceleration Cohorts',
+    digital_credit: 'Digital Credit',
     eso_report:   'ESO Report', // NEW TAB
   };
 
@@ -1980,9 +4296,17 @@
   let _panels      = {};
   let _typeSubTabs = {};   // type → [{btn, pid}]
 
+  window._forceRender = false;
+  window.triggerActivePanelReRender = function() {
+    window._forceRender = true;
+    if (_activePanel) showPanel(_activePanel);
+  };
+
   function showPanel(pid) {
-    if (_activePanel === pid) return;
-    if (_activePanel) destroyPanel(_activePanel);
+    if (_activePanel === pid && !window._forceRender) return;
+    window._forceRender = false;
+
+    if (_activePanel && _activePanel !== pid) destroyPanel(_activePanel);
     _activePanel = pid;
 
     document.querySelectorAll('.panel').forEach(el => el.classList.remove('active'));
@@ -1995,8 +4319,42 @@
     });
 
     const meta = _panels[pid];
-    if (meta && meta.type === 'overview') {
-      requestAnimationFrame(() => initOverviewCharts(meta.portfolios));
+    if (!meta) return;
+
+    if (meta.portfolio) {
+      const p_dyn = window.recalculatePortfolio(meta.portfolio, window.TIME_FILTER);
+      panel.innerHTML = {
+          segmentation: buildSegmentationHTML,
+          growth_plans: buildGrowthPlansHTML,
+          eoi:          buildEoiHTML,
+          buz_needs:    buildBuzNeedsHTML,
+          devices:      buildDevicesHTML,
+          foundation:   buildFoundationHTML,
+          platforms:    buildPlatformsHTML,
+          cohorts:      buildCohortsHTML,
+          digital_credit: buildDigitalCreditHTML,
+      }[meta.type]?.(p_dyn, pid) ?? buildGrowthPlansHTML(p_dyn, pid);
+
+      if (meta.type === 'buz_needs') {
+        requestAnimationFrame(() => initBusinessNeedsCharts(p_dyn, pid));
+      }
+    }
+    
+    if (meta.type === 'overview') {
+      const dynPortfolios = meta.portfolios.map(p => window.recalculatePortfolio(p, window.TIME_FILTER));
+      panel.innerHTML = buildOverviewHTML(dynPortfolios);
+      requestAnimationFrame(() => initOverviewCharts(dynPortfolios));
+    } else if (meta.type === 'intelligence') {
+      const dynPortfolios = meta.portfolios.map(p => window.recalculatePortfolio(p, window.TIME_FILTER));
+      panel.innerHTML = buildIntelligenceHTML(dynPortfolios);
+    } else if (meta.type === 'eoi-overview') {
+      const eoiPortfolios = window.PORTFOLIO_DATA.portfolios.filter(p => p.type === 'eoi' || p.type === 'segmentation');
+      const dynPortfolios = eoiPortfolios.map(p => window.recalculatePortfolio(p, window.TIME_FILTER));
+      panel.innerHTML = buildEoiOverviewHTML(dynPortfolios);
+      requestAnimationFrame(() => initEoiOverviewCharts(dynPortfolios));
+    } else if (meta.type === 'eso_report_list') {
+      const dynPortfolios = meta.portfolios.map(p => window.recalculatePortfolio(p, window.TIME_FILTER));
+      panel.innerHTML = buildEsoReportListHTML(dynPortfolios);
     }
   }
 
@@ -2024,7 +4382,6 @@
   function showNoData() {
     document.getElementById('main-content').innerHTML = `
       <div class="no-data">
-        <div class="icon">📂</div>
         <h2>No Portfolio Data Found</h2>
         <p>Run the data extractor to generate <code>data.js</code>:</p>
         <br>
@@ -2042,7 +4399,7 @@
       return;
     }
 
-    const portfolios = data.portfolios;
+    const portfolios = data.portfolios.filter(p => p.type !== 'yiw');
     const totalAll   = portfolios.reduce((s, p) => s + p.stats.total, 0);
 
     document.getElementById('last-updated').textContent = 'Last extracted: ' + data.generated;
@@ -2072,6 +4429,27 @@
     ovSubBtn.dataset.panel = 'panel-overview';
     ovSubBtn.onclick = () => showPanel('panel-overview');
     _typeSubTabs['overview'] = [{ btn: ovSubBtn, pid: 'panel-overview' }];
+
+    const intelTypeBtn = document.createElement('button');
+    intelTypeBtn.className = 'type-tab-btn';
+    intelTypeBtn.textContent = 'Intelligence';
+    intelTypeBtn.dataset.type = 'intelligence';
+    intelTypeBtn.onclick = () => showTypeGroup('intelligence');
+    typeBar.appendChild(intelTypeBtn);
+
+    const intelPanel = document.createElement('div');
+    intelPanel.id = 'panel-intelligence';
+    intelPanel.className = 'panel';
+    intelPanel.innerHTML = buildIntelligenceHTML(portfolios);
+    content.appendChild(intelPanel);
+    _panels['panel-intelligence'] = { type: 'intelligence', portfolios };
+
+    const intelSubBtn = document.createElement('button');
+    intelSubBtn.className = 'sub-tab-btn';
+    intelSubBtn.textContent = 'Intelligence Center';
+    intelSubBtn.dataset.panel = 'panel-intelligence';
+    intelSubBtn.onclick = () => showPanel('panel-intelligence');
+    _typeSubTabs['intelligence'] = [{ btn: intelSubBtn, pid: 'panel-intelligence' }];
 
     /* ── Per-type tabs with sub-tabs ── */
     const groups = {};
@@ -2130,24 +4508,19 @@
           segmentation: buildSegmentationHTML,
           growth_plans: buildGrowthPlansHTML,
           eoi:          buildEoiHTML,
-          yiw:          buildYiwHTML,
           buz_needs:    buildBuzNeedsHTML,
           devices:      buildDevicesHTML,
           foundation:   buildFoundationHTML,
           platforms:    buildPlatformsHTML,
+          cohorts:      buildCohortsHTML,
+          digital_credit: buildDigitalCreditHTML,
         }[p.type]?.(p, pid) ?? buildGrowthPlansHTML(p, pid);
         content.appendChild(panel);
         _panels[pid] = { type: p.type, portfolio: p };
       });
     });
 
-    // Add ESO Report tab
-    const esoTypeBtn = document.createElement('button');
-    esoTypeBtn.className   = 'type-tab-btn';
-    esoTypeBtn.textContent = TYPE_LABELS['eso_report'];
-    esoTypeBtn.dataset.type = 'eso_report';
-    esoTypeBtn.onclick = () => showTypeGroup('eso_report');
-    typeBar.appendChild(esoTypeBtn);
+    // ESO Report tab hidden per menu config
 
     // Only include portfolios with an 'eso' field and a valid type (not segmentation)
     const esoPortfolios = portfolios.filter(p => p.eso && p.type && p.type !== 'segmentation');
@@ -2195,6 +4568,50 @@
     showTypeGroup('overview');
   }
 
+  function downloadCSV(filename, rows) {
+    const escapeCell = value => `"${String(value ?? '').replace(/"/g, '""')}"`;
+    const csv = rows.map(row => row.map(escapeCell).join(',')).join('\n');
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = filename;
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+    URL.revokeObjectURL(url);
+  }
+
+  window.downloadQualityCSV = function() {
+    const portfolios = (window.PORTFOLIO_DATA?.portfolios || []).filter(p => p.type !== 'yiw');
+    const rows = [['Dataset', 'Type', 'ESO', 'Total Records', 'Metric', 'Value']];
+    portfolios.forEach(p => {
+      const dq = p.data_quality || {};
+      if (!Object.keys(dq).length) {
+        rows.push([p.name, p.type, p.eso || '', p.stats?.total || 0, 'no_data_quality_metrics', '']);
+      } else {
+        Object.entries(dq).forEach(([metric, value]) => rows.push([p.name, p.type, p.eso || '', p.stats?.total || 0, metric, value]));
+      }
+    });
+    downloadCSV('portfolio-data-quality.csv', rows);
+  };
+
+  window.downloadEso360CSV = function() {
+    const portfolios = (window.PORTFOLIO_DATA?.portfolios || []).filter(p => p.type !== 'yiw' && p.eso);
+    const esoMap = {};
+    portfolios.forEach(p => {
+      const eso = p.eso;
+      esoMap[eso] = esoMap[eso] || { eoi: 0, buz_needs: 0, devices: 0, platforms: 0, digital_credit: 0, quality: 0 };
+      esoMap[eso][p.type] = (esoMap[eso][p.type] || 0) + (p.stats?.total || 0);
+      esoMap[eso].quality += Object.values(p.data_quality || {}).reduce((a, b) => a + (Number(b) || 0), 0);
+    });
+    const rows = [['ESO', 'EOI', 'Business Needs', 'Devices', 'Platforms', 'Digital Credit', 'Quality Signals']];
+    Object.entries(esoMap).sort((a, b) => a[0].localeCompare(b[0])).forEach(([eso, d]) => {
+      rows.push([eso, d.eoi || 0, d.buz_needs || 0, d.devices || 0, d.platforms || 0, d.digital_credit || 0, d.quality || 0]);
+    });
+    downloadCSV('portfolio-eso-360.csv', rows);
+  };
+
   /* ═══════════════════════════════════════════════════════════════
      REFRESH HINT
   ═══════════════════════════════════════════════════════════════ */
@@ -2218,7 +4635,6 @@
     const esoSet = new Set(esoPortfolios.map(p => p.eso));
     const aspects = [
       { key: 'foundation', label: 'Foundation' },
-      { key: 'yiw', label: 'Youth in Work' },
       { key: 'buz_needs', label: 'Business Needs' },
       { key: 'devices', label: 'Devices' },
       { key: 'platforms', label: 'Platforms' },
@@ -2283,7 +4699,6 @@
     // Find all portfolios for this ESO, grouped by aspect
     const aspects = [
       { key: 'foundation', label: 'Foundation', builder: buildFoundationHTML },
-      { key: 'yiw', label: 'Youth in Work', builder: buildYiwHTML },
       { key: 'buz_needs', label: 'Business Needs', builder: buildBuzNeedsHTML },
       { key: 'devices', label: 'Devices', builder: buildDevicesHTML },
       { key: 'platforms', label: 'Platforms', builder: buildPlatformsHTML },

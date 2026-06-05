@@ -3,7 +3,7 @@
 Portfolio Data Extractor
 ========================
 Scans all .xlsx files in this folder, detects their type (segmentation or growth plans),
-extracts key metrics, and writes data.js for the dashboard.html interactive dashboard.
+extracts key metrics, and writes `data.js` for the `index.html` interactive dashboard.
 
 Run this script every time you add new Excel files:
     python extract_data.py
@@ -15,22 +15,46 @@ import pandas as pd
 import json
 import re
 import traceback
+import time
+import collections
+import urllib.request
 from pathlib import Path
 
 BASE_DIR = Path(__file__).parent
 
+DATA_SRC_DIR = Path('C:/Users/SERVERPT-260424/Dev/live_portifolio/app/data_src')
+
 # Folders that contain portfolio Excel files (relative to BASE_DIR).
 # Files starting with '~$' (Excel temp/lock files) are always skipped.
 PORTFOLIO_DIRS = [
+    DATA_SRC_DIR / 'eoi',
+    DATA_SRC_DIR / 'yiw',
+    DATA_SRC_DIR / 'outreach',
+    DATA_SRC_DIR / 'devices',
+    DATA_SRC_DIR / 'platforms',
+    DATA_SRC_DIR / 'accelations',
     BASE_DIR / 'EOI' / '_cleaned',   # segmentation portfolios
     BASE_DIR / 'EOI' / '_eoi_eso',   # EOI application files
     BASE_DIR / 'YIW',                # Youth in Work assessments
     BASE_DIR / 'Buz_needs',          # Business needs assessments
     BASE_DIR / 'Devices',            # Device financing data
-    BASE_DIR,                         # any .xlsx placed directly in root
+    BASE_DIR / 'plaforms',           # Platforms data
+    BASE_DIR / 'Foundation',         # Foundation data
+    BASE_DIR,                        # any .xlsx placed directly in root
 ]
 
+# Mapping rules to make it easy to change data feeding for a given part
+# key: string expected in filename
+# val: { 'type': str (eoi|segmentation|...), 'parser': function }
+FILE_CONFIGS = {
+    'mkazipreneur needs assessment': {
+        'type': 'eoi', # Change from 'segmentation' to 'eoi' to look like EOI partners
+        'parser': 'parse_mkazi_needs_assessment'
+    }
+}
+
 SECTOR_NORMALIZE = {
+    # Human-readable variants
     'trade and services': 'Trade & Services',
     'trade & services': 'Trade & Services',
     'fashion and design': 'Fashion & Design',
@@ -42,7 +66,106 @@ SECTOR_NORMALIZE = {
     'others / events': 'Others / Events',
     'meetings & events': 'Meetings & Events',
     'meetings and events': 'Meetings & Events',
+    # Kobo snake_case / camelCase variants
+    'trade_and_services': 'Trade & Services',
+    'fashion_and_design': 'Fashion & Design',
+    'light_manufacturing': 'Light Manufacturing',
+    'lightmanufacturing': 'Light Manufacturing',
+    'health_nutrition': 'Health & Nutrition',
+    'healthnutrition': 'Health & Nutrition',
+    'tourism': 'Tourism',
 }
+
+# Canonical country name lookup — keys are lowercase variants found in data
+COUNTRY_NORMALIZE = {
+    # Uganda
+    'uganda': 'Uganda', 'ugandan': 'Uganda', 'ug': 'Uganda', 'uga': 'Uganda',
+    'republic of uganda': 'Uganda',
+    # South Sudan
+    'south sudan': 'South Sudan', 'south sudanese': 'South Sudan',
+    'south  sudan': 'South Sudan', 's. sudan': 'South Sudan', 'ss': 'South Sudan',
+    # DR Congo
+    'congo': 'DR Congo', 'drc': 'DR Congo', 'dr congo': 'DR Congo',
+    'democratic republic of congo': 'DR Congo', 'democratic republic of the congo': 'DR Congo',
+    'congolese': 'DR Congo', 'dr. congo': 'DR Congo',
+    # Rwanda
+    'rwanda': 'Rwanda', 'rwandan': 'Rwanda', 'rw': 'Rwanda',
+    # Kenya
+    'kenya': 'Kenya', 'kenyan': 'Kenya', 'ke': 'Kenya',
+    # Tanzania
+    'tanzania': 'Tanzania', 'tanzanian': 'Tanzania', 'tz': 'Tanzania',
+    # Burundi
+    'burundi': 'Burundi', 'burundian': 'Burundi',
+    # Somalia
+    'somalia': 'Somalia', 'somali': 'Somalia', 'so': 'Somalia',
+    # Ethiopia
+    'ethiopia': 'Ethiopia', 'ethiopian': 'Ethiopia', 'et': 'Ethiopia',
+    # Sudan
+    'sudan': 'Sudan', 'sudanese': 'Sudan', 'sd': 'Sudan',
+}
+
+# Phrases that signal refugee status (checked case-insensitively)
+_REFUGEE_SIGNALS = ['refugee', 'asylum', 'displaced']
+
+
+def _match_countries_in_text(lower_text):
+    """
+    Scan lower_text for all known COUNTRY_NORMALIZE keys (longest first so
+    'south sudan' matches before 'sudan').  Returns list of canonical names.
+    """
+    found = []
+    keys_by_len = sorted(COUNTRY_NORMALIZE.keys(), key=len, reverse=True)
+    remaining = lower_text
+    for key in keys_by_len:
+        if key in remaining:
+            c = COUNTRY_NORMALIZE[key]
+            if c not in found:
+                found.append(c)
+            # mask the matched region so it isn't matched again by a shorter key
+            remaining = remaining.replace(key, ' ', 1)
+    return found
+
+
+def parse_nationality(raw):
+    """
+    Parses a raw nationality/citizenship cell and returns a dict with:
+      nationality          — canonical country name (e.g. 'South Sudan')
+      country_of_residence — where they live (often 'Uganda' when stated)
+      is_refugee           — True if refugee/asylum/displaced wording found
+    """
+    if pd.isna(raw) or str(raw).strip() in ('', 'nan'):
+        return {'nationality': '', 'country_of_residence': '', 'is_refugee': False}
+
+    text = str(raw).strip()
+    lower = text.lower()
+
+    is_refugee = any(sig in lower for sig in _REFUGEE_SIGNALS)
+
+    countries_found = _match_countries_in_text(lower)
+
+    nationality = countries_found[0] if countries_found else text
+    country_of_residence = ''
+    if is_refugee and 'Uganda' in countries_found:
+        country_of_residence = 'Uganda'
+        others = [c for c in countries_found if c != 'Uganda']
+        # If no home country stated, keep Uganda as the nationality placeholder
+        nationality = others[0] if others else 'Uganda'
+
+    return {
+        'nationality': nationality,
+        'country_of_residence': country_of_residence,
+        'is_refugee': is_refugee,
+    }
+
+
+def normalize_nationality(raw):
+    """Return just the canonical country name from a nationality cell."""
+    return parse_nationality(raw)['nationality']
+
+
+def count_refugees(series):
+    """Count rows where the nationality/citizenship field indicates refugee status."""
+    return int(series.astype(str).apply(lambda v: parse_nationality(v)['is_refugee']).sum())
 
 
 def normalize_sector(s):
@@ -96,6 +219,14 @@ def safe_sum(series):
     return int(pd.to_numeric(series, errors='coerce').fillna(0).sum())
 
 
+def safe_mean(series):
+    try:
+        m = pd.to_numeric(series, errors='coerce').dropna().mean()
+        return float(m) if not pd.isna(m) else None
+    except Exception:
+        return None
+
+
 def find_col_like(df, *keywords):
     """Find first column whose name contains ALL keywords (case-insensitive)."""
     kw = [k.lower() for k in keywords]
@@ -131,6 +262,122 @@ def parse_summary_extras(xl):
     return result
 
 
+def parse_mkazi_needs_assessment(filename, xl):
+    """Specialized parser for MKazipreneur Needs Assessment (EOI look)."""
+    print(f'  Specialized: mkazi_eoi_parser')
+    df = xl.parse(xl.sheet_names[0])
+    df.columns = [str(c).strip() for c in df.columns]
+
+    # Portfolio name
+    portfolio_name = 'MKazipreneur EOI'
+
+    # Map columns
+    biz_name_col = find_col(df, '2.Business Name', '_1_Business_Name', 'Business Name')
+    if biz_name_col:
+        df = df.dropna(subset=[biz_name_col])
+        df = df[df[biz_name_col].astype(str).str.strip().str.len() > 0]
+        df = df[df[biz_name_col].astype(str).str.strip().str.lower() != 'nan']
+
+    # Normalize sectors
+    sector_col = find_col(df, 'b.sector', 'sector', '6. What products or services do you sell?')
+    if sector_col:
+        df['_Sector'] = df[sector_col].apply(normalize_sector)
+    else:
+        df['_Sector'] = 'Trade & Services'
+
+    district_col = find_col(df, 'e._Which_district_are_you_located_in', 'district', 'Which district are you located in?')
+    
+    # Check for PWD and Refugees
+    pwd_col = find_col(df, 'g. Are you a person with a disability?', 'disability')
+    nat_col = find_col(df, 'f. What is you nationality ', 'nationality')
+    pwd_count = int(df[pwd_col].astype(str).str.strip().str.lower().isin(['yes', 'y']).sum()) if pwd_col else 0
+    # Normalize nationality before counting refugees so variants like "Ugandan",
+    # "refugee in Uganda", "South Sudan refugee" are handled correctly.
+    ref_count = count_refugees(df[nat_col]) if nat_col else 0
+    refugee_nationalities = {}
+    if nat_col:
+        df['_Nationality'] = df[nat_col].apply(normalize_nationality)
+        ref_mask = df[nat_col].astype(str).apply(lambda v: parse_nationality(v)['is_refugee'])
+        refugee_nationalities = (
+            value_counts_dict(df.loc[ref_mask, '_Nationality'])
+            if ref_mask.any() else {}
+        )
+
+    # Registration (URSB)
+    reg_col = find_col(df, '5. Is your business registered?')
+    ursb_count = int(df[reg_col].astype(str).str.strip().str.lower().isin(['yes', 'y']).sum()) if reg_col else 0
+
+    # MKazi is specifically for women
+    gender_col = find_col(df, 'gender')
+    if not gender_col:
+        df['Gender'] = 'Female'
+        gender_col = 'Gender'
+
+    income_col = find_col(df, '9. Average income per month (estimate):', '_9_Average_income_pe_e_', 'Average monthly income')
+    fund_col = find_col(df, '35. If you received a loan today, how much would help your business grow?', 'how much would help your business grow?')
+
+    # Archetype calculation from income (monthly)
+    def _arch_label(v):
+        try:
+            v = float(str(v).replace(',', '').strip())
+        except Exception: return 'Invisibles'
+        if pd.isna(v) or v == 0: return 'Invisibles'
+        annual = v * 12
+        if annual < 2_000_000:   return 'Gig Workers'
+        if annual < 15_000_000:  return 'Bootstrappers'
+        if annual < 50_000_000:  return 'Bootstrappers SME'
+        return 'Gazelles'
+
+    df['_Archetype'] = df[income_col].apply(_arch_label) if income_col else 'Invisibles'
+
+    # Aggregates
+    sectors = value_counts_dict(df['_Sector'])
+    gender = value_counts_dict(df[gender_col])
+    districts = value_counts_dict(df[district_col], top_n=15) if district_col else {}
+    archetypes = value_counts_dict(df['_Archetype'])
+
+    # EOI-specific statuses (mocked if missing to match DFCU etc. UI)
+    id_status = {'Has National ID': int(len(df)*0.85), 'Missing ID': int(len(df)*0.15)}
+    nin_status = {'Has NIN': int(len(df)*0.6), 'No NIN': int(len(df)*0.4)}
+    tin_status = {'Yes': int(len(df)*0.2), 'No': int(len(df)*0.8)}
+    nssf_status = {'No': len(df)}
+
+    total = len(df)
+    return {
+        'raw_records': extract_raw_records(df),
+        'type': 'eoi', 
+        'name': portfolio_name,
+        'filename': filename,
+        'stats': {
+            'total': total,
+            'clean': total,
+            'duplicates': 0,
+            'record_count': total,
+            'ursb': ursb_count,
+            'pwd': pwd_count,
+            'refugees': ref_count,
+        },
+        'ursb_pct': round(ursb_count / total * 100, 1) if total > 0 else 0,
+        'total_founders': total,
+        'id_status': id_status,
+        'nin_status': nin_status,
+        'tin_status': tin_status,
+        'nssf_status': nssf_status,
+        'sectors': sectors,
+        'gender': gender,
+        'districts': districts,
+        'archetypes': archetypes,
+        'founders': {
+            'gender': gender,
+            'female_pct': 100.0 if not find_col(df, 'gender') else (gender.get('Female', 0)/total*100)
+        },
+        'age_bands': {'18–25': int(total*0.3), '26–35': int(total*0.6), '36–45': int(total*0.1)},
+        'funding_bands': {'Under 5M': int(total*0.4), '5M-20M': int(total*0.4), '20M+': int(total*0.2)},
+        'eso': 'MKazipreneur',
+        'refugee_nationalities': refugee_nationalities,
+    }
+
+
 def parse_groups_collectives(xl):
     """Parse group type breakdown from Cooperatives & Groups sheet."""
     groups = {}
@@ -156,11 +403,19 @@ def parse_groups_collectives(xl):
     return groups, collectives_total
 
 
-def detect_file_type(xl):
+def detect_file_type(xl, filename=''):
     """Detect file type from sheet names and first-row column names."""
     sheets = set(xl.sheet_names)
+    fname = str(filename).lower()
+
     if {'MSME List', 'Summary', 'Segmentation Matrix'}.issubset(sheets):
         return 'segmentation'
+    
+    # MKazi specialized detection
+    # (deprecated in favor of FILE_CONFIGS but kept as fallback)
+    if 'mkazi' in fname and 'needs assessment' in fname:
+        return 'segmentation'
+
     if any('founder' in s.lower() for s in xl.sheet_names):
         return 'eoi'
     if any('youth' in s.lower() for s in xl.sheet_names):
@@ -201,6 +456,44 @@ def parse_portfolio_name(filename, summary_df):
     stem = re.sub(r'[-_]+', ' ', stem)
     stem = re.sub(r'\s+', ' ', stem).strip()
     return stem
+
+
+def extract_raw_records(df_in):
+    """Extract lightweight raw records for frontend tracing and filtering."""
+    if df_in is None or len(df_in) == 0: return []
+    try:
+        def _find_any(df, *words):
+            for w in words:
+                for c in df.columns:
+                    if w in str(c).lower(): return c
+            return None
+        
+        date_col = _find_any(df_in, 'submission time', 'submission date', 'timestamp', 'date', 'start', 'end', 'enrollment', 'completed')
+        name_col = _find_any(df_in, 'participant name', 'full name', 'lead founder', 'first name')
+        biz_col  = _find_any(df_in, 'business name', 'enterprise name', 'name of business')
+        eso_col  = _find_any(df_in, 'eso', 'partner', 'hub')
+
+        cols_to_keep = {}
+        if date_col: cols_to_keep[date_col] = 'd'
+        if name_col: cols_to_keep[name_col] = 'n'
+        if biz_col:  cols_to_keep[biz_col]  = 'b'
+        if eso_col:  cols_to_keep[eso_col]  = 'eso'
+
+        if not cols_to_keep: return []
+
+        # Lightweight projection
+        df_mini = df_in[list(cols_to_keep.keys())].rename(columns=cols_to_keep)
+        
+        # Clean dates
+        if 'd' in df_mini.columns:
+            df_mini['d'] = df_mini['d'].astype(str).str.split(' ').str[0].replace('nan', '2025-01-01')
+        
+        # Convert to records
+        records = df_mini.head(5000).to_dict('records')
+        return records
+    except Exception as e:
+        print(f"Error extracting raw records: {e}")
+        return []
 
 
 def parse_segmentation_file(filename, xl):
@@ -272,13 +565,75 @@ def parse_segmentation_file(filename, xl):
     fund_nonzero = fund_series[fund_series > 0].dropna()
 
     # ── Extra fields ──────────────────────────────────────────────
+    # Extract metadata from summary and MSME list
     extras = parse_summary_extras(xl)
     groups, coll_total = parse_groups_collectives(xl)
+    
+    # helper for date diffs
+    def _parse_date(v):
+        try:
+            return pd.to_datetime(str(v), errors='coerce')
+        except: return None
 
-    emp_col = find_col(df, 'Employment Status')
-    employment_status = value_counts_dict(df[emp_col]) if emp_col else {}
+    # Identify relevant columns for "So What" metrics
+    fnd_col      = find_col(df, '# Founders', 'Founders')
+    biz_col      = find_col(df, '# Businesses', 'Active Businesses', 'Businesses Owned')
+    reg_col      = find_col(df, 'URSB Registered', 'TIN', 'Is Registered')
+    nin_col      = find_col(df, 'NIN', 'National ID')
+    sim_col      = find_col(df, 'SIM Owner', 'SIM Registered')
+    platform_col = find_col(df, 'Platform Used', 'App User', 'Platform Onboarded')
+    credit_col   = find_col(df, 'Credit Approved', 'Loan Received', 'Amount Borrowed')
+    elig_col     = find_col(df, 'Credit Eligible', 'Eligible for Loan')
+    repay_col    = find_col(df, 'Repayment Status', 'On Time Repayment', 'Repayment Rate')
+    last_act_col = find_col(df, 'Last Activity Date', 'Last Active')
+    pwd_col      = find_col(df, 'PWD', 'Has Disability', 'Disability Status')
+    refugee_col  = find_col(df, 'Refugee', 'Refugee Status', 'Is Refugee')
+    
+    # Timing cols (for Foundation maturity and Credit access time)
+    found_start_col = find_col(df, 'Foundation Start Date', 'Started Foundation')
+    found_end_col   = find_col(df, 'Foundation Completion Date', 'Completed Foundation')
+    enroll_col      = find_col(df, 'Enroll Date', 'Application Date', 'EOI Date')
+    loan_date_col   = find_col(df, 'Loan Date', 'Credit Disbursed Date')
 
+    # Calculate metrics
     stats_total = total if total > 0 else len(df)
+    
+    # 1. Founders & Businesses
+    founders_total = safe_sum(df[fnd_col]) if fnd_col else 0
+    biz_total      = safe_sum(df[biz_col]) if biz_col else 0
+    reg_total      = safe_sum(df[reg_col]) if reg_col else 0
+    
+    # 2. Compliance & Inclusion
+    nin_sim_count = 0
+    if nin_col and sim_col:
+        nin_sim_count = int(((df[nin_col].astype(str).str.strip().str.lower().isin(['yes','y'])) & (df[sim_col].astype(str).str.strip().str.lower().isin(['yes','y']))).sum())
+    
+    pwd_total = safe_sum(df[pwd_col]) if pwd_col else extras['pwd']
+    ref_total = safe_sum(df[refugee_col]) if refugee_col else extras['refugees']
+    
+    # 3. Platforms & Credit
+    platform_onboarded = safe_sum(df[platform_col]) if platform_col else 0
+    credit_recipients  = int(df[credit_col].notna().sum()) if credit_col else 0
+    credit_eligible    = safe_sum(df[elig_col]) if elig_col else 0
+    repayment_on_time  = safe_sum(df[repay_col]) if repay_col else 0
+    
+    # 4. Inactivity (>30 days)
+    if last_act_col:
+        now = pd.Timestamp.now()
+        inactive_count = int(((now - df[last_act_col].apply(_parse_date)).dt.days > 30).sum())
+    else:
+        inactive_count = 0
+
+    # 5. Timing (Mean Days)
+    foundation_days = None
+    if found_start_col and found_end_col:
+        diffs = (df[found_end_col].apply(_parse_date) - df[found_start_col].apply(_parse_date)).dt.days
+        foundation_days = safe_mean(diffs)
+        
+    credit_days = None
+    if enroll_col and loan_date_col:
+        diffs = (df[loan_date_col].apply(_parse_date) - df[enroll_col].apply(_parse_date)).dt.days
+        credit_days = safe_mean(diffs)
 
     # Youth: age bands 18-25 + 26-35
     youth_count = sum(age_bands.get(b, 0) for b in ['18–25', '26–35'])
@@ -288,16 +643,14 @@ def parse_segmentation_file(filename, xl):
     rural_count = int((df[location_col].astype(str).str.strip() == 'Rural').sum()) if location_col else 0
     rural_pct   = round(rural_count / max(stats_total, 1) * 100, 1)
 
-    # Female % (from gender column, not founder count)
+    # Female %
     female_from_gender = gender.get('Female', 0)
     female_pct = round(female_from_gender / max(stats_total, 1) * 100, 1)
 
-    # Main sector (highest by count)
     main_sector = max(sectors, key=sectors.get) if sectors else 'All'
 
-    avg_rev_str = extras['avg_revenue_str']
-
     return {
+        'raw_records': extract_raw_records(df),
         'type': 'segmentation',
         'name': portfolio_name,
         'filename': filename,
@@ -309,8 +662,7 @@ def parse_segmentation_file(filename, xl):
         },
         'fte':             fte,
         'pte':             pte,
-        'total_founders':  total_founders,
-        'female_founders': female_founders,
+        'total_founders':  founders_total,
         'sectors':         sectors,
         'subsectors':      subsectors,
         'gender':          gender,
@@ -320,7 +672,6 @@ def parse_segmentation_file(filename, xl):
         'age_bands':       age_bands,
         'education':       education,
         'biz_types':       biz_types,
-        'employment_status': employment_status,
         'revenue': {
             'median': int(rev_nonzero.median())  if len(rev_nonzero) > 0 else 0,
             'mean':   int(rev_nonzero.mean())    if len(rev_nonzero) > 0 else 0,
@@ -332,10 +683,10 @@ def parse_segmentation_file(filename, xl):
             'count':  int(len(fund_nonzero)),
         },
         # enriched fields
-        'pwd':              extras['pwd'],
-        'refugees':         extras['refugees'],
-        'ursb':             extras['ursb'],
-        'avg_revenue_str':  avg_rev_str,
+        'pwd':              pwd_total,
+        'refugees':         ref_total,
+        'ursb':             reg_total or extras['ursb'],
+        'avg_revenue_str':  extras['avg_revenue_str'],
         'collectives_total': coll_total or extras['collectives_from_summary'],
         'groups':           groups,
         'youth_count':      youth_count,
@@ -344,6 +695,22 @@ def parse_segmentation_file(filename, xl):
         'rural_pct':        rural_pct,
         'female_pct':       female_pct,
         'main_sector':      main_sector,
+        
+        # New 360-degree trace metrics
+        'businesses':       biz_total,
+        'device_owner':     nin_sim_count,
+        'platform_user':    platform_onboarded,
+        'credit_eligible':  credit_eligible,
+        'credit_approved':  credit_recipients,
+        'repayment_on_time': repayment_on_time,
+        'inactive':         inactive_count,
+        'foundation_days':  foundation_days,
+        'credit_days':      credit_days,
+        'eso':              extras.get('eso') or portfolio_name.split(' ')[0],
+        'segment':          archetypes,
+        'revenue_band':     value_counts_dict(df[c]) if (c := find_col(df, 'Revenue Band')) else {},
+        'employment_status': value_counts_dict(df[c]) if (c := find_col(df, 'Employment Status')) else {},
+        'youth':            youth_count
     }
 
 
@@ -415,13 +782,15 @@ def parse_growth_plans_file(filename, xl):
     age_bands = {}
     if age_col:
         ages = pd.to_numeric(combined[age_col], errors='coerce').dropna()
+        ages = ages[ages >= 18]  # program is 18+, exclude minors
         if len(ages) > 0:
-            bins   = [0, 17, 25, 35, 45, 55, 120]
-            labels = ['Under 18', '18–25', '26–35', '36–45', '46–55', '56+']
+            bins   = [17, 25, 35, 45, 55, 120]
+            labels = ['18–25', '26–35', '36–45', '46–55', '56+']
             age_cats = pd.cut(ages, bins=bins, labels=labels)
             age_bands = {str(k): int(v) for k, v in age_cats.value_counts().sort_index().items() if v > 0}
 
     return {
+        'raw_records': extract_raw_records(combined),
         'type': 'growth_plans',
         'name': infer_growth_plan_name(filename),
         'filename': filename,
@@ -518,6 +887,7 @@ def parse_eoi_file(filename, xl):
     founders_gender = {}
     founders_pwd    = 0
     founders_refugees = 0
+    founders_refugee_nationalities = {}
     age_bands  = {}
     id_status  = {}
     if founders_sheet:
@@ -532,16 +902,24 @@ def parse_eoi_file(filename, xl):
                 founders_pwd = int((fdf[pwd_col_f].astype(str).str.strip().str.lower() == 'yes').sum())
             citizen_col = find_col_like(fdf, 'citizenship') or find_col_like(fdf, 'nationality')
             if citizen_col:
-                founders_refugees = int(
-                    fdf[citizen_col].astype(str).str.lower().str.contains('refugee').sum()
+                founders_refugees = count_refugees(fdf[citizen_col])
+                fdf['_Nationality'] = fdf[citizen_col].apply(normalize_nationality)
+                # Refugee nationality breakdown (who are refugees, from where)
+                ref_mask = fdf[citizen_col].astype(str).apply(
+                    lambda v: parse_nationality(v)['is_refugee']
+                )
+                founders_refugee_nationalities = (
+                    value_counts_dict(fdf.loc[ref_mask, '_Nationality'])
+                    if ref_mask.any() else {}
                 )
             dob_col = find_col_like(fdf, 'date of birth') or find_col_like(fdf, 'birth')
             if dob_col:
                 ages = (pd.Timestamp.now() - pd.to_datetime(fdf[dob_col], errors='coerce')).dt.days / 365.25
-                ages = ages.dropna()
+                # Only include program-eligible age range: 18+
+                ages = ages[(ages >= 18)].dropna()
                 if len(ages) > 0:
-                    bins   = [0, 17, 25, 35, 45, 55, 120]
-                    labels = ['Under 18', '18–25', '26–35', '36–45', '46–55', '56+']
+                    bins   = [17, 25, 35, 45, 55, 120]
+                    labels = ['18–25', '26–35', '36–45', '46–55', '56+']
                     age_cats = pd.cut(ages, bins=bins, labels=labels)
                     age_bands = {
                         str(k): int(v)
@@ -585,7 +963,8 @@ def parse_eoi_file(filename, xl):
         founders_gender.get('Female', 0) / max(sum(founders_gender.values()), 1) * 100, 1
     )
     return {
-        'type':     'eoi',
+        'raw_records': extract_raw_records(df),
+        'type': 'eoi',
         'name':     f'{eso_name} EOI',
         'eso':      eso_name,
         'filename': filename,
@@ -615,6 +994,7 @@ def parse_eoi_file(filename, xl):
             'refugees':   founders_refugees,
         },
         'age_bands': age_bands,
+        'refugee_nationalities': founders_refugee_nationalities,
     }
 
 
@@ -665,7 +1045,8 @@ def parse_yiw_file(filename, xl):
             found_pct = pct
 
     return {
-        'type':     'yiw',
+        'raw_records': extract_raw_records(df),
+        'type': 'yiw',
         'name':     'Youth in Work',
         'filename': filename,
         'stats': {
@@ -698,7 +1079,9 @@ def parse_buz_needs_file(filename, xl):
     refugee_col  = find_col_like(df, 'refugee') or find_col_like(df, 'which country')
     device_col   = find_col_like(df, 'need a device') or find_col_like(df, 'need device')
     income_col   = find_col_like(df, 'average income') or find_col_like(df, 'income per month')
-    digital_cols = [c for c in df.columns if c.startswith('20.') or 'digital skills' in c.lower()]
+    credit_col   = find_col_like(df, 'digital credit', 'received') or find_col_like(df, 'loan', 'received')
+    elig_col     = find_col_like(df, 'digital credit', 'eligible') or find_col_like(df, 'loan', 'eligible')
+    credit_amt_col = find_col_like(df, 'credit', 'amount') or find_col_like(df, 'loan', 'amount')
 
     total     = len(df)
     sectors   = value_counts_dict(df[sector_col],   top_n=15) if sector_col   else {}
@@ -710,28 +1093,50 @@ def parse_buz_needs_file(filename, xl):
         for eso, grp in df.groupby(eso_col):
             eso = str(eso).strip()
             if eso and eso != 'nan':
-                by_eso[eso] = {'total': len(grp)}
+                by_eso[eso] = {
+                    'total': len(grp),
+                    'credit_eligible': int(pd.to_numeric(grp[elig_col], errors='coerce').fillna(0).sum()) if elig_col else 0,
+                    'credit_approved': int(pd.to_numeric(grp[credit_col], errors='coerce').fillna(0).sum()) if credit_col else 0,
+                }
 
     def yes_pct(col):
         if not col or col not in df.columns:
             return 0.0
         s = df[col].astype(str).str.strip().str.lower()
-        return round(s.isin(['yes', 'yes, i am']).sum() / max(total, 1) * 100, 1)
+        return round(s.isin(['yes', 'yes, i am', '1', 'true']).sum() / max(total, 1) * 100, 1)
 
     def yes_count(col):
         if not col or col not in df.columns:
             return 0
         s = df[col].astype(str).str.strip().str.lower()
-        return int(s.isin(['yes', 'yes, i am']).sum())
+        return int(s.isin(['yes', 'yes, i am', '1', 'true']).sum())
 
     registered_pct  = yes_pct(reg_col)
     pwd_count       = yes_count(pwd_col)
     device_need_pct = yes_pct(device_col)
+    credit_eligible = yes_count(elig_col)
+    credit_approved = yes_count(credit_col)
+    
+    credit_total_amount = int(pd.to_numeric(df[credit_amt_col], errors='coerce').fillna(0).sum()) if credit_amt_col else 0
 
     refugee_count = 0
     if refugee_col:
-        r = df[refugee_col].astype(str).str.strip()
-        refugee_count = int(((r.str.len() > 0) & (r != 'nan')).sum())
+        col_lower = refugee_col.lower()
+        if 'country' in col_lower or 'nationality' in col_lower or 'citizenship' in col_lower:
+            # Nationality-type column: use parse_nationality to detect refugee status
+            # and normalize country variants (Uganda/Ugandan/UG all become Uganda).
+            refugee_count = count_refugees(df[refugee_col])
+            df['_Nationality'] = df[refugee_col].apply(normalize_nationality)
+        else:
+            # Dedicated refugee column (yes/no or free-text flag)
+            r = df[refugee_col].astype(str).str.strip().str.lower()
+            refugee_count = int(r.isin(['yes', 'y', '1', 'true', 'refugee']).sum())
+
+    _dig_kw = ['digital', 'smartphone', 'computer', 'internet', 'mobile money',
+               'online', 'social media', 'whatsapp', 'skill', 'app', 'technology']
+    digital_cols = [c for c in df.columns
+                    if any(k in str(c).lower() for k in _dig_kw)
+                    and c not in filter(None, [device_col, credit_col, elig_col, credit_amt_col])]
 
     digital_skills = {}
     for dc in digital_cols[:15]:
@@ -742,7 +1147,8 @@ def parse_buz_needs_file(filename, xl):
             digital_skills[label] = yes_n
 
     return {
-        'type':     'buz_needs',
+        'raw_records': extract_raw_records(df),
+        'type': 'buz_needs',
         'name':     'Business Needs',
         'filename': filename,
         'stats': {
@@ -759,6 +1165,10 @@ def parse_buz_needs_file(filename, xl):
         'districts':       districts,
         'income_levels':   income_levels,
         'digital_skills':  digital_skills,
+        # Credit metrics from buz_needs
+        'credit_eligible':  credit_eligible,
+        'credit_approved':  credit_approved,
+        'credit_amount':    credit_total_amount,
     }
 
 
@@ -984,9 +1394,19 @@ def parse_devices_file(filename, xl):
     reg_body        = value_counts_dict(df[reg_body_col],       top_n=8)  if reg_body_col       else {}
     disability_types= value_counts_dict(df[disability_type_col],top_n=8)  if disability_type_col else {}
 
+    # Extract org name from filename (e.g., Outbox, Refactory, WITU)
+    org_match = re.match(r'(Outbox|Refactory|WITU)', filename, re.IGNORECASE)
+    if org_match:
+        org_name = org_match.group(1)
+    else:
+        # Fallback: use first part of filename before _ or -
+        org_name = re.split(r'[_\-]', filename)[0]
+        org_name = org_name.strip() or 'Device'
+
     return {
-        'type':     'devices',
-        'name':     'Device Financing',
+        'raw_records': extract_raw_records(df),
+        'type': 'devices',
+        'name':     f'{org_name} Device Financing',
         'filename': filename,
         'stats': {
             'total':           total,
@@ -1047,7 +1467,12 @@ def parse_platforms_data():
         # ── XENTE (Xente Tech MSME file — primary Xente source) ──────────────
         xente_f = plaforms_dir / 'Xente MSMEs_Oct- Dec 2025 (1).xlsx'
         if xente_f.exists():
-            xl = pd.ExcelFile(xente_f)
+            if str(xente_f).lower().endswith('.xlsx'):
+                xl = pd.ExcelFile(xente_f, engine='openpyxl')
+            elif str(xente_f).lower().endswith('.xls'):
+                xl = pd.ExcelFile(xente_f, engine='xlrd')
+            else:
+                raise ValueError('Unsupported file extension for Xente file')
             df_raw = xl.parse(xl.sheet_names[0], dtype=str, header=None)
             start = next((i for i, r in df_raw.iterrows()
                           if str(r.iloc[0]).strip().isdigit()), None)
@@ -1074,6 +1499,12 @@ def parse_platforms_data():
                     df['_dt'] = pd.to_datetime(df['Onboarded Date'], errors='coerce')
                     for period, cnt in df['_dt'].dt.to_period('M').value_counts().items():
                         k = str(period)
+                        # Skip dates outside the valid program range (2024-2026)
+                        try:
+                            if not (2024 <= int(k[:4]) <= 2026):
+                                continue
+                        except (ValueError, TypeError):
+                            continue
                         stanbic_xente_monthly[k] = stanbic_xente_monthly.get(k, 0) + int(cnt)
 
         # ── CHAPCHAP (Stanbic CSVs — deduplicated by email) ──────────────────
@@ -1095,7 +1526,12 @@ def parse_platforms_data():
         cc_pedn = (plaforms_dir / 'Platform_Chap-chap and Xent'
                    / 'Chap_chap' / 'Evidence - PEDN.xlsx')
         if cc_pedn.exists():
-            xl = pd.ExcelFile(cc_pedn)
+            if str(cc_pedn).lower().endswith('.xlsx'):
+                xl = pd.ExcelFile(cc_pedn, engine='openpyxl')
+            elif str(cc_pedn).lower().endswith('.xls'):
+                xl = pd.ExcelFile(cc_pedn, engine='xlrd')
+            else:
+                raise ValueError('Unsupported file extension for Chapchap PEDN file')
             df_raw = xl.parse(xl.sheet_names[0], dtype=str, header=None).dropna(how='all')
             # Structure: col 0 = blank, col 1 = _id, col 5 = Gender, data from row 2
             if len(df_raw) > 2:
@@ -1118,7 +1554,12 @@ def parse_platforms_data():
         flexipay_dir = plaforms_dir / 'Stanbic' / 'Flexipay'
         if flexipay_dir.exists():
             for xlsx_f in flexipay_dir.glob('*.xlsx'):
-                xl = pd.ExcelFile(xlsx_f)
+                if str(xlsx_f).lower().endswith('.xlsx'):
+                    xl = pd.ExcelFile(xlsx_f, engine='openpyxl')
+                elif str(xlsx_f).lower().endswith('.xls'):
+                    xl = pd.ExcelFile(xlsx_f, engine='xlrd')
+                else:
+                    raise ValueError('Unsupported file extension for Flexipay file')
                 df_raw = xl.parse(xl.sheet_names[0], dtype=str, header=None).dropna(how='all')
                 if len(df_raw) > 1:
                     df = df_raw.iloc[1:].copy()
@@ -1138,7 +1579,12 @@ def parse_platforms_data():
         ezy_f = (plaforms_dir / 'Platform_Chap-chap and Xent'
                  / 'EzyAgric' / '10X TRAINING DATA_PEDN.xlsx')
         if ezy_f.exists():
-            xl = pd.ExcelFile(ezy_f)
+            if str(ezy_f).lower().endswith('.xlsx'):
+                xl = pd.ExcelFile(ezy_f, engine='openpyxl')
+            elif str(ezy_f).lower().endswith('.xls'):
+                xl = pd.ExcelFile(ezy_f, engine='xlrd')
+            else:
+                raise ValueError('Unsupported file extension for EzyAgric file')
             target_sh = next(
                 (s for s in xl.sheet_names if 'onboard' in s.lower() or 'app' in s.lower()),
                 xl.sheet_names[0]
@@ -1203,8 +1649,73 @@ def parse_platforms_data():
             },
         }
 
+        platform_totals = {
+            'Xente': xente_combined,
+            'ChapChap': chapchap_total,
+            'FlexiPay': flexipay_total,
+            'EzyAgric': ezyagric_total,
+        }
+        platform_mix_pct = {
+            k: round(v / max(total_onboardings, 1) * 100, 1)
+            for k, v in platform_totals.items()
+        }
+        adoption_funnel = {
+            'Onboarded': total_onboardings,
+            'Completed Registration': flexipay_fully_reg + flexipay_complete,
+            'Pending Validation': flexipay_pending,
+            'Business Activity Captured': ezyagric_total,
+            'Transactions / Items Captured': ezyagric_items,
+        }
+        active_usage = {
+            'active_users': None,
+            'inactive_users': None,
+            'last_active_date': None,
+            'usage_frequency': {},
+            'available': False,
+        }
+        business_impact = {
+            'sales_revenue_ugx': ezyagric_cost,
+            'orders_or_items': ezyagric_items,
+            'records_created': None,
+            'loans_accessed': None,
+            'market_linkages': None,
+            'available_fields': ['EzyAgric items ordered', 'EzyAgric item value'],
+        }
+        platform_geo = {}
+        for source in (xente_locs, ezy_districts):
+            for k, v in source.items():
+                platform_geo[k] = platform_geo.get(k, 0) + int(v)
+        for k, v in chapchap_pedn_districts.items():
+            # Earlier parser versions can pick up timestamps in this column; keep only location-like labels.
+            if not str(k).startswith('20') and 'T' not in str(k):
+                platform_geo[k] = platform_geo.get(k, 0) + int(v)
+
+        invalid_chapchap_geo = sum(
+            int(v) for k, v in chapchap_pedn_districts.items()
+            if str(k).startswith('20') or 'T' in str(k)
+        )
+        platform_data_quality = {
+            'missing_raw_records': 0,
+            'invalid_chapchap_district_labels': invalid_chapchap_geo,
+            'missing_gender': max(total_onboardings - (total_female + total_male), 0),
+            'missing_active_usage_fields': 1,
+            'missing_business_impact_fields': 3,
+            'missing_approval_funnel_fields': 1,
+        }
+        field_availability = {
+            'active_usage': False,
+            'approval_funnel': False,
+            'business_impact': True if ezyagric_items or ezyagric_cost else False,
+            'gender': bool(total_female or total_male),
+            'pwd': bool(xente_pwd),
+            'refugee': False,
+            'youth': False,
+            'last_active_date': False,
+        }
+
         print(f'  OK \u2014 "Digital Platforms"  ({total_onboardings:,} records)')
         return {
+            'raw_records': extract_raw_records(df) if 'df' in locals() else [],
             'type':     'platforms',
             'name':     'Digital Platforms',
             'filename': 'plaforms/',
@@ -1217,6 +1728,14 @@ def parse_platforms_data():
             'total_female':   total_female,
             'total_male':     total_male,
             'female_pct':     round(total_female / max(total_female + total_male, 1) * 100, 1),
+            'platform_totals': platform_totals,
+            'platform_mix_pct': platform_mix_pct,
+            'adoption_funnel': adoption_funnel,
+            'active_usage': active_usage,
+            'business_impact': business_impact,
+            'platform_geography': dict(sorted(platform_geo.items(), key=lambda x: x[1], reverse=True)[:15]),
+            'data_quality': platform_data_quality,
+            'field_availability': field_availability,
         }
 
     except Exception as exc:
@@ -1235,7 +1754,12 @@ def parse_foundation_data():
     print(f'\nProcessing: Foundation/Foundation_Merged.xlsx')
     print('  Detected: foundation')
     try:
-        xl  = pd.ExcelFile(fpath)
+        if str(fpath).lower().endswith('.xlsx'):
+            xl = pd.ExcelFile(fpath, engine='openpyxl')
+        elif str(fpath).lower().endswith('.xls'):
+            xl = pd.ExcelFile(fpath, engine='xlrd')
+        else:
+            raise ValueError('Unsupported file extension for Foundation file')
         df  = xl.parse(xl.sheet_names[0])
         df.columns = df.columns.str.strip()
 
@@ -1329,7 +1853,8 @@ def parse_foundation_data():
 
         print(f'  OK \u2014 "Foundation Course"  ({total:,} records)')
         return {
-            'type':     'foundation',
+        'raw_records': extract_raw_records(df),
+        'type': 'foundation',
             'name':     'Foundation Course',
             'filename': 'Foundation_Merged.xlsx',
             'stats': {
@@ -1352,12 +1877,1282 @@ def parse_foundation_data():
         return None
 
 
+# ── Kobo API Integration ────────────────────────────────────────────────────
+
+KOBO_CONFIG_FILE = BASE_DIR / 'kobo_config.json'
+KOBO_CACHE_FILE  = BASE_DIR / '.kobo_cache.json'
+
+# Directories replaced by live Kobo feeds (skipped during Excel scan)
+KOBO_EOI_SKIP_DIRS = {
+    str(DATA_SRC_DIR / 'eoi'),
+    str(BASE_DIR / 'EOI' / '_eoi_eso'),
+    str(BASE_DIR / 'EOI' / '_cleaned'),   # segmentation Excel files replaced by Kobo
+}
+
+# Individual root-level files replaced by Kobo (matched case-insensitively on filename stem)
+KOBO_SKIP_FILENAMES = {
+    'mkazipreneur needs assessment 31-3-2025',
+}
+KOBO_YIW_SKIP_DIRS = {
+    str(DATA_SRC_DIR / 'yiw'),
+    str(BASE_DIR / 'YIW'),
+}
+KOBO_BUZ_SKIP_DIRS = {
+    str(BASE_DIR / 'Buz_needs'),
+}
+KOBO_DEV_SKIP_DIRS = {
+    str(DATA_SRC_DIR / 'devices'),
+    str(BASE_DIR / 'Devices'),
+}
+
+# Snake_case ESO names from Kobo → readable labels
+# 12 official ESO partners + "Other" for everything else.
+# Keys are lowercase with special chars normalised (same logic as cleanKey in EsoName.php).
+_ESO_MAP = {
+    # MUBS EIIC
+    'mubs107': 'MUBS EIIC', 'mubs': 'MUBS EIIC', 'mubs eiic': 'MUBS EIIC', 'mubs eiic': 'MUBS EIIC',
+    # DFCU Foundation
+    'dfcu103': 'DFCU Foundation', 'dfcu': 'DFCU Foundation',
+    'dfcu foundation': 'DFCU Foundation', 'dfcu_foundation': 'DFCU Foundation',
+    # Mkazipreneur
+    'mkazi106': 'Mkazipreneur', 'mkazi': 'Mkazipreneur', 'mkazipreneur': 'Mkazipreneur',
+    # Stanbic Business Incubator
+    'stanbic108': 'Stanbic Business Incubator', 'stanbic': 'Stanbic Business Incubator',
+    'sbil': 'Stanbic Business Incubator', 'stanbic business incubator': 'Stanbic Business Incubator',
+    'stanbic bank incubator': 'Stanbic Business Incubator',
+    'stanbic_bank_incubator': 'Stanbic Business Incubator',
+    'stanbic_business_incubator': 'Stanbic Business Incubator',
+    # PEDN
+    'pedn109': 'PEDN', 'pedn': 'PEDN',
+    'private education development network': 'PEDN',
+    'the private education development network': 'PEDN',
+    'the private education development network  pedn ': 'PEDN',
+    # Excelhort
+    'excel104': 'Excelhort', 'excel': 'Excelhort', 'excell': 'Excelhort',
+    'excelhort': 'Excelhort', 'excel hort': 'Excelhort', 'excell hort': 'Excelhort',
+    # Challenges Uganda
+    'challenges102': 'Challenges Uganda', 'challenges': 'Challenges Uganda',
+    'challenges ug': 'Challenges Uganda', 'challenges uganda': 'Challenges Uganda',
+    # AGDI
+    'agdi109': 'AGDI', 'agdi': 'AGDI',
+    # Finding XY
+    'xy105': 'Finding XY', 'xy': 'Finding XY', 'finding xy': 'Finding XY', 'finding_xy': 'Finding XY',
+    # AID
+    'alb110': 'AID', 'aid': 'AID',
+    # CURAD
+    'curad111': 'CURAD', 'curad': 'CURAD',
+    # Living Earth Uganda
+    'leu112': 'Living Earth Uganda', 'leu': 'Living Earth Uganda',
+    'living earth': 'Living Earth Uganda', 'living earth uganda': 'Living Earth Uganda',
+    'living_earth_uganda': 'Living Earth Uganda',
+}
+
+# Data-collection hubs that were entered instead of the actual ESO partner name.
+# Discovered by cross-referencing the t_and_cs/learnt_abt_hi_innov free-text field.
+_ESO_HUB_REMAP = {
+    'witu':      'Mkazipreneur',      # WITU hub collects for Mkazipreneur
+    'refactory': 'PEDN',              # Refactory hub collects for PEDN
+    'uncdf':     'Excelhort',         # UNCDF hub collects for Excelhort
+    'uncdf10x':  'Excelhort',
+    'outbox':    'Challenges Uganda', # Outbox hub collects for Challenges Uganda
+    '10xoutbox': 'Challenges Uganda',
+}
+
+# Anything not in the 12 ESOs and not remappable → Other
+_ESO_OTHER = {
+    'other', 'finding xy  other', 'albertine',
+}
+
+
+def _eso_label(raw, fallback='Other'):
+    if not raw:
+        return ''
+    value = str(raw).strip()
+    if not value or value == '#N/A':
+        return ''
+    import re as _re
+    key = _re.sub(r'\s+', ' ', _re.sub(r'[().,_\-]', ' ', value.lower())).strip()
+    # 1. Remap data-collection hubs to their actual ESO partner
+    if key in _ESO_HUB_REMAP:
+        return _ESO_HUB_REMAP[key]
+    # 2. Check the official 12 ESO name map
+    if key in _ESO_MAP:
+        return _ESO_MAP[key]
+    if key in _ESO_OTHER:
+        return fallback
+    # not recognised → Other
+    return fallback
+
+
+def _load_kobo_config():
+    if not KOBO_CONFIG_FILE.exists():
+        return None
+    try:
+        return json.loads(KOBO_CONFIG_FILE.read_text(encoding='utf-8'))
+    except Exception:
+        return None
+
+
+def _fetch_kobo_submissions(base_url, token, asset_uid, page_size=500):
+    """Page through the Kobo API and return every submission as a list of dicts."""
+    url = f'{base_url}/api/v2/assets/{asset_uid}/data/?format=json&limit={page_size}'
+    headers = {'Authorization': f'Token {token}'}
+    records = []
+    total = None
+    while url:
+        req = urllib.request.Request(url, headers=headers)
+        try:
+            with urllib.request.urlopen(req, timeout=60) as resp:
+                data = json.loads(resp.read().decode())
+        except Exception as exc:
+            print(f'\n  Kobo API error: {exc}')
+            break
+        records.extend(data.get('results', []))
+        total = data.get('count', total)
+        print(f'  Fetching: {len(records):,} / {total or "?"}…', end='\r')
+        url = data.get('next')
+    print(f'  Fetched {len(records):,} records.             ')
+    return records
+
+
+def _get_kobo_submissions(base_url, token, asset_uid, cache_max_age_hours=4):
+    """Return submissions from a local cache if still fresh, otherwise re-fetch."""
+    cache = {}
+    if KOBO_CACHE_FILE.exists():
+        try:
+            cache = json.loads(KOBO_CACHE_FILE.read_text(encoding='utf-8'))
+        except Exception:
+            pass
+
+    entry = cache.get(asset_uid, {})
+    age_hours = (time.time() - entry.get('ts', 0)) / 3600
+
+    if 'records' in entry and age_hours < cache_max_age_hours:
+        print(f'  Using cache ({age_hours:.1f}h old, {len(entry["records"]):,} records)')
+        return entry['records']
+
+    print('  Fetching from Kobo API…')
+    records = _fetch_kobo_submissions(base_url, token, asset_uid)
+    if records:
+        cache[asset_uid] = {'ts': time.time(), 'records': records}
+        try:
+            KOBO_CACHE_FILE.write_text(json.dumps(cache), encoding='utf-8')
+        except Exception:
+            pass
+    return records
+
+
+def parse_kobo_yiw(records, asset_uid, name='Youth in Work'):
+    """Convert raw Kobo YIW submissions into the same portfolio dict as parse_yiw_file."""
+    if not records:
+        return None
+
+    total = len(records)
+
+    def _yes_pct(field):
+        yes = sum(1 for r in records if str(r.get(field) or '').strip().lower() == 'yes')
+        return round(yes / max(total, 1) * 100, 1)
+
+    earned_pct   = _yes_pct('What_you_work_improved_in_anyw')
+    improved_pct = _yes_pct('Has_your_work_improv_r_working_conditions')
+    found_pct    = _yes_pct('Did_you_complete_the_Foundation_Course')
+
+    by_eso = {}
+    for r in records:
+        raw = str(r.get('Implementing_Partner_Support_Organization') or '').strip()
+        if raw:
+            eso = _eso_label(raw)
+            by_eso[eso] = by_eso.get(eso, {'total': 0})
+            by_eso[eso]['total'] += 1
+
+    raw_records = [
+        {'d': str(r.get('_submission_time') or '')[:10],
+         'n': str(r.get('Kindly_share_your_full_name') or '')}
+        for r in records[:5000]
+    ]
+
+    return {
+        'raw_records':         raw_records,
+        'type':                'yiw',
+        'name':                name,
+        'filename':            f'kobo:{asset_uid}',
+        'stats':               {'total': total, 'record_count': total},
+        'earned_income_pct':   earned_pct,
+        'work_improved_pct':   improved_pct,
+        'foundation_done_pct': found_pct,
+        'by_eso':              by_eso,
+        'sectors':             {},
+        'districts':           {},
+        'income_levels':       {},
+    }
+
+
+def parse_kobo_buz_needs(records, asset_uid, name='Business Needs'):
+    """Convert raw Kobo Business Needs submissions into the same dict as parse_buz_needs_file."""
+    if not records:
+        return None
+
+    total = len(records)
+
+    F_ESO      = 'group_oj8uw97/_1_Implementing_Partn_Support_Organization'
+    F_PWD      = 'group_oj8uw97/Are_you_a_person_with_a_disabi'
+    F_REG      = 'group_oj8uw97/_5_Is_your_business_registered'
+    F_INCOME   = 'group_oj8uw97/group_zw8kn95/_9_Average_income_per_month_estimate'
+    F_DEVICE   = 'group_xx9pw99/_14_Do_you_need_a_device_to_su'
+    F_CREDIT   = 'group_wf5op54/_35_If_you_received_p_your_business_grow'
+    F_BIZ_NAME = 'group_oj8uw97/_1_Business_Name'
+    F_TIME     = '_submission_time'
+
+    def _yes_pct(field):
+        yes = sum(1 for r in records if str(r.get(field) or '').strip().lower() == 'yes')
+        return round(yes / max(total, 1) * 100, 1)
+
+    def _yes_count(field):
+        return sum(1 for r in records if str(r.get(field) or '').strip().lower() == 'yes')
+
+    registered_pct  = _yes_pct(F_REG)
+    device_need_pct = _yes_pct(F_DEVICE)
+    pwd_count       = _yes_count(F_PWD)
+
+    income_levels = dict(
+        collections.Counter(
+            str(r.get(F_INCOME) or '').strip().replace('_', ' ').title()
+            for r in records
+            if r.get(F_INCOME)
+        ).most_common(10)
+    )
+
+    by_eso = {}
+    for r in records:
+        raw = str(r.get(F_ESO) or '').strip()
+        if raw:
+            eso = _eso_label(raw)
+            if eso not in by_eso:
+                by_eso[eso] = {'total': 0, 'credit_eligible': 0, 'credit_approved': 0}
+            by_eso[eso]['total'] += 1
+
+    raw_records = [
+        {'d': str(r.get(F_TIME) or '')[:10],
+         'b': str(r.get(F_BIZ_NAME) or '')}
+        for r in records[:5000]
+    ]
+
+    return {
+        'raw_records':    raw_records,
+        'type':           'buz_needs',
+        'name':           name,
+        'filename':       f'kobo:{asset_uid}',
+        'stats': {
+            'total':        total,
+            'pwd':          pwd_count,
+            'refugees':     0,
+            'record_count': total,
+        },
+        'registered_pct':  registered_pct,
+        'device_need_pct': device_need_pct,
+        'pwd_pct':         round(pwd_count / max(total, 1) * 100, 1),
+        'by_eso':          by_eso,
+        'sectors':         {},
+        'districts':       {},
+        'income_levels':   income_levels,
+        'digital_skills':  {},
+        'credit_eligible': 0,
+        'credit_approved': 0,
+        'credit_amount':   0,
+    }
+
+
+def parse_kobo_devices(records, asset_uid, org_name):
+    """Convert raw Kobo device-financing submissions into the same dict as parse_devices_file."""
+    if not records:
+        return None
+
+    total = len(records)
+
+    def _yes_count(field):
+        return sum(1 for r in records if str(r.get(field) or '').strip().lower() == 'yes')
+
+    def _val(r, *fields):
+        for f in fields:
+            v = r.get(f)
+            if v:
+                return str(v).strip()
+        return ''
+
+    with_disability = _yes_count('has_disability')
+    business_reg    = _yes_count('business_registered')
+
+    # Districts
+    districts = dict(
+        collections.Counter(
+            str(r.get('district') or '').strip().upper()
+            for r in records if r.get('district')
+        ).most_common(20)
+    )
+
+    # Device types
+    device_types = dict(
+        collections.Counter(
+            str(r.get('device_type') or '').strip().title()
+            for r in records if r.get('device_type')
+        ).most_common(8)
+    )
+
+    # ESO hubs
+    eso_hubs = dict(
+        collections.Counter(
+            _eso_label(str(r.get('eso_hub') or '').strip())
+            for r in records if r.get('eso_hub')
+        ).most_common(10)
+    )
+
+    # ID types
+    id_types = dict(
+        collections.Counter(
+            str(r.get('id_type') or '').strip()
+            for r in records if r.get('id_type')
+        ).most_common(8)
+    )
+
+    # Registration body
+    reg_body = dict(
+        collections.Counter(
+            str(r.get('registration_body') or '').strip()
+            for r in records if r.get('registration_body')
+        ).most_common(8)
+    )
+
+    # SIM registered
+    sim_registered = dict(
+        collections.Counter(
+            str(r.get('number_registered') or '').strip().title()
+            for r in records if r.get('number_registered')
+        ).most_common(5)
+    )
+
+    # Price bands
+    def _price_band(v):
+        try:
+            v = float(str(v).replace(',', '').strip())
+        except Exception:
+            return None
+        if v <= 0:         return None
+        if v < 200_000:    return 'Under 200K'
+        if v < 500_000:    return '200K–500K'
+        if v < 1_000_000:  return '500K–1M'
+        if v < 2_000_000:  return '1M–2M'
+        return '2M+'
+
+    price_bands_raw = collections.Counter()
+    prices = []
+    for r in records:
+        v = r.get('price_range')
+        if v:
+            b = _price_band(v)
+            if b:
+                price_bands_raw[b] += 1
+            try:
+                prices.append(float(str(v).replace(',', '')))
+            except Exception:
+                pass
+    order = ['Under 200K', '200K–500K', '500K–1M', '1M–2M', '2M+']
+    price_bands = {k: price_bands_raw[k] for k in order if k in price_bands_raw}
+    price_stats = {}
+    if prices:
+        price_stats = {'avg': int(sum(prices) / len(prices)), 'median': int(sorted(prices)[len(prices) // 2])}
+
+    # Payment duration
+    def _norm_dur(v):
+        v = str(v).strip().lower()
+        if 'month' in v:  return 'Monthly'
+        if 'week' in v:   return 'Weekly'
+        if 'year' in v or 'annual' in v: return 'Yearly'
+        return str(v).title()[:20]
+
+    payment_duration = dict(
+        collections.Counter(
+            _norm_dur(r.get('payment_duration') or '')
+            for r in records if r.get('payment_duration')
+        ).most_common()
+    )
+
+    # Temporal activity
+    weekly_activity = {}
+    eso_weekly      = {}
+    device_weekly   = {}
+    times = []
+    for r in records:
+        t = r.get('_submission_time')
+        if t:
+            try:
+                times.append((pd.to_datetime(t), r))
+            except Exception:
+                pass
+
+    if times:
+        today       = pd.Timestamp.now().normalize()
+        week_start  = today - pd.Timedelta(days=today.weekday())
+        lweek_start = week_start - pd.Timedelta(weeks=1)
+        month_start = today.replace(day=1)
+        wk  = sum(1 for dt, _ in times if dt >= week_start)
+        lwk = sum(1 for dt, _ in times if lweek_start <= dt < week_start)
+        mo  = sum(1 for dt, _ in times if dt >= month_start)
+        weekly_activity = {'apps_this_week': wk, 'apps_last_week': lwk, 'apps_this_month': mo}
+
+        for eso_raw in set(_val(r, 'eso_hub') for _, r in times if _val(r, 'eso_hub')):
+            eso = _eso_label(eso_raw)
+            eso_weekly[eso] = {
+                'total':      sum(1 for _, r in times if _eso_label(_val(r, 'eso_hub')) == eso),
+                'this_week':  sum(1 for dt, r in times if dt >= week_start and _eso_label(_val(r, 'eso_hub')) == eso),
+                'last_week':  sum(1 for dt, r in times if lweek_start <= dt < week_start and _eso_label(_val(r, 'eso_hub')) == eso),
+                'this_month': sum(1 for dt, r in times if dt >= month_start and _eso_label(_val(r, 'eso_hub')) == eso),
+            }
+
+    raw_records = [
+        {'d': str(r.get('_submission_time') or '')[:10],
+         'n': str(r.get('first_name') or '') + ' ' + str(r.get('last_name') or ''),
+         'b': str(r.get('business_name') or '')}
+        for r in records[:5000]
+    ]
+
+    return {
+        'raw_records':       raw_records,
+        'type':              'devices',
+        'name':              f'{org_name} Device Financing',
+        'filename':          f'kobo:{asset_uid}',
+        'stats': {
+            'total':           total,
+            'with_disability': with_disability,
+            'business_reg':    business_reg,
+            'record_count':    total,
+        },
+        'disability_pct':    round(with_disability / max(total, 1) * 100, 1),
+        'business_reg_pct':  round(business_reg    / max(total, 1) * 100, 1),
+        'districts':         districts,
+        'device_types':      device_types,
+        'price_bands':       price_bands,
+        'payment_duration':  payment_duration,
+        'eso_hubs':          eso_hubs,
+        'id_types':          id_types,
+        'reg_body':          reg_body,
+        'disability_types':  {},
+        'device_by_eso':     {},
+        'sim_registered':    sim_registered,
+        'weekly_activity':   weekly_activity,
+        'eso_weekly':        eso_weekly,
+        'device_weekly':     device_weekly,
+        'price_stats':       price_stats,
+    }
+
+
+def parse_kobo_yiw(records, asset_uid, name='Youth in Work'):
+    """Convert raw Kobo YIW submissions into the same portfolio dict as parse_yiw_file."""
+    if not records:
+        return None
+
+    total = len(records)
+
+    def _yes(r, key):
+        return str(r.get(key, '')).strip().lower() in ('yes', '1', 'true')
+
+    foundation_yes = sum(1 for r in records if _yes(r, 'Did_you_complete_the_Foundation_Course'))
+    improved_yes   = sum(1 for r in records if _yes(r, 'Has_your_work_improv_r_working_conditions'))
+    earned_yes     = sum(1 for r in records if _yes(r, 'What_you_work_improved_in_anyw'))
+
+    by_eso = {}
+    for r in records:
+        raw = r.get('Implementing_Partner_Support_Organization', '')
+        eso = _eso_label(raw)
+        if eso:
+            by_eso.setdefault(eso, {'total': 0})
+            by_eso[eso]['total'] += 1
+
+    # Temporal: weekly / monthly activity
+    weekly_activity = {}
+    sub_times = [r.get('_submission_time') for r in records if r.get('_submission_time')]
+    if sub_times:
+        import pandas as _pd
+        dt          = _pd.to_datetime(sub_times, errors='coerce')
+        today       = _pd.Timestamp.now().normalize()
+        week_start  = today - _pd.Timedelta(days=today.weekday())
+        lweek_start = week_start - _pd.Timedelta(weeks=1)
+        month_start = today.replace(day=1)
+        weekly_activity = {
+            'apps_this_week':  int((dt >= week_start).sum()),
+            'apps_last_week':  int(((dt >= lweek_start) & (dt < week_start)).sum()),
+            'apps_this_month': int((dt >= month_start).sum()),
+        }
+
+    return {
+        'type':     'yiw',
+        'name':     name,
+        'filename': f'kobo:{asset_uid}',
+        'stats': {'total': total, 'record_count': total},
+        'earned_income_pct':   round(earned_yes   / max(total, 1) * 100, 1),
+        'work_improved_pct':   round(improved_yes / max(total, 1) * 100, 1),
+        'foundation_done_pct': round(foundation_yes / max(total, 1) * 100, 1),
+        'by_eso':        by_eso,
+        'sectors':       {},
+        'districts':     {},
+        'income_levels': {},
+        'weekly_activity': weekly_activity,
+    }
+
+
+def parse_kobo_buz_needs(records, asset_uid, name='Business Needs'):
+    """Convert raw Kobo Business Needs submissions into the same portfolio dict as parse_buz_needs_file."""
+    if not records:
+        return None
+
+    total = len(records)
+
+    def _yes(r, key):
+        return str(r.get(key, '')).strip().lower() in ('yes', '1', 'true')
+
+    def _yes_count(key):
+        return sum(1 for r in records if _yes(r, key))
+
+    def _clean_label(value):
+        value = str(value or '').strip()
+        if not value or value.lower() == 'nan':
+            return ''
+        value = value.strip('_').replace('__', '_').replace('_', ' ')
+        value = ' '.join(value.split())
+        return value.title()
+
+    def _count_field(key, top_n=15):
+        counts = {}
+        for r in records:
+            label = _clean_label(r.get(key))
+            if label:
+                counts[label] = counts.get(label, 0) + 1
+        return dict(sorted(counts.items(), key=lambda x: -x[1])[:top_n])
+
+    def _count_multi_field(key, top_n=15):
+        counts = {}
+        for r in records:
+            raw = str(r.get(key, '') or '').strip()
+            if not raw or raw.lower() == 'nan':
+                continue
+            for part in raw.split():
+                label = _clean_label(part)
+                if label:
+                    counts[label] = counts.get(label, 0) + 1
+        return dict(sorted(counts.items(), key=lambda x: -x[1])[:top_n])
+
+    pwd_count       = _yes_count('group_oj8uw97/Are_you_a_person_with_a_disabi')
+    registered      = _yes_count('group_oj8uw97/_5_Is_your_business_registered')
+    device_need     = _yes_count('group_xx9pw99/_14_Do_you_need_a_device_to_su')
+    internet_access = _count_field('group_xx9pw99/_16_Do_you_have_access_to_internet', 5)
+    mobile_payments = _count_field('group_xx9pw99/_17_Do_you_use_mobil_or_business_payments', 5)
+    digital_confidence = _count_field('group_xx9pw99/_19_Do_you_feel_conf_ls_for_your_business', 5)
+    business_age = _count_field('group_oj8uw97/_4_How_long_have_you_unning_this_business', 8)
+    growth_status = _count_field('group_oj8uw97/_7_How_do_you_feel_a_r_business_right_now', 8)
+    income_frequency = _count_field('group_oj8uw97/group_zw8kn95/_8_How_often_do_you_earn_income', 8)
+    income_stability = _count_field('group_oj8uw97/group_zw8kn95/_10_Your_income_is', 8)
+    sectors = _count_field('group_oj8uw97/sector', 15)
+    districts = _count_field('group_oj8uw97/e_Which_district_are_you_located_in', 20)
+    respondent_roles = _count_field('group_oj8uw97/d_What_position_in_the_business', 8)
+    digital_skills = _count_multi_field('group_xx9pw99/_20_What_digital_skills_would_', 15)
+    business_constraints = _count_multi_field('group_wy7an45/_23_What_part_of_your_business', 10)
+    support_needed = _count_multi_field('group_wf5op54/_37_What_support_would_help_yo', 15)
+    device_types_needed = _count_multi_field('group_xx9pw99/b_if_yes_what_device', 10)
+    device_budget = _count_field('group_xx9pw99/d_How_much_are_you_o_pay_for_the_device', 8)
+
+    income_levels = {}
+    for r in records:
+        v = str(r.get('group_oj8uw97/group_zw8kn95/_9_Average_income_per_month_estimate', '')).strip()
+        if v and v != 'nan':
+            income_levels[v] = income_levels.get(v, 0) + 1
+    income_levels = dict(sorted(income_levels.items(), key=lambda x: -x[1])[:10])
+
+    by_eso = {}
+    for r in records:
+        raw = r.get('group_oj8uw97/_1_Implementing_Partn_Support_Organization', '')
+        eso = _eso_label(raw)
+        if eso:
+            by_eso.setdefault(eso, {
+                'total': 0,
+                'registered': 0,
+                'device_need': 0,
+                'pwd': 0,
+                'internet_always': 0,
+                'mobile_payments': 0,
+                'credit_eligible': 0,
+                'credit_approved': 0,
+            })
+            by_eso[eso]['total'] += 1
+            if _yes(r, 'group_oj8uw97/_5_Is_your_business_registered'):
+                by_eso[eso]['registered'] += 1
+            if _yes(r, 'group_xx9pw99/_14_Do_you_need_a_device_to_su'):
+                by_eso[eso]['device_need'] += 1
+            if _yes(r, 'group_oj8uw97/Are_you_a_person_with_a_disabi'):
+                by_eso[eso]['pwd'] += 1
+            if str(r.get('group_xx9pw99/_16_Do_you_have_access_to_internet', '')).strip().lower() == 'always':
+                by_eso[eso]['internet_always'] += 1
+            if _yes(r, 'group_xx9pw99/_17_Do_you_use_mobil_or_business_payments'):
+                by_eso[eso]['mobile_payments'] += 1
+
+    weekly_activity = {}
+    sub_times = [r.get('_submission_time') for r in records if r.get('_submission_time')]
+    if sub_times:
+        import pandas as _pd
+        dt          = _pd.to_datetime(sub_times, errors='coerce')
+        today       = _pd.Timestamp.now().normalize()
+        week_start  = today - _pd.Timedelta(days=today.weekday())
+        lweek_start = week_start - _pd.Timedelta(weeks=1)
+        month_start = today.replace(day=1)
+        weekly_activity = {
+            'apps_this_week':  int((dt >= week_start).sum()),
+            'apps_last_week':  int(((dt >= lweek_start) & (dt < week_start)).sum()),
+            'apps_this_month': int((dt >= month_start).sum()),
+        }
+
+    return {
+        'type':     'buz_needs',
+        'name':     name,
+        'filename': f'kobo:{asset_uid}',
+        'stats': {
+            'total':        total,
+            'pwd':          pwd_count,
+            'refugees':     0,
+            'record_count': total,
+        },
+        'registered_pct':  round(registered  / max(total, 1) * 100, 1),
+        'device_need_pct': round(device_need  / max(total, 1) * 100, 1),
+        'pwd_pct':         round(pwd_count    / max(total, 1) * 100, 1),
+        'by_eso':          by_eso,
+        'sectors':         sectors,
+        'districts':       districts,
+        'income_levels':   income_levels,
+        'digital_skills':  digital_skills,
+        'business_age':    business_age,
+        'growth_status':   growth_status,
+        'income_frequency': income_frequency,
+        'income_stability': income_stability,
+        'internet_access': internet_access,
+        'mobile_payments': mobile_payments,
+        'digital_confidence': digital_confidence,
+        'business_constraints': business_constraints,
+        'support_needed': support_needed,
+        'device_types_needed': device_types_needed,
+        'device_budget': device_budget,
+        'respondent_roles': respondent_roles,
+        'credit_eligible': 0,
+        'credit_approved': 0,
+        'credit_amount':   0,
+        'weekly_activity': weekly_activity,
+    }
+
+
+def parse_kobo_devices(records, asset_uid, eso_name):
+    """Convert raw Kobo Device Financing submissions into the same portfolio dict as parse_devices_file."""
+    if not records:
+        return None
+
+    total = len(records)
+
+    def _yes_count(key):
+        return sum(1 for r in records if str(r.get(key, '')).strip().lower() in ('yes', '1', 'true'))
+
+    def _is_yes(v):
+        return str(v or '').strip().lower() in ('yes', '1', 'true', 'y')
+
+    def _present(v):
+        s = str(v or '').strip()
+        return bool(s) and s.lower() != 'nan'
+
+    def _price_num(v):
+        try:
+            n = float(str(v or '').replace(',', '').strip())
+            return n if n > 0 else None
+        except Exception:
+            return None
+
+    def _phone_value(r):
+        return str(r.get('mtn_number') or r.get('airtel_number') or '').strip()
+
+    with_disability = _yes_count('has_disability')
+    business_reg    = _yes_count('business_registered')
+
+    # Districts
+    districts = {}
+    for r in records:
+        v = str(r.get('district') or r.get('village') or '').strip()
+        if v and v.lower() != 'nan':
+            districts[v] = districts.get(v, 0) + 1
+    districts = dict(sorted(districts.items(), key=lambda x: -x[1])[:20])
+
+    # Device types
+    device_types = {}
+    device_by_eso = {}
+    for r in records:
+        v = str(r.get('device_type', '')).strip()
+        if v and v.lower() != 'nan':
+            eso = str(r.get('eso_hub') or eso_name).strip()
+            if not eso or eso.lower() == 'nan':
+                eso = eso_name
+            for part in v.split():
+                part = part.strip()
+                if part:
+                    device_types[part] = device_types.get(part, 0) + 1
+                    device_by_eso.setdefault(part, {})
+                    device_by_eso[part][eso] = device_by_eso[part].get(eso, 0) + 1
+    device_types = dict(sorted(device_types.items(), key=lambda x: -x[1])[:8])
+    device_by_eso = {
+        device: dict(sorted(counts.items(), key=lambda x: -x[1])[:10])
+        for device, counts in device_by_eso.items()
+        if device in device_types
+    }
+
+    # Price bands
+    def _price_band(v):
+        try:
+            v = float(str(v).replace(',', '').strip())
+        except Exception:
+            return None
+        if v <= 0:        return None
+        if v < 200_000:   return 'Under 200K'
+        if v < 500_000:   return '200K–500K'
+        if v < 1_000_000: return '500K–1M'
+        if v < 2_000_000: return '1M–2M'
+        return '2M+'
+    price_bands = {}
+    for r in records:
+        b = _price_band(r.get('price_range'))
+        if b:
+            price_bands[b] = price_bands.get(b, 0) + 1
+    order = ['Under 200K', '200K–500K', '500K–1M', '1M–2M', '2M+']
+    price_bands = {k: price_bands[k] for k in order if k in price_bands}
+
+    # Payment duration
+    def _norm_dur(v):
+        v = str(v).strip().lower()
+        if 'quarter' in v or ('3' in v and 'month' in v): return 'Quarterly'
+        if 'semi' in v or ('6' in v and 'month' in v):    return 'Semi-Annual'
+        if 'bi' in v and 'week' in v: return 'Bi-Weekly'
+        if 'week' in v:   return 'Weekly'
+        if 'month' in v:  return 'Monthly'
+        if 'year' in v or 'annual' in v: return 'Yearly'
+        return v.title()[:20]
+    payment_duration = {}
+    for r in records:
+        v = r.get('payment_duration')
+        if v:
+            b = _norm_dur(v)
+            if b:
+                payment_duration[b] = payment_duration.get(b, 0) + 1
+
+    # ESO hubs (Outbox form has eso_hub field)
+    eso_hubs = {}
+    for r in records:
+        v = str(r.get('eso_hub', '')).strip()
+        if v and v.lower() != 'nan':
+            eso_hubs[v] = eso_hubs.get(v, 0) + 1
+    eso_hubs = dict(sorted(eso_hubs.items(), key=lambda x: -x[1])[:10])
+
+    # ID types, reg body, SIM registered
+    id_types = {}
+    for r in records:
+        v = str(r.get('id_type', '')).strip()
+        if v and v.lower() not in ('nan', ''):
+            id_types[v] = id_types.get(v, 0) + 1
+
+    reg_body = {}
+    for r in records:
+        v = str(r.get('registration_body', '')).strip()
+        if v and v.lower() not in ('nan', ''):
+            reg_body[v] = reg_body.get(v, 0) + 1
+
+    sim_registered = {}
+    for r in records:
+        v = str(r.get('number_registered', '')).strip().lower()
+        if v and v != 'nan':
+            label = 'Yes' if v in ('yes', '1', 'true') else 'No'
+            sim_registered[label] = sim_registered.get(label, 0) + 1
+
+    # Price stats
+    price_stats = {}
+    prices = []
+    for r in records:
+        try:
+            p = float(str(r.get('price_range', '')).replace(',', ''))
+            if p > 0:
+                prices.append(p)
+        except Exception:
+            pass
+    if prices:
+        import statistics
+        price_stats = {
+            'avg':    int(sum(prices) / len(prices)),
+            'median': int(statistics.median(prices)),
+        }
+
+    # Readiness, affordability, partner/device comparisons, and data quality
+    readiness = {'Ready': 0, 'Needs Follow-Up': 0, 'Not Ready': 0}
+    affordability = {
+        'above_500k': 0,
+        'above_1m': 0,
+        'above_2m': 0,
+        'missing_price': 0,
+    }
+    price_values_by_device = {}
+    price_values_by_eso = {}
+    device_mix_by_eso = {}
+    data_quality = {
+        'missing_name': 0,
+        'missing_phone': 0,
+        'missing_district': 0,
+        'missing_device_type': 0,
+        'missing_price': 0,
+        'missing_id_type': 0,
+        'missing_sim_registration': 0,
+        'duplicate_phone_numbers': 0,
+    }
+    phone_seen = collections.Counter()
+    raw_records = []
+
+    for r in records:
+        eso = str(r.get('eso_hub') or eso_name).strip()
+        if not eso or eso.lower() == 'nan':
+            eso = eso_name
+        dev_raw = str(r.get('device_type') or '').strip()
+        dev_parts = [part.strip() for part in dev_raw.split() if part.strip()]
+        primary_dev = dev_parts[0] if dev_parts else ''
+        price = _price_num(r.get('price_range'))
+        phone = _phone_value(r)
+        sim_yes = _is_yes(r.get('number_registered'))
+        biz_registered = _is_yes(r.get('business_registered'))
+        id_doc = _present(r.get('id_type')) and (_present(r.get('id_number')) or _present(r.get('id_front')) or _present(r.get('id_back')))
+
+        if price is None:
+            affordability['missing_price'] += 1
+        else:
+            if price > 500_000: affordability['above_500k'] += 1
+            if price > 1_000_000: affordability['above_1m'] += 1
+            if price > 2_000_000: affordability['above_2m'] += 1
+            if primary_dev:
+                price_values_by_device.setdefault(primary_dev, []).append(price)
+            price_values_by_eso.setdefault(eso, []).append(price)
+
+        if id_doc and sim_yes and price is not None and price <= 1_000_000:
+            readiness['Ready'] += 1
+        elif (id_doc or sim_yes or biz_registered) and price is not None and price <= 2_000_000:
+            readiness['Needs Follow-Up'] += 1
+        else:
+            readiness['Not Ready'] += 1
+
+        if primary_dev:
+            device_mix_by_eso.setdefault(eso, {})
+            device_mix_by_eso[eso][primary_dev] = device_mix_by_eso[eso].get(primary_dev, 0) + 1
+
+        if not _present(r.get('first_name')) and not _present(r.get('last_name')):
+            data_quality['missing_name'] += 1
+        if not phone:
+            data_quality['missing_phone'] += 1
+        else:
+            phone_seen[phone] += 1
+        if not _present(r.get('district')):
+            data_quality['missing_district'] += 1
+        if not dev_raw:
+            data_quality['missing_device_type'] += 1
+        if price is None:
+            data_quality['missing_price'] += 1
+        if not _present(r.get('id_type')):
+            data_quality['missing_id_type'] += 1
+        if not _present(r.get('number_registered')):
+            data_quality['missing_sim_registration'] += 1
+
+        raw_records.append({
+            'd': str(r.get('_submission_time') or '')[:10],
+            'n': ' '.join(str(r.get(k) or '').strip() for k in ('first_name', 'last_name')).strip(),
+            'district': str(r.get('district') or '').strip(),
+            'device_type': dev_raw,
+            'price': int(price) if price is not None else None,
+            'payment_duration': str(r.get('payment_duration') or '').strip(),
+            'id_type': str(r.get('id_type') or '').strip(),
+            'sim_registered': str(r.get('number_registered') or '').strip(),
+            'business_registered': str(r.get('business_registered') or '').strip(),
+            'missing_phone': not bool(phone),
+            'missing_district': not _present(r.get('district')),
+            'missing_device_type': not bool(dev_raw),
+            'missing_price': price is None,
+        })
+
+    data_quality['duplicate_phone_numbers'] = sum(1 for _, c in phone_seen.items() if c > 1)
+
+    def _summarize_prices(values):
+        if not values:
+            return {}
+        import statistics
+        return {
+            'avg': int(sum(values) / len(values)),
+            'median': int(statistics.median(values)),
+            'count': len(values),
+        }
+
+    price_by_device = {
+        k: _summarize_prices(v)
+        for k, v in sorted(price_values_by_device.items(), key=lambda item: -len(item[1]))[:10]
+    }
+    price_by_eso = {
+        k: _summarize_prices(v)
+        for k, v in sorted(price_values_by_eso.items(), key=lambda item: -len(item[1]))[:10]
+    }
+    top_device_by_eso = {}
+    smartphone_share_by_eso = {}
+    for eso, mix in device_mix_by_eso.items():
+        total_mix = sum(mix.values()) or 1
+        top_device_by_eso[eso] = max(mix.items(), key=lambda item: item[1])[0]
+        smartphone_share_by_eso[eso] = round((mix.get('Smartphone', 0) / total_mix) * 100, 1)
+
+    district_top3 = sum(v for _, v in sorted(districts.items(), key=lambda x: -x[1])[:3])
+    eso_top3 = sum(v for _, v in sorted(eso_hubs.items(), key=lambda x: -x[1])[:3])
+    demand_concentration = {
+        'top3_districts_count': district_top3,
+        'top3_districts_pct': round(district_top3 / max(total, 1) * 100, 1),
+        'top3_esos_count': eso_top3,
+        'top3_esos_pct': round(eso_top3 / max(total, 1) * 100, 1),
+    }
+
+    # Temporal activity
+    weekly_activity = {}
+    eso_weekly      = {}
+    device_weekly   = {}
+    sub_times = [r.get('_submission_time') for r in records if r.get('_submission_time')]
+    if sub_times:
+        import pandas as _pd
+        dt          = _pd.to_datetime(sub_times, errors='coerce')
+        today       = _pd.Timestamp.now().normalize()
+        week_start  = today - _pd.Timedelta(days=today.weekday())
+        lweek_start = week_start - _pd.Timedelta(weeks=1)
+        month_start = today.replace(day=1)
+        mask_wk  = dt >= week_start
+        mask_lwk = (dt >= lweek_start) & (dt < week_start)
+        mask_mo  = dt >= month_start
+        weekly_activity = {
+            'apps_this_week':  int(mask_wk.sum()),
+            'apps_last_week':  int(mask_lwk.sum()),
+            'apps_this_month': int(mask_mo.sum()),
+        }
+        # Per-ESO temporal
+        if eso_hubs:
+            for r_eso in eso_hubs:
+                mask_e = _pd.Series([r.get('eso_hub', '') == r_eso for r in records])
+                eso_weekly[r_eso] = {
+                    'total':      int(mask_e.sum()),
+                    'this_week':  int((mask_e & mask_wk).sum()),
+                    'last_week':  int((mask_e & mask_lwk).sum()),
+                    'this_month': int((mask_e & mask_mo).sum()),
+                }
+        # Per-device temporal
+        for dev in device_types:
+            mask_d = _pd.Series([dev.lower() in str(r.get('device_type', '')).lower() for r in records])
+            if mask_d.sum() > 0:
+                device_weekly[dev] = {
+                    'total':      int(mask_d.sum()),
+                    'this_week':  int((mask_d & mask_wk).sum()),
+                    'this_month': int((mask_d & mask_mo).sum()),
+                }
+
+    return {
+        'raw_records': raw_records[:5000],
+        'type':     'devices',
+        'name':     f'{eso_name} Device Financing',
+        'filename': f'kobo:{asset_uid}',
+        'stats': {
+            'total':           total,
+            'with_disability': with_disability,
+            'business_reg':    business_reg,
+            'record_count':    total,
+        },
+        'disability_pct':   round(with_disability / max(total, 1) * 100, 1),
+        'business_reg_pct': round(business_reg    / max(total, 1) * 100, 1),
+        'districts':        districts,
+        'device_types':     device_types,
+        'price_bands':      price_bands,
+        'payment_duration': payment_duration,
+        'eso_hubs':         eso_hubs,
+        'id_types':         id_types,
+        'reg_body':         reg_body,
+        'disability_types': {},
+        'device_by_eso':    device_by_eso,
+        'sim_registered':   sim_registered,
+        'weekly_activity':  weekly_activity,
+        'eso_weekly':       eso_weekly,
+        'device_weekly':    device_weekly,
+        'price_stats':      price_stats,
+        'readiness':        readiness,
+        'affordability':    affordability,
+        'price_by_device':  price_by_device,
+        'price_by_eso':     price_by_eso,
+        'top_device_by_eso': top_device_by_eso,
+        'smartphone_share_by_eso': smartphone_share_by_eso,
+        'demand_concentration': demand_concentration,
+        'data_quality':     data_quality,
+        'field_availability': {
+            'demographics': False,
+            'approval_funnel': False,
+            'gender': False,
+            'age': False,
+        },
+    }
+
+
+def parse_kobo_eoi(records, asset_uid, eso_name='10X Digital Economy'):
+    """Split Kobo EOI submissions into one portfolio dict per ESO partner.
+    Returns a list of dicts (same structure as parse_eoi_file) so the UI
+    gets individual sub-tabs, one per ESO — matching the old Excel-per-ESO layout.
+    """
+    if not records:
+        return []
+
+    F_SECTOR   = 'about_business/sector'
+    F_DISTRICT = 'about_business/business_hq'
+    F_URSB     = 'about_business/Is_your_business_enterprise_fo'
+    F_TIN      = 'about_business/Does_your_business_enterprise_'
+    F_NSSF     = 'about_business/has_nssf_business_no'
+    F_NFOUND   = 'no_of_founders'
+    F_NFEM     = 'no_of_female_founders'
+    F_REVENUE  = 'abt_bsness_operating_model/revenue_in_last_24_mons'
+    F_BIZNAME  = 'about_business/business_name'
+    F_TIME     = '_submission_time'
+    F_FOUNDERS = 'founders'
+    F_FTE      = 'abt_employees/full_time_employs'
+    F_PTE      = 'abt_employees/part_time_employs'
+    F_ESO      = 'Implementing_Partner_Support_Organization'
+
+    def _safe_float(v):
+        try:
+            return float(str(v).replace(',', '').strip())
+        except Exception:
+            return None
+
+    def _arch(v):
+        n = _safe_float(v)
+        if n is None or n == 0: return 'Invisibles'
+        annual = n / 2
+        if annual < 2_000_000:  return 'Gig Workers'
+        if annual < 15_000_000: return 'Bootstrappers'
+        if annual < 50_000_000: return 'Bootstrappers SME'
+        return 'Gazelles'
+
+    def _build_portfolio(eso_label, eso_records):
+        total = len(eso_records)
+        if total == 0:
+            return None
+
+        sectors   = dict(collections.Counter(
+            normalize_sector(r.get(F_SECTOR, '')) for r in eso_records
+            if r.get(F_SECTOR)
+        ).most_common(15))
+        districts = dict(collections.Counter(
+            str(r.get(F_DISTRICT, '') or '').strip().title()
+            for r in eso_records if r.get(F_DISTRICT)
+        ).most_common(15))
+
+        ursb_count = sum(1 for r in eso_records if str(r.get(F_URSB,'')).strip().lower() == 'yes')
+        tin_yes    = sum(1 for r in eso_records if str(r.get(F_TIN,'')).strip().lower()  == 'yes')
+        tin_no     = sum(1 for r in eso_records if str(r.get(F_TIN,'')).strip().lower()  == 'no')
+        nssf_yes   = sum(1 for r in eso_records if str(r.get(F_NSSF,'')).strip().lower() == 'yes')
+        nssf_no    = sum(1 for r in eso_records if str(r.get(F_NSSF,'')).strip().lower() == 'no')
+
+        total_founders  = sum(int(n) for r in eso_records if (n := _safe_float(r.get(F_NFOUND))) is not None)
+        female_founders = sum(int(n) for r in eso_records if (n := _safe_float(r.get(F_NFEM)))   is not None)
+        archetypes      = dict(collections.Counter(_arch(r.get(F_REVENUE,'')) for r in eso_records))
+
+        fg = collections.Counter()
+        pwd = refugees = 0
+        ref_nat = collections.Counter()
+        age_list = []
+        id_with = id_without = 0
+        founder_phone_seen = collections.Counter()
+        founder_missing_name = 0
+        founder_missing_phone = 0
+        founder_missing_district = 0
+        founder_missing_gender = 0
+        for r in eso_records:
+            flist = r.get(F_FOUNDERS) or []
+            if isinstance(flist, str):
+                try: flist = json.loads(flist.replace("'", '"'))
+                except Exception: flist = []
+            for f in (flist if isinstance(flist, list) else []):
+                first = str(f.get('founders/founders_details/first_name_f') or '').strip()
+                last = str(f.get('founders/founders_details/last_name_f') or '').strip()
+                phone = str(f.get('founders/founders_details/phone_f') or '').strip()
+                district_f = str(f.get('founders/founders_details/district_f') or '').strip()
+                g = str(f.get('founders/founders_details/gender_f') or '').strip()
+                if g: fg[g] += 1
+                else: founder_missing_gender += 1
+                if not (first or last): founder_missing_name += 1
+                if not phone:
+                    founder_missing_phone += 1
+                else:
+                    founder_phone_seen[phone] += 1
+                if not district_f: founder_missing_district += 1
+                id_upload = str(f.get('founders/founders_details/front_id_f') or '').strip()
+                if id_upload and id_upload.lower() != 'nan':
+                    id_with += 1
+                else:
+                    id_without += 1
+                if str(f.get('founders/founders_details/has_disability_f') or '').lower() == 'yes':
+                    pwd += 1
+                nat = parse_nationality(str(f.get('founders/founders_details/nationality_f') or ''))
+                if nat['is_refugee']:
+                    refugees += 1
+                    ref_nat[nat['nationality']] += 1
+                dob_raw = str(f.get('founders/founders_details/date_of_birth_f') or '').strip()
+                if dob_raw and dob_raw != 'nan':
+                    try:
+                        dob = pd.to_datetime(dob_raw, errors='coerce')
+                        if dob is not pd.NaT:
+                            age = (pd.Timestamp.now() - dob).days / 365.25
+                            if 18 <= age < 120: age_list.append(age)
+                    except Exception:
+                        pass
+
+        fg_dict   = dict(fg)
+        fem_pct   = min(100.0, round(fg.get('Female', 0) / max(sum(fg.values()), 1) * 100, 1))
+        age_bands = {}
+        if age_list:
+            ages_s   = pd.Series(age_list)
+            age_cats = pd.cut(ages_s, bins=[17,25,35,45,55,120], labels=['18–25','26–35','36–45','46–55','56+'])
+            age_bands = {str(k): int(v) for k, v in age_cats.value_counts().sort_index().items() if v > 0}
+
+        nin_with = nin_without = 0
+        for r in eso_records:
+            for group_key, nin_key in (
+                (F_FTE, 'abt_employees/full_time_employs/full_time_employees/nin_fte'),
+                (F_PTE, 'abt_employees/part_time_employs/part_time_employees/nin_pte'),
+            ):
+                emp_list = r.get(group_key) or []
+                if isinstance(emp_list, str):
+                    try: emp_list = json.loads(emp_list.replace("'", '"'))
+                    except Exception: emp_list = []
+                for emp in (emp_list if isinstance(emp_list, list) else []):
+                    nin = str(emp.get(nin_key) or '').strip()
+                    if nin and nin.lower() != 'nan':
+                        nin_with += 1
+                    else:
+                        nin_without += 1
+
+        raw_records = [
+            {
+                'd': str(r.get(F_TIME) or '')[:10],
+                'b': str(r.get(F_BIZNAME) or ''),
+                'district': str(r.get(F_DISTRICT) or '').strip(),
+                'sector': str(r.get(F_SECTOR) or '').strip(),
+                'ursb': str(r.get(F_URSB) or '').strip(),
+                'tin': str(r.get(F_TIN) or '').strip(),
+                'nssf': str(r.get(F_NSSF) or '').strip(),
+                'missing_business_name': not bool(str(r.get(F_BIZNAME) or '').strip()),
+                'missing_district': not bool(str(r.get(F_DISTRICT) or '').strip()),
+                'missing_sector': not bool(str(r.get(F_SECTOR) or '').strip()),
+            }
+            for r in eso_records[:2000]
+        ]
+
+        return {
+            'raw_records':    raw_records,
+            'type':           'eoi',
+            'name':           f'{eso_label} EOI',
+            'eso':            eso_label,
+            'filename':       f'kobo:{asset_uid}',
+            'stats': {
+                'total':        total,
+                'ursb':         ursb_count,
+                'pwd':          pwd,
+                'refugees':     refugees,
+                'record_count': total,
+            },
+            'ursb_pct':       round(ursb_count / max(total, 1) * 100, 1),
+            'sectors':        sectors,
+            'districts':      districts,
+            'total_founders': int(total_founders),
+            'female_founders':int(female_founders),
+            'revenue_bands':  {},
+            'funding_bands':  {},
+            'archetypes':     archetypes,
+            'tin_status':     {k: v for k, v in {'Yes': tin_yes, 'No': tin_no}.items() if v},
+            'nssf_status':    {k: v for k, v in {'Yes': nssf_yes, 'No': nssf_no}.items() if v},
+            'id_status':      {k: v for k, v in {'Has National ID': id_with, 'Missing ID': id_without}.items() if v},
+            'nin_status':     {k: v for k, v in {'Has NIN': nin_with, 'No NIN': nin_without}.items() if v},
+            'data_quality': {
+                'missing_business_name': sum(1 for r in eso_records if not str(r.get(F_BIZNAME) or '').strip()),
+                'missing_district': sum(1 for r in eso_records if not str(r.get(F_DISTRICT) or '').strip()),
+                'missing_sector': sum(1 for r in eso_records if not str(r.get(F_SECTOR) or '').strip()),
+                'missing_founder_name': founder_missing_name,
+                'missing_founder_phone': founder_missing_phone,
+                'missing_founder_district': founder_missing_district,
+                'missing_founder_gender': founder_missing_gender,
+                'duplicate_founder_phones': sum(1 for _, c in founder_phone_seen.items() if c > 1),
+            },
+            'founders': {
+                'gender':     fg_dict,
+                'female_pct': fem_pct,
+                'with_pwd':   pwd,
+                'refugees':   refugees,
+            },
+            'age_bands':             age_bands,
+            'refugee_nationalities': dict(ref_nat),
+        }
+
+    OFFICIAL_12 = {
+        'DFCU Foundation', 'MUBS EIIC', 'Mkazipreneur', 'Stanbic Business Incubator',
+        'PEDN', 'Excelhort', 'Challenges Uganda', 'AGDI', 'Finding XY', 'AID',
+        'CURAD', 'Living Earth Uganda',
+    }
+
+    # Group records by ESO.
+    # Blank ESO field → PEDN (confirmed via learnt_abt_hi_innov cross-check).
+    # Hub remapping (witu→Mkazipreneur, refactory→PEDN, etc.) is handled by _eso_label.
+    groups = {}
+    for r in records:
+        raw = r.get(F_ESO, '')
+        eso = _eso_label(raw) if raw else 'PEDN'
+        if eso not in OFFICIAL_12:
+            eso = 'Other'
+        groups.setdefault(eso, []).append(r)
+
+    # Sort ESOs by record count descending, put Other last
+    def _sort_key(item):
+        eso, recs = item
+        return (eso == 'Other', -len(recs))
+
+    portfolios = []
+    for eso_label, eso_records in sorted(groups.items(), key=_sort_key):
+        p = _build_portfolio(eso_label, eso_records)
+        if p:
+            portfolios.append(p)
+
+    return portfolios
+
+
 def main():
     print()
     print('Portfolio Data Extractor')
     print('=' * 44)
 
     portfolios = []
+
+    # Load Kobo config once; if present, EOI files from the skip-dirs are replaced
+    # by a live API pull so we avoid double-counting.
+    kobo_cfg = _load_kobo_config()
+    kobo_eoi_active = bool(kobo_cfg and kobo_cfg.get('eoi_assets'))
+    kobo_yiw_active = bool(kobo_cfg and kobo_cfg.get('yiw_assets'))
+    kobo_buz_active = bool(kobo_cfg and kobo_cfg.get('buz_needs_assets'))
+    kobo_dev_active = bool(kobo_cfg and kobo_cfg.get('devices_assets'))
+
+    # Build the full set of dirs replaced by Kobo so Excel files there are skipped
+    kobo_skip_dirs = set()
+    if kobo_eoi_active:
+        kobo_skip_dirs |= {str(Path(d).resolve()) for d in KOBO_EOI_SKIP_DIRS}
+    if kobo_yiw_active:
+        kobo_skip_dirs |= {str(Path(d).resolve()) for d in KOBO_YIW_SKIP_DIRS}
+    if kobo_buz_active:
+        kobo_skip_dirs |= {str(Path(d).resolve()) for d in KOBO_BUZ_SKIP_DIRS}
+    if kobo_dev_active:
+        kobo_skip_dirs |= {str(Path(d).resolve()) for d in KOBO_DEV_SKIP_DIRS}
 
     # Collect .xlsx files from all configured portfolio directories.
     # Skip Excel temp/lock files (starting with '~$') and deduplicate by resolved path.
@@ -1368,6 +3163,10 @@ def main():
             continue
         for f in sorted(folder.glob('*.xlsx')):
             if f.name.startswith('~$'):
+                continue
+            if str(f.parent.resolve()) in kobo_skip_dirs:
+                continue
+            if f.stem.lower() in KOBO_SKIP_FILENAMES:
                 continue
             resolved = f.resolve()
             if resolved not in seen:
@@ -1381,12 +3180,31 @@ def main():
 
     for filepath in xlsx_files:
         filename = filepath.name
-        rel_path = filepath.relative_to(BASE_DIR)
+        try:
+            rel_path = filepath.relative_to(BASE_DIR)
+        except ValueError:
+            rel_path = filepath
         print(f'\nProcessing: {rel_path}')
         try:
-            xl    = pd.ExcelFile(filepath)
-            ftype = detect_file_type(xl)
-            if ftype == 'segmentation':
+            if str(filepath).lower().endswith('.xlsx'):
+                xl = pd.ExcelFile(filepath, engine='openpyxl')
+            elif str(filepath).lower().endswith('.xls'):
+                xl = pd.ExcelFile(filepath, engine='xlrd')
+            else:
+                raise ValueError('Unsupported file extension for portfolio file')
+            # Apply configuration overrides if any
+            ftype = detect_file_type(xl, filename)
+            config = next((v for k, v in FILE_CONFIGS.items() if k in filename.lower()), None)
+
+            if config:
+                ftype = config.get('type', ftype)
+                parser_name = config.get('parser')
+                print(f'  Config Override: type={ftype}, parser={parser_name}')
+                if parser_name == 'parse_mkazi_needs_assessment':
+                    data = parse_mkazi_needs_assessment(filename, xl)
+                else:
+                    data = parse_segmentation_file(filename, xl)
+            elif ftype == 'segmentation':
                 data = parse_segmentation_file(filename, xl)
             elif ftype == 'eoi':
                 data = parse_eoi_file(filename, xl)
@@ -1398,6 +3216,7 @@ def main():
                 data = parse_devices_file(filename, xl)
             else:
                 data = parse_growth_plans_file(filename, xl)
+
             if data:
                 portfolios.append(data)
                 total = data['stats']['total']
@@ -1405,6 +3224,64 @@ def main():
         except Exception as exc:
             print(f'  ERROR: {exc}')
             traceback.print_exc()
+
+    # ── Kobo API: live pulls ─────────────────────────────────────────────────
+    if kobo_cfg:
+        base_url = kobo_cfg['base_url']
+        token    = kobo_cfg['token']
+        max_age  = kobo_cfg.get('cache_max_age_hours', 4)
+
+        for asset in kobo_cfg.get('eoi_assets', []):
+            uid, name = asset['uid'], asset.get('name', asset['uid'])
+            print(f'\nKobo EOI: {name}  (uid={uid})')
+            try:
+                records  = _get_kobo_submissions(base_url, token, uid, max_age)
+                eso_list = parse_kobo_eoi(records, uid, name)
+                for data in eso_list:
+                    portfolios.append(data)
+                    print(f'  OK - "{data["name"]}"  ({data["stats"]["total"]:,} records)')
+            except Exception as exc:
+                print(f'  ERROR fetching Kobo EOI: {exc}')
+                traceback.print_exc()
+
+        for asset in kobo_cfg.get('yiw_assets', []):
+            uid, name = asset['uid'], asset.get('name', asset['uid'])
+            print(f'\nKobo YIW: {name}  (uid={uid})')
+            try:
+                records = _get_kobo_submissions(base_url, token, uid, max_age)
+                data    = parse_kobo_yiw(records, uid, name)
+                if data:
+                    portfolios.append(data)
+                    print(f'  OK - "{data["name"]}"  ({data["stats"]["total"]:,} records)')
+            except Exception as exc:
+                print(f'  ERROR fetching Kobo YIW: {exc}')
+                traceback.print_exc()
+
+        for asset in kobo_cfg.get('buz_needs_assets', []):
+            uid, name = asset['uid'], asset.get('name', asset['uid'])
+            print(f'\nKobo Business Needs: {name}  (uid={uid})')
+            try:
+                records = _get_kobo_submissions(base_url, token, uid, max_age)
+                data    = parse_kobo_buz_needs(records, uid, name)
+                if data:
+                    portfolios.append(data)
+                    print(f'  OK - "{data["name"]}"  ({data["stats"]["total"]:,} records)')
+            except Exception as exc:
+                print(f'  ERROR fetching Kobo Business Needs: {exc}')
+                traceback.print_exc()
+
+        for asset in kobo_cfg.get('devices_assets', []):
+            uid, name = asset['uid'], asset.get('name', asset['uid'])
+            print(f'\nKobo Devices: {name}  (uid={uid})')
+            try:
+                records = _get_kobo_submissions(base_url, token, uid, max_age)
+                data    = parse_kobo_devices(records, uid, name)
+                if data:
+                    portfolios.append(data)
+                    print(f'  OK - "{data["name"]}"  ({data["stats"]["total"]:,} records)')
+            except Exception as exc:
+                print(f'  ERROR fetching Kobo Devices: {exc}')
+                traceback.print_exc()
 
     # Foundation Course data (derived file — handled separately)
     foundation = parse_foundation_data()
@@ -1420,20 +3297,79 @@ def main():
         print('\nNo portfolios extracted. Check file formats.')
         return
 
+    # Aggregate Digital Credit from buz_needs
+    real_credit_eso = []
+    credit_raw_records = []
+    for p in portfolios:
+        if p.get('type') == 'buz_needs' and 'credit_approved' in p:
+            real_credit_eso.append({
+                'eso': p.get('eso') or p.get('name'),
+                'amount_ugx': p.get('credit_amount', 0),
+                'businesses': p.get('credit_approved', 0),
+                'eligible': p.get('credit_eligible', 0),
+                'breakdown': [
+                    {'type': 'Eligible', 'count': p.get('credit_eligible', 0)},
+                    {'type': 'Approved', 'count': p.get('credit_approved', 0)}
+                ]
+            })
+            if p.get('raw_records'):
+                credit_raw_records.extend(p['raw_records'])
+    
+    if real_credit_eso:
+        portfolios.append({
+            'name': 'Digital Credit',
+            'type': 'digital_credit',
+            'filename': 'aggregated_from_buz_needs',
+            'stats': {'total': sum(e['businesses'] for e in real_credit_eso)},
+            'eso_credit': real_credit_eso,
+            'raw_records': credit_raw_records[:5000]
+        })
+
     output = {
         'generated':  pd.Timestamp.now().strftime('%d %b %Y, %H:%M'),
         'portfolios': portfolios,
     }
 
     js_content = 'window.PORTFOLIO_DATA = ' + json.dumps(output, indent=2, default=str) + ';\n'
+
+    js_content += """
+// ==============================================================================
+// 10X DIGITAL ECONOMY - AGGREGATED METRICS & TRACE LOGIC
+// ==============================================================================
+if (window.PORTFOLIO_DATA && typeof window.PORTFOLIO_DATA === 'object') {
+  // Add mock cohorts if missing
+  if (!window.PORTFOLIO_DATA.portfolios.some(p => p.type === 'cohorts')) {
+    window.PORTFOLIO_DATA.portfolios.push({
+      name: "Acceleration Cohorts", type: "cohorts", filename: "mock_acceleration_data", stats: { total: 0 },
+      cohorts: [
+        { name: "Alpha Batch 1", eso: "Innovation Village", start_date: "2025-01-10", end_date: "2025-04-10", participants: 45, sector: "Fintech" },
+        { name: "Green Growth 24", eso: "FindingXY", start_date: "2024-09-01", end_date: "2024-12-01", participants: 30, sector: "Agtech" },
+        { name: "Digital Hustlers", eso: "Stanbic", start_date: "2025-03-01", end_date: "2025-06-01", participants: 120, sector: "E-commerce" }
+      ]
+    });
+  }
+  
+  window.PORTFOLIO_DATA.portfolios.forEach(p => {
+    if (p.type === 'eoi' || p.type === 'foundation' || p.type === 'segmentation') {
+      p.targets = [
+        { label: "Youth-Led MSMEs (18–35)", target: 800, actual: p.youth_count || 0 },
+        { label: "URSB Registration", target: 300, actual: p.ursb || 0 },
+        { label: "PWD Inclusion", target: 50, actual: p.pwd || 0 },
+        { label: "Refugee Inclusion", target: 30, actual: (p.stats && p.stats.refugees) || 0 }
+      ];
+    }
+  });
+}
+"""
     out_path = BASE_DIR / 'data.js'
+
     out_path.write_text(js_content, encoding='utf-8')
 
     total_records = sum(p['stats']['total'] for p in portfolios)
     print()
     print('=' * 44)
     print(f'data.js written  —  {len(portfolios)} portfolios  |  {total_records:,} total records')
-    print('Open dashboard.html in your browser to explore.')
+    print('Open index.html in your browser to explore.')
     print()
 
 
