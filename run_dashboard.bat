@@ -23,8 +23,7 @@ if errorlevel 1 (
 )
 
 echo.
-echo  [2/2]  Opening dashboard in your browser...
-start "" "%~dp0dashboard.html"
-
-echo  Done.  Press any key to close this window.
-pause >nul
+echo  [2/2]  Starting dynamic watcher and local web server (http://localhost:8000)...
+echo  (Leave this window open to automatically regenerate data when files change)
+start http://localhost:8000
+python serve_dynamic.py

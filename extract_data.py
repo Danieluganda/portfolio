@@ -19,6 +19,7 @@ import time
 import collections
 import urllib.request
 import hashlib
+import os
 from pathlib import Path
 
 BASE_DIR = Path(__file__).parent
@@ -1905,6 +1906,7 @@ def parse_foundation_data():
 # ── Kobo API Integration ────────────────────────────────────────────────────
 
 KOBO_CONFIG_FILE = BASE_DIR / 'kobo_config.json'
+KOBO_LOCAL_CONFIG_FILE = BASE_DIR / 'kobo_config.local.json'
 KOBO_CACHE_FILE  = BASE_DIR / '.kobo_cache.json'
 
 # Directories replaced by live Kobo feeds (skipped during Excel scan)
@@ -2010,10 +2012,24 @@ def _eso_label(raw, fallback='Other'):
 
 
 def _load_kobo_config():
-    if not KOBO_CONFIG_FILE.exists():
+    env_token = os.environ.get('KOBO_TOKEN', '').strip()
+    env_base_url = os.environ.get('KOBO_BASE_URL', '').strip()
+    if env_token:
+        cfg = {}
+        if KOBO_CONFIG_FILE.exists():
+            try:
+                cfg = json.loads(KOBO_CONFIG_FILE.read_text(encoding='utf-8'))
+            except Exception:
+                cfg = {}
+        cfg['token'] = env_token
+        cfg['base_url'] = env_base_url or cfg.get('base_url') or 'https://kf.kobotoolbox.org'
+        return cfg
+
+    config_file = KOBO_LOCAL_CONFIG_FILE if KOBO_LOCAL_CONFIG_FILE.exists() else KOBO_CONFIG_FILE
+    if not config_file.exists():
         return None
     try:
-        return json.loads(KOBO_CONFIG_FILE.read_text(encoding='utf-8'))
+        return json.loads(config_file.read_text(encoding='utf-8'))
     except Exception:
         return None
 

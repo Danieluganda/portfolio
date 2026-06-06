@@ -1,0 +1,20 @@
+# Local Kobo credentials and API cache
+kobo_config.json
+kobo_config.local.json
+.kobo_cache.json
+
+# Generated sync logs
+logs/
+
+# Python runtime/cache files
+__pycache__/
+*.pyc
+
+# Local scratch/output files
+error.txt
+out.txt
+diff.txt
+script.js
+script_*.js
+Untitled-*.js
+

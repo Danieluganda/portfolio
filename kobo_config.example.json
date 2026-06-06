@@ -1,0 +1,19 @@
+{
+  "base_url": "https://kf.kobotoolbox.org",
+  "token": "PASTE_KOBO_TOKEN_HERE_OR_SET_KOBO_TOKEN_ENV",
+  "cache_max_age_hours": 4,
+  "eoi_assets": [
+    { "uid": "YOUR_EOI_ASSET_UID", "name": "10X Digital Economy" }
+  ],
+  "yiw_assets": [
+    { "uid": "YOUR_YIW_ASSET_UID", "name": "Youth in Work" }
+  ],
+  "buz_needs_assets": [
+    { "uid": "YOUR_BUSINESS_NEEDS_ASSET_UID", "name": "Business Needs" }
+  ],
+  "devices_assets": [
+    { "uid": "YOUR_OUTBOX_DEVICE_ASSET_UID", "name": "Outbox" },
+    { "uid": "YOUR_WITU_DEVICE_ASSET_UID", "name": "WITU" },
+    { "uid": "YOUR_REFACTORY_DEVICE_ASSET_UID", "name": "Refactory" }
+  ]
+}

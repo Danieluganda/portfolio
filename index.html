@@ -5116,6 +5116,30 @@ window.setTimePeriod = function(btn, period) {
     document.getElementById('last-updated').textContent = 'data.js not found — run extract_data.py';
   }
 
+  function setupScheduledDataRefresh() {
+    const syncWindows = [
+      { label: '0700', hour: 7, minute: 5 },
+      { label: '1200', hour: 12, minute: 5 },
+      { label: '1700', hour: 17, minute: 5 },
+    ];
+    const check = () => {
+      const now = new Date();
+      const today = now.toISOString().slice(0, 10);
+      const activeWindow = syncWindows
+        .filter(slot => now.getHours() > slot.hour || (now.getHours() === slot.hour && now.getMinutes() >= slot.minute))
+        .pop();
+      if (!activeWindow) return;
+
+      const key = `portfolio-refresh-${today}-${activeWindow.label}`;
+      if (sessionStorage.getItem(key)) return;
+      sessionStorage.setItem(key, '1');
+      window.location.reload();
+    };
+
+    window.setTimeout(check, 30 * 1000);
+    window.setInterval(check, 5 * 60 * 1000);
+  }
+
   function init() {
     const data = window.PORTFOLIO_DATA;
     if (!data || !Array.isArray(data.portfolios) || !data.portfolios.length) {
@@ -5128,6 +5152,7 @@ window.setTimePeriod = function(btn, period) {
 
     document.getElementById('last-updated').textContent = 'Last extracted: ' + data.generated;
     document.getElementById('total-pill').textContent   = totalAll.toLocaleString() + ' total records';
+    setupScheduledDataRefresh();
 
     const typeBar = document.getElementById('type-tabs-bar');
     const content  = document.getElementById('main-content');
