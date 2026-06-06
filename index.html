@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Portfolio Intelligence Dashboard</title>
+  <title>Portfolio Insights</title>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <script src="data.js?v=20260605-devices-eso"></script>
   <style>
@@ -1410,13 +1410,146 @@
         min-height: 160px;
       }
     }
+
+    /* Final responsive fit layer */
+    .content {
+      width: 100%;
+      max-width: none;
+      margin: 0;
+      padding-left: clamp(12px, 2vw, 32px);
+      padding-right: clamp(12px, 2vw, 32px);
+    }
+    .panel.active {
+      width: 100%;
+    }
+    .section-hdr,
+    .port-header,
+    .landing-card,
+    .metric-card,
+    .card,
+    .col-section {
+      max-width: 100%;
+    }
+    .landing-grid {
+      width: 100%;
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+      align-items: stretch;
+    }
+    .landing-grid.two,
+    .landing-grid.three,
+    .landing-grid.four {
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
+    }
+    .kpi-strip-7,
+    .kpi-row {
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 145px), 1fr));
+    }
+    .funnel {
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+    }
+    .three-col {
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+    }
+    .three-col > .col-section,
+    .three-col > .col-section[style*="span 2"],
+    .col-section[style*="grid-column:span 2"],
+    .col-section[style*="grid-column: span 2"] {
+      grid-column: auto !important;
+    }
+    .snapshot-row,
+    .bar-row {
+      grid-template-columns: minmax(120px, 1fr) minmax(120px, 1.4fr) max-content;
+    }
+    .snapshot-row > *,
+    .bar-row > *,
+    .credit-row > *,
+    .target-row > * {
+      min-width: 0;
+    }
+    .snapshot-row strong,
+    .bar-stat,
+    .credit-amt,
+    .credit-count {
+      overflow-wrap: anywhere;
+    }
+    .landing-card,
+    .metric-card,
+    .kpi-box {
+      overflow: hidden;
+    }
+    .metric-grid {
+      grid-template-columns: repeat(auto-fit, minmax(min(100%, 150px), 1fr)) !important;
+    }
+    .metric-grid .metric-card {
+      min-height: 76px;
+      padding: 12px 12px 11px;
+    }
+    .metric-grid .metric-card .metric-value {
+      font-size: clamp(1.2rem, 1.35vw, 1.65rem);
+      line-height: 1;
+    }
+    .metric-grid .metric-card .metric-label,
+    .metric-grid .metric-card .metric-note {
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    .type-tabs-bar,
+    .sub-tabs-bar,
+    .time-filter-bar {
+      width: 100%;
+    }
+    .tf-badge {
+      margin-left: auto;
+    }
+
+    @media(min-width:1500px) {
+      .content {
+        padding-left: clamp(18px, 1.6vw, 40px);
+        padding-right: clamp(18px, 1.6vw, 40px);
+      }
+      .landing-grid.three,
+      .landing-grid.four {
+        grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+      }
+      .landing-grid.two {
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+      }
+      .kpi-strip-7 {
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      }
+    }
+
+    @media(max-width:900px) {
+      .landing-grid,
+      .landing-grid.two,
+      .landing-grid.three,
+      .landing-grid.four,
+      .three-col {
+        grid-template-columns: 1fr !important;
+      }
+      .snapshot-row,
+      .bar-row,
+      .credit-row,
+      .target-row {
+        grid-template-columns: 1fr !important;
+      }
+      .kpi-strip-7[style*="grid-template-columns"],
+      .activity-strip[style*="grid-template-columns"],
+      div[style*="grid-template-columns:1fr 1fr"],
+      div[style*="grid-template-columns:1fr 1fr 1fr 1fr"] {
+        grid-template-columns: 1fr !important;
+      }
+      .tf-badge {
+        margin-left: 0;
+      }
+    }
   </style>
 </head>
 <body>
 
 <div class="header">
   <div class="header-left">
-    <h1>Portfolio Intelligence Dashboard</h1>
+    <h1>Portfolio Insights</h1>
     <div class="sub" id="last-updated">Loading…</div>
   </div>
   <div class="header-right">
@@ -1754,7 +1887,7 @@ window.setTimePeriod = function(btn, period) {
   /* ─────────────────────────────────────────────────────────────
      DIGITAL CREDIT BUILDER
   ───────────────────────────────────────────────────────────── */
-  function buildDigitalCreditHTML(creditData) {
+  function buildDigitalCreditHTMLLegacy(creditData) {
     if (!creditData || !creditData.eso_credit) {
       return `<div class="no-data" style="padding:60px 24px;text-align:center">
         <div style="font-size:3rem;margin-bottom:16px">💳</div>
@@ -3843,7 +3976,7 @@ window.setTimePeriod = function(btn, period) {
     const totalBusinesses = totalOf(needs) || eoi.reduce((s, p) => s + (p.stats?.ursb || 0), 0);
     const totalDevices = totalOf(devices);
     const totalPlatformUsers = totalOf(platforms);
-    const totalCreditUsers = credit.reduce((s, p) => s + (p.eso_credit || []).reduce((x, e) => x + (e.businesses || e.eligible || 0), 0), 0);
+    const totalCreditUsers = credit.reduce((s, p) => s + (p.credit_demand || p.stats?.total || (p.eso_credit || []).reduce((x, e) => x + (e.demand || e.businesses || e.eligible || 0), 0)), 0);
     const gender = sumObj(eoi.map(p => p.founders?.gender || p.gender || {}));
     const ageGroups = sumObj(eoi.map(p => p.age_bands || {}));
     const regions = sumObj(eoi.map(p => p.districts || {}));
@@ -3887,12 +4020,12 @@ window.setTimePeriod = function(btn, period) {
         <span class="type-badge badge-all">${portfolios.length} datasets</span>
       </div>
 
-      <div class="landing-grid three">
+      <div class="landing-grid three metric-grid">
         ${metric(fmt(totalEoi), 'Total EOIs', `${eoi.length} ESO groups`, 'blue')}
         ${metric(fmt(totalBusinesses), 'Business Needs Records', 'Submissions, not unique businesses', 'green')}
         ${metric(fmt(totalDevices), 'Total Devices', `${fmt(Object.values(deviceTypes).reduce((a,b)=>a+b,0))} requested`, 'orange')}
         ${metric(fmt(totalPlatformUsers), 'Platform Users', `${Object.keys(platformTotals).length} platforms`, 'purple')}
-        ${metric(fmt(totalCreditUsers), 'Digital Credit Users', totalCreditUsers ? 'Tracked providers' : 'No credit users recorded', 'teal')}
+        ${metric(fmt(totalCreditUsers), 'Digital Credit Demand', totalCreditUsers ? 'Demand/readiness signal' : 'No credit demand recorded', 'teal')}
       </div>
 
       <div class="landing-card" style="margin-bottom:12px">
@@ -3956,7 +4089,7 @@ window.setTimePeriod = function(btn, period) {
         <div class="insight-list">
           <div class="insight good">${topPlatform[0]} is the strongest tracked platform signal with ${fmt(topPlatform[1])} users.</div>
           <div class="insight info">${topRegion[0]} leads geographic activity with ${fmt(topRegion[1])} records.</div>
-          <div class="insight info">Named needs and credit-provider counts only show when those exact fields are present in the source data.</div>
+          <div class="insight info">Digital credit currently shows demand/readiness. Provider approval, disbursement, and repayment only show when those source fields exist.</div>
         </div>
       </div>
     `;
@@ -4006,7 +4139,67 @@ window.setTimePeriod = function(btn, period) {
     const totalNeeds = totalOf(needs);
     const totalDevices = totalOf(devices);
     const totalPlatforms = totalOf(platforms);
-    const totalCredit = totalOf(credit);
+    const totalCredit = credit.reduce((s, p) => s + (p.credit_demand || p.stats?.total || 0), 0);
+    const creditReady = credit.reduce((s, p) => s + (p.credit_ready || 0), 0);
+    const creditFollowup = credit.reduce((s, p) => s + (p.credit_followup || 0), 0);
+    const creditDenied = credit.reduce((s, p) => s + (p.denied_loan_count || 0), 0);
+    const creditRequested = credit.reduce((s, p) => s + (p.credit_amount_stats?.total_requested_ugx || 0), 0);
+    const creditAvgRequest = credit.reduce((s, p) => s + (p.credit_amount_stats?.avg_requested_ugx || 0), 0);
+    const creditCrossref = credit.reduce((acc, p) => {
+      const x = p.eoi_credit_crossref || {};
+      acc.checked += Number(x.credit_records_checked || 0);
+      acc.matched += Number(x.matched_total || 0);
+      acc.phone += Number(x.matched_by_phone || 0);
+      acc.email += Number(x.matched_by_email || 0);
+      acc.business += Number(x.matched_by_business_name || 0);
+      acc.nationalId += Number(x.matched_with_national_id || 0);
+      acc.eoiRegistration += Number(x.matched_with_eoi_registration || 0);
+      acc.tin += Number(x.matched_with_tin || 0);
+      acc.nssf += Number(x.matched_with_nssf || 0);
+      acc.hasPhoneEmail = acc.hasPhoneEmail || !!x.business_needs_phone_email_available;
+      acc.note = x.match_note || acc.note;
+      return acc;
+    }, { checked: 0, matched: 0, phone: 0, email: 0, business: 0, nationalId: 0, eoiRegistration: 0, tin: 0, nssf: 0, hasPhoneEmail: false, note: '' });
+    const creditChecklist = {};
+    credit.forEach(p => {
+      Object.entries(p.true_readiness_checklist || {}).forEach(([key, item]) => {
+        creditChecklist[key] = creditChecklist[key] || { count: 0, denominator: 0, available: false, source: item.source || '' };
+        creditChecklist[key].count += Number(item.count || 0);
+        creditChecklist[key].denominator += Number(item.denominator || 0);
+        creditChecklist[key].available = creditChecklist[key].available || !!item.available;
+        creditChecklist[key].source = item.source || creditChecklist[key].source;
+      });
+    });
+    const creditChecklistLabels = {
+      business_registered: 'Business Registered',
+      business_type_sector: 'Business Type / Sector',
+      repay_confidence: 'Can Repay',
+      amount_needed: 'Amount Needed',
+      owner_national_id: 'Owner National ID',
+      eoi_business_registration: 'EOI Registration',
+      eoi_tin: 'EOI TIN',
+      eoi_nssf: 'EOI NSSF',
+      phone_registered_in_owner_name: 'Phone in Owner Name',
+      actual_provider_application: 'Provider Application',
+      approved_or_disbursed: 'Approved / Disbursed',
+      repayment_history: 'Repayment History',
+    };
+    const creditChecklistRows = Object.entries(creditChecklist).map(([key, item]) => {
+      const pct = item.denominator ? (item.count / item.denominator * 100).toFixed(1) + '%' : '0.0%';
+      return [creditChecklistLabels[key] || clean(key), item.available ? item.count : 0, item.available ? `${fmt(item.count)} (${pct})` : 'Missing / not linked'];
+    });
+    const creditReadinessObj = {
+      'Screening ready': creditReady,
+      'Needs follow-up': creditFollowup,
+      'Not ready yet': Math.max(totalCredit - creditReady - creditFollowup, 0),
+    };
+    const creditCrossrefObj = {
+      'Matched to EOI': creditCrossref.matched,
+      'National ID matched': creditCrossref.nationalId,
+      'EOI registration matched': creditCrossref.eoiRegistration,
+      'TIN matched': creditCrossref.tin,
+      'NSSF matched': creditCrossref.nssf,
+    };
 
     const quality = {};
     active.forEach(p => {
@@ -4029,6 +4222,13 @@ window.setTimePeriod = function(btn, period) {
       esoMap[eso][p.type] = (esoMap[eso][p.type] || 0) + (p.stats?.total || 0);
       esoMap[eso].quality += Object.values(p.data_quality || {}).reduce((a, b) => a + (Number(b) || 0), 0);
     });
+    credit.forEach(p => {
+      (p.eso_credit || []).forEach(row => {
+        const eso = row.eso || 'Unknown';
+        esoMap[eso] = esoMap[eso] || { eoi: 0, buz_needs: 0, devices: 0, platforms: 0, digital_credit: 0, quality: 0 };
+        esoMap[eso].digital_credit += Number(row.demand || row.businesses || 0);
+      });
+    });
     const esoRows = Object.entries(esoMap).sort((a, b) => (b[1].eoi + b[1].devices + b[1].buz_needs) - (a[1].eoi + a[1].devices + a[1].buz_needs)).slice(0, 12)
       .map(([eso, d]) => `<tr>
         <td>${eso}</td>
@@ -4044,23 +4244,26 @@ window.setTimePeriod = function(btn, period) {
       ['EOI to Business Needs', totalEoi, totalNeeds, 'Approximate only: forms are not linked by stable person/business ID.'],
       ['Business Needs to Devices', totalNeeds, totalDevices, 'Approximate only: no shared unique applicant ID across forms.'],
       ['Devices to Platforms', totalDevices, totalPlatforms, 'Approximate only: platform data is aggregate/onboarding-oriented.'],
-      ['Platforms to Credit', totalPlatforms, totalCredit, 'Credit status fields are incomplete in current source data.'],
+      ['Business Needs to Credit Demand', totalNeeds, totalCredit, 'Credit is demand/readiness, not approved/disbursed outcomes.'],
+      ['Credit Demand to Screening Ready', totalCredit, creditReady, 'Screening readiness proxy; strict approval readiness still needs linked ID/provider data.'],
     ];
     const alertItems = [
       duplicateSignals ? insight('Duplicate Signals', fmt(duplicateSignals), 'Duplicate phone indicators found across EOI and Devices quality checks.', 'warn') : insight('Duplicate Signals', '0', 'No duplicate phone signals found in quality metrics.', 'good'),
       quality.datasets_without_raw_records ? insight('Raw Record Gaps', fmt(quality.datasets_without_raw_records), 'Some datasets do not expose raw records for detailed quality checks.', 'warn') : insight('Raw Record Coverage', 'Available', 'All active datasets expose some raw record detail.', 'good'),
-      totalCredit === 0 ? insight('Credit Outcome Gap', 'No credit users recorded', 'Digital credit exists as a page but current source data has no approved/actual credit counts.', 'warn') : insight('Credit Outcome Signal', fmt(totalCredit), 'Digital credit users are available.', 'good'),
+      totalCredit === 0 ? insight('Credit Demand Gap', 'No credit demand recorded', 'Digital Credit has no demand records in current source data.', 'warn') : insight('Credit Demand Signal', fmt(totalCredit), 'Credit demand is available from Business Needs.', 'good'),
+      creditCrossref.checked ? insight('Credit Cross-Reference', `${fmt(creditCrossref.matched)} / ${fmt(creditCrossref.checked)}`, creditCrossref.hasPhoneEmail ? 'Business Needs phone/email matching is available.' : 'Business Needs has no phone/email, so matches rely on normalized business name.', creditCrossref.hasPhoneEmail ? 'good' : 'warn') : '',
+      credit.find(p => p.field_availability?.provider === false) ? insight('Credit Outcome Fields', 'Missing provider/disbursement/repayment', 'Credit page is truthful demand/readiness until provider outcome data is added.', 'warn') : '',
       quality.datasets_without_approval_fields ? insight('Approval Funnel Missing', fmt(quality.datasets_without_approval_fields), 'Some forms do not have eligibility/approval/disbursement/rejection fields.', 'warn') : '',
       topEntries(districtTotals, 1)[0] ? insight('Highest Geography Signal', topEntries(districtTotals, 1)[0][0], `${fmt(topEntries(districtTotals, 1)[0][1])} records`, 'info') : '',
     ].join('');
 
     return `
       <div class="section-hdr">
-        <h2>Portfolio Intelligence Center</h2>
+        <h2>Portfolio Analysis Center</h2>
         <span class="type-badge badge-all">${active.length} active datasets</span>
       </div>
 
-      <div class="landing-grid three">
+      <div class="landing-grid three metric-grid">
         ${metric(fmt(qualityTotal), 'Quality Signals', 'Missing, duplicate, and unavailable-field counts', 'orange')}
         ${metric(fmt(Object.keys(esoMap).length), 'ESO 360 Profiles', 'Partners with linked portfolio records', 'blue')}
         ${metric(fmt(duplicateSignals), 'Duplicate Signals', 'Phone duplication indicators', duplicateSignals ? 'red' : 'green')}
@@ -4090,6 +4293,42 @@ window.setTimePeriod = function(btn, period) {
               <span class="funnel-rate">${fmt(next)} of ${fmt(base)} records</span>
               <span class="funnel-rate">${note}</span>
             </div>`).join('')}
+        </div>
+      </div>
+
+      <div class="section-hdr">
+        <h2>Digital Credit Intelligence</h2>
+        <span class="type-badge badge-digital_credit">Demand · readiness · cross-reference</span>
+      </div>
+      <div class="landing-grid three metric-grid">
+        ${metric(fmt(totalCredit), 'Credit Demand', 'From Business Needs finance signals', 'teal')}
+        ${metric(fmt(creditReady), 'Screening Ready', `${pctText(creditReady, totalCredit)} of demand`, 'green')}
+        ${metric(fmt(creditFollowup), 'Needs Follow-Up', `${pctText(creditFollowup, totalCredit)} of demand`, 'orange')}
+        ${metric(creditAvgRequest ? 'UGX ' + fmt(creditAvgRequest) : 'Missing', 'Avg Amount Needed', creditRequested ? `UGX ${fmt(creditRequested)} total requested` : 'Amount field missing', creditAvgRequest ? 'purple' : 'red')}
+        ${metric(fmt(creditDenied), 'Denied Before', 'Prior denied-loan experience', creditDenied ? 'red' : 'blue')}
+        ${metric(`${fmt(creditCrossref.matched)} / ${fmt(creditCrossref.checked)}`, 'EOI Cross-Ref Match', creditCrossref.hasPhoneEmail ? 'Phone/email matching available' : 'Phone/email missing; fallback used', creditCrossref.hasPhoneEmail ? 'green' : 'red')}
+      </div>
+
+      <div class="landing-grid three">
+        <div class="landing-card">
+          <h3>Credit Readiness</h3>
+          ${rows(topEntries(creditReadinessObj, 3), Math.max(totalCredit, 1), '#0F766E')}
+        </div>
+        <div class="landing-card">
+          <h3>Strict Readiness Checklist</h3>
+          <div class="snapshot-list">${creditChecklistRows.map(([label, count, display]) => `
+            <div class="snapshot-row">
+              <span title="${clean(label)}">${clean(label)}</span>
+              <div class="mini-track"><div class="mini-fill" style="width:${Math.min(Number(count || 0) / Math.max(totalCredit, 1) * 100, 100).toFixed(1)}%;background:${Number(count || 0) ? '#2563EB' : '#CBD5E1'}"></div></div>
+              <strong>${display}</strong>
+            </div>`).join('') || '<div class="no-data-note">No checklist data available</div>'}</div>
+        </div>
+        <div class="landing-card">
+          <h3>EOI Cross-Reference</h3>
+          ${rows(topEntries(creditCrossrefObj, 5), Math.max(creditCrossref.checked, 1), '#7C3AED')}
+          <div class="insight-list" style="margin-top:10px">
+            ${insight('Match Method', creditCrossref.hasPhoneEmail ? 'Phone/email enabled' : 'Business-name fallback', creditCrossref.note || 'No match note available.', creditCrossref.hasPhoneEmail ? 'good' : 'warn')}
+          </div>
         </div>
       </div>
 
@@ -4163,6 +4402,426 @@ window.setTimePeriod = function(btn, period) {
       'TIN present': '#2563EB',
       'NSSF present': '#7C3AED'
     }, 3);
+  }
+
+  function buildDigitalCreditHTML(creditData) {
+    if (!creditData || !creditData.eso_credit) {
+      return `<div class="no-data" style="padding:60px 24px;text-align:center">
+        <h2 style="font-size:1.3rem;font-weight:700;margin-bottom:12px">Digital Credit Data</h2>
+        <p style="color:#64748B;font-size:.9rem">Add <code>digital_credit</code> entries to data.js to populate this view.</p>
+      </div>`;
+    }
+
+    const esoCredit = creditData.eso_credit || [];
+    const total = creditData.credit_demand || creditData.stats?.total || esoCredit.reduce((s, e) => s + (e.demand || e.businesses || 0), 0);
+    const ready = creditData.credit_ready || esoCredit.reduce((s, e) => s + (e.ready || 0), 0);
+    const followup = creditData.credit_followup || esoCredit.reduce((s, e) => s + (e.followup || 0), 0);
+    const approved = esoCredit.reduce((s, e) => s + (e.businesses || 0), 0);
+    const eligible = esoCredit.reduce((s, e) => s + (e.eligible || 0), 0);
+    const totalAmt = esoCredit.reduce((s, e) => s + (e.amount_ugx || 0), 0);
+    const readiness = creditData.credit_demand_readiness || creditData.credit_readiness || {};
+    const demandBySector = creditData.credit_demand_by_sector || {};
+    const demandByDistrict = creditData.credit_demand_by_district || {};
+    const signals = creditData.credit_signals || {};
+    const amountBands = creditData.credit_amount_bands || {};
+    const amountStats = creditData.credit_amount_stats || {};
+    const priorSources = creditData.credit_prior_sources || {};
+    const repayCapacity = creditData.credit_repay_capacity || {};
+    const loanPurpose = creditData.credit_loan_purpose || {};
+    const deniedReasons = creditData.denied_reasons || {};
+    const trueChecklist = creditData.true_readiness_checklist || {};
+    const eoiCrossref = creditData.eoi_credit_crossref || {};
+    const availability = creditData.field_availability || {};
+    const dataQuality = creditData.data_quality || {};
+    const inclusion = creditData.inclusion_metrics || {};
+    const funnel = creditData.credit_funnel || {
+      'Need Credit': total,
+      'Ready for Screening': ready,
+      'Eligible': eligible,
+      'Applied': 0,
+      'Approved': approved,
+      'Disbursed': approved,
+    };
+
+    const CREDIT_COLORS = ['#1D4ED8','#0EA5E9','#10B981','#7C3AED','#F59E0B','#EF4444','#EC4899','#14B8A6'];
+    const sumVals = obj => Object.values(obj || {}).reduce((a, b) => a + (Number(b) || 0), 0) || 1;
+    const insight = (title, value, note, tone = 'info') => `<div class="insight ${tone}">
+      <strong>${title}</strong>
+      <span>${value}</span>
+      <small>${note}</small>
+    </div>`;
+
+    const maxDemand = Math.max(...esoCredit.map(e => e.demand || e.businesses || 0), 1);
+    const esoRows = esoCredit
+      .slice()
+      .sort((a, b) => (b.demand || b.businesses || 0) - (a.demand || a.businesses || 0))
+      .map((e, i) => {
+        const color = CREDIT_COLORS[i % CREDIT_COLORS.length];
+        const demand = e.demand || e.businesses || 0;
+        const w = Math.min(demand / maxDemand * 100, 100).toFixed(1);
+        const readyPct = demand ? Math.round((e.ready || 0) / demand * 100) : 0;
+        return `<div class="credit-row">
+          <span class="credit-eso">${e.eso}</span>
+          <div class="bar-track" style="height:8px"><div class="bar-fill" style="width:${w}%;background:${color}"></div></div>
+          <span class="credit-amt">${fmt(demand)} demand</span>
+          <span class="credit-count">${fmt(e.ready || 0)} ready (${readyPct}%)</span>
+        </div>`;
+      }).join('');
+
+    const funnelRows = Object.entries(funnel).map(([label, value], i) => {
+      const known = ['Need Credit', 'Ready for Screening'].includes(label) || Number(value) > 0;
+      const w = Math.min((Number(value) || 0) / Math.max(total, 1) * 100, 100).toFixed(1);
+      const color = known ? CREDIT_COLORS[i % CREDIT_COLORS.length] : '#CBD5E1';
+      return `<div class="bar-row">
+        <div class="bar-track"><div class="bar-fill" style="width:${w}%;background:${color}"></div></div>
+        <span class="bar-name">${label}</span>
+        <span class="bar-stat">${known ? fmt(value || 0) : 'Field missing'}</span>
+      </div>`;
+    }).join('');
+
+    const byType = {};
+    esoCredit.forEach(e => (e.breakdown || []).forEach(b => {
+      byType[b.type] = (byType[b.type] || 0) + (b.count || 0);
+    }));
+
+    const availabilityRows = Object.entries({
+      'Demand captured': availability.demand,
+      'Readiness proxy': availability.readiness,
+      'Provider name': availability.provider,
+      'Application status': availability.application,
+      'Eligibility result': availability.eligibility,
+      'Approval result': availability.approval,
+      'Disbursement amount': availability.disbursement,
+      'Repayment status': availability.repayment,
+    }).map(([label, ok]) => insight(label, ok ? 'Available' : 'Missing', ok ? 'Source has usable fields.' : 'Needs provider or application data.', ok ? 'good' : 'warn')).join('');
+
+    const missing = '<span class="no-data-note" style="padding:0">Missing field</span>';
+    const noRecords = '<div class="no-data-note">No individual credit records yet. Add provider/application records to populate this section.</div>';
+    const providerRows = insight('FSP Provider Breakdown', 'Missing', 'Provider names like MoKash, Airtel QuickLoan, SACCO, MFI, and bank are not in the current source data.', 'warn')
+      + insight('Multi-FSP Businesses', 'Missing', 'Needs one row per credit record with business ID and provider.', 'warn')
+      + insight('Prior Credit Source', Object.keys(priorSources).length ? 'Available' : 'Missing', 'Business Needs tracks previous loan sources; active FSP provider still needs credit records.', Object.keys(priorSources).length ? 'good' : 'warn');
+    const repaymentRows = insight('Repayment Rate', 'Missing', 'No repayment status or due-date fields are available yet.', 'warn')
+      + insight('Portfolio at Risk', 'Missing', 'PAR 1/30/90 needs overdue balances and due dates.', 'warn')
+      + insight('Repay Capacity', Object.keys(repayCapacity).length ? 'Available' : 'Missing', 'Business Needs asks if respondents could repay a loan today.', Object.keys(repayCapacity).length ? 'good' : 'warn');
+    const loanCycleRows = insight('Repeat Borrowers', 'Missing', 'Requires multiple credit records linked to the same business.', 'warn')
+      + insight('Ticket Growth', 'Missing', 'Needs dated loan amounts for each repeat borrower.', 'warn')
+      + insight('Business Journey', 'Missing', 'Will populate once individual credit records are available.', 'warn');
+    const checklistLabel = key => ({
+      business_registered: 'Business Registered',
+      business_type_sector: 'Business Type / Sector',
+      repay_confidence: 'Can Repay',
+      amount_needed: 'Amount Needed',
+      owner_national_id: 'Owner National ID',
+      eoi_business_registration: 'EOI Business Registration',
+      eoi_tin: 'EOI TIN',
+      eoi_nssf: 'EOI NSSF',
+      phone_registered_in_owner_name: 'Phone Registered in Owner Name',
+      actual_provider_application: 'Provider Application',
+      approved_or_disbursed: 'Approved / Disbursed',
+      repayment_history: 'Repayment History',
+    }[key] || key.replace(/_/g, ' '));
+    const checklistRows = Object.entries(trueChecklist).map(([key, item]) => {
+      const denominator = Number(item.denominator || total || 0);
+      const count = Number(item.count || 0);
+      const pct = denominator ? Math.round(count / denominator * 100) : 0;
+      const value = item.available ? `${fmt(count)} (${pct}%)` : 'Not linked / missing';
+      const tone = item.available ? (pct >= 80 ? 'good' : 'info') : 'warn';
+      return insight(checklistLabel(key), value, item.source || 'Source not configured', tone);
+    }).join('');
+    const crossrefRows = [
+      insight('Credit Records Checked', fmt(eoiCrossref.credit_records_checked || 0), 'Credit-demand records prepared for EOI matching.', 'info'),
+      insight('Matched to EOI', fmt(eoiCrossref.matched_total || 0), `${fmt(eoiCrossref.matched_by_phone || 0)} phone · ${fmt(eoiCrossref.matched_by_email || 0)} email · ${fmt(eoiCrossref.matched_by_business_name || 0)} business-name`, eoiCrossref.matched_total ? 'good' : 'warn'),
+      insight('Matched With National ID', fmt(eoiCrossref.matched_with_national_id || 0), 'From EOI founder National ID upload status.', eoiCrossref.matched_with_national_id ? 'good' : 'warn'),
+      insight('Match Method Warning', eoiCrossref.business_needs_phone_email_available ? 'Phone/email available' : 'Phone/email missing', eoiCrossref.match_note || 'No cross-reference note available.', eoiCrossref.business_needs_phone_email_available ? 'good' : 'warn'),
+    ].join('');
+    const inclusionRows = [
+      insight('PWD Credit Demand', fmt(inclusion.pwd_demand || 0), 'PWD-owned/respondent businesses that signalled credit demand.', inclusion.pwd_demand ? 'good' : 'info'),
+      insight('Women-Led Businesses', inclusion.women_led == null ? 'Missing' : fmt(inclusion.women_led), 'Needs gender/women-led field in credit or Business Needs records.', inclusion.women_led == null ? 'warn' : 'good'),
+      insight('Female Founders %', inclusion.female_founders_pct == null ? 'Missing' : inclusion.female_founders_pct + '%', 'Needs founder gender linked to credit demand.', inclusion.female_founders_pct == null ? 'warn' : 'good'),
+      insight('Refugee Credit Demand', inclusion.refugees == null ? 'Missing' : fmt(inclusion.refugees), 'Needs refugee flag in credit-demand records.', inclusion.refugees == null ? 'warn' : 'good'),
+    ].join('');
+
+    const scoreRows = esoCredit
+      .slice()
+      .sort((a, b) => (b.demand || 0) - (a.demand || 0))
+      .map((e, i) => {
+        const demand = e.demand || 0;
+        const readyRate = demand ? Math.round((e.ready || 0) / demand * 100) : 0;
+        const pwdRate = demand ? Math.round((e.pwd_demand || 0) / demand * 100) : 0;
+        const status = readyRate >= 65 ? 'Strong' : readyRate >= 45 ? 'Follow-Up' : 'Risk';
+        const statusCls = readyRate >= 65 ? 'good' : readyRate >= 45 ? 'info' : 'warn';
+        return `<tr>
+          <td class="td-main">${e.eso}</td>
+          <td>${fmt(demand)}</td>
+          <td>${fmt(e.ready || 0)} (${readyRate}%)</td>
+          <td>${fmt(e.followup || 0)}</td>
+          <td>${fmt(e.pwd_demand || 0)} (${pwdRate}%)</td>
+          <td>${fmt(e.denied || 0)}</td>
+          <td>${e.businesses ? fmt(e.businesses) : 'Missing'}</td>
+          <td>${e.amount_ugx ? 'UGX ' + fmt(e.amount_ugx) : 'Missing'}</td>
+          <td><span class="insight ${statusCls}" style="display:inline-flex;padding:3px 8px;margin:0">${status}</span></td>
+        </tr>`;
+      }).join('');
+
+    return `
+      <div class="port-header">
+        <div class="port-bar-strip"><div style="width:45%;background:#0F766E"></div><div style="width:30%;background:#1D4ED8"></div><div style="flex:1;background:#E2E8F0"></div></div>
+        <div class="port-title-area">
+          <div class="port-title">Digital Credit Demand &amp; Readiness</div>
+          <div class="port-filename">10X Digital Economy - demand signals from Business Needs - ${new Date().toLocaleDateString('en-UG',{month:'long',year:'numeric'})}</div>
+        </div>
+      </div>
+
+      <div class="kpi-strip-7" style="margin-bottom:16px">
+        ${kpiBox(fmt(total), 'Credit Demand', 'kb')}
+        ${kpiBox(fmt(ready), 'Ready for Screening', 'kg')}
+        ${kpiBox(total ? Math.round(ready / total * 100) + '%' : '0%', 'Screening Readiness', 'kt')}
+        ${kpiBox(fmt(followup), 'Needs Follow-Up', 'ko')}
+        ${kpiBox(amountStats.avg_requested_ugx ? 'UGX ' + fmt(amountStats.avg_requested_ugx) : 'Missing', 'Avg Amount Needed', amountStats.avg_requested_ugx ? 'kp' : 'kr')}
+        ${kpiBox(fmt(creditData.denied_loan_count || 0), 'Denied Before', creditData.denied_loan_count ? 'ka' : 'kt')}
+        ${kpiBox(approved ? fmt(approved) : 'Missing', 'Approved Credit', approved ? 'ka' : 'kr')}
+      </div>
+
+      <div class="section-hdr">
+        <h2>Loan Book Overview</h2>
+        <span class="type-badge badge-digital_credit">Borrowed from credit operations layout</span>
+      </div>
+      <div class="landing-grid three">
+        <div class="landing-card">
+          <h3>Loan Book Status</h3>
+          <div class="insight-list">
+            ${insight('Businesses With Credit', approved ? fmt(approved) : 'Missing', 'Approved/disbursed records are not yet available.', approved ? 'good' : 'warn')}
+            ${insight('Total Disbursed', totalAmt ? 'UGX ' + fmt(totalAmt) : 'Missing', 'Needs disbursement amount per credit record.', totalAmt ? 'good' : 'warn')}
+            ${insight('Average Loan Size', approved && totalAmt ? 'UGX ' + fmt(Math.round(totalAmt / approved)) : 'Missing', 'Calculated once approved businesses and amount are available.', approved && totalAmt ? 'good' : 'warn')}
+          </div>
+        </div>
+        <div class="landing-card">
+          <h3>Provider / FSP Coverage</h3>
+          <div class="insight-list">${providerRows}</div>
+        </div>
+        <div class="landing-card">
+          <h3>Repayment &amp; PAR</h3>
+          <div class="insight-list">${repaymentRows}</div>
+        </div>
+      </div>
+
+      <div class="section-hdr">
+        <h2>Credit Need Details</h2>
+        <span class="type-badge badge-buz_needs">Amount · purpose · history</span>
+      </div>
+      <div class="landing-grid three">
+        <div class="landing-card">
+          <h3>Amount Needed</h3>
+          ${Object.keys(amountBands).length ? barRowsHTML(amountBands, null, sumVals(amountBands), 8) : '<div class="no-data-note">No requested amount data available</div>'}
+          <div class="insight-list" style="margin-top:10px">
+            ${insight('Total Requested', amountStats.total_requested_ugx ? 'UGX ' + fmt(amountStats.total_requested_ugx) : 'Missing', `${fmt(amountStats.count || 0)} responses with usable amount values.`, amountStats.total_requested_ugx ? 'good' : 'warn')}
+            ${insight('Median Requested', amountStats.median_requested_ugx ? 'UGX ' + fmt(amountStats.median_requested_ugx) : 'Missing', 'Median from parsed Business Needs amount responses.', amountStats.median_requested_ugx ? 'info' : 'warn')}
+          </div>
+        </div>
+        <div class="landing-card">
+          <h3>Loan Purpose</h3>
+          ${Object.keys(loanPurpose).length ? barRowsHTML(loanPurpose, null, sumVals(loanPurpose), 8) : '<div class="no-data-note">No loan purpose data available</div>'}
+        </div>
+        <div class="landing-card">
+          <h3>Previous Credit Experience</h3>
+          ${Object.keys(priorSources).length ? barRowsHTML(priorSources, null, sumVals(priorSources), 8) : '<div class="no-data-note">No previous loan source data available</div>'}
+        </div>
+      </div>
+
+      <div class="landing-grid two">
+        <div class="landing-card">
+          <h3>Repay Capacity</h3>
+          ${Object.keys(repayCapacity).length ? barRowsHTML(repayCapacity, {'Yes':'#10B981','No':'#EF4444','Not Sure':'#F59E0B'}, sumVals(repayCapacity), 8) : '<div class="no-data-note">No repay capacity data available</div>'}
+        </div>
+        <div class="landing-card">
+          <h3>Denied Loan Reasons</h3>
+          ${Object.keys(deniedReasons).length ? barRowsHTML(deniedReasons, null, sumVals(deniedReasons), 8) : '<div class="no-data-note">No denied-loan reason data available</div>'}
+        </div>
+      </div>
+
+      <div class="section-hdr">
+        <h2>Inclusion Metrics</h2>
+        <span class="type-badge badge-buz_needs">Women · PWD · Refugees</span>
+      </div>
+      <div class="landing-grid four">
+        <div class="landing-card"><h3>PWD Demand</h3>${insight('PWD Credit Demand', fmt(inclusion.pwd_demand || 0), 'Actual count from Business Needs PWD + credit demand.', inclusion.pwd_demand ? 'good' : 'info')}</div>
+        <div class="landing-card"><h3>Women-Led</h3>${insight('Women-Led Credit Demand', inclusion.women_led == null ? 'Missing' : fmt(inclusion.women_led), 'Needs women-led or founder-gender field linked to credit demand.', inclusion.women_led == null ? 'warn' : 'good')}</div>
+        <div class="landing-card"><h3>Refugees</h3>${insight('Refugee Credit Demand', inclusion.refugees == null ? 'Missing' : fmt(inclusion.refugees), 'Needs refugee status linked to credit demand.', inclusion.refugees == null ? 'warn' : 'good')}</div>
+        <div class="landing-card"><h3>Inclusion Readiness</h3><div class="insight-list">${inclusionRows}</div></div>
+      </div>
+
+      <div class="landing-grid two">
+        <div class="landing-card">
+          <h3>Credit Funnel</h3>
+          ${funnelRows}
+          <div class="insight-list" style="margin-top:10px">
+            ${insight('Outcome Data', approved || totalAmt ? 'Partial' : 'Missing', 'Demand and readiness are available; approvals, disbursements, and repayment need provider data.', approved || totalAmt ? 'info' : 'warn')}
+          </div>
+        </div>
+        <div class="landing-card">
+          <h3>Readiness Snapshot</h3>
+          ${barRowsHTML(readiness, {
+            'Ready for Screening': '#10B981',
+            'Needs Follow-Up': '#F59E0B',
+            'Not Ready Yet': '#EF4444'
+          }, sumVals(readiness), 5)}
+        </div>
+      </div>
+
+      <div class="section-hdr">
+        <h2>True Credit Readiness Checklist</h2>
+        <span class="type-badge badge-digital_credit">Strict eligibility fields</span>
+      </div>
+      <div class="landing-grid two">
+        <div class="landing-card">
+          <h3>What We Can Prove</h3>
+          <div class="insight-list">${checklistRows || '<div class="no-data-note">No readiness checklist available</div>'}</div>
+        </div>
+        <div class="landing-card">
+          <h3>EOI Cross-Reference</h3>
+          <div class="insight-list">${crossrefRows}</div>
+        </div>
+      </div>
+
+      <div class="landing-grid two">
+        <div class="landing-card">
+          <h3>Readiness Definition</h3>
+          <div class="insight-list">
+            ${insight('Screening Readiness', total ? Math.round(ready / total * 100) + '%' : '0%', creditData.screening_readiness_note || 'Proxy score only.', 'info')}
+            ${insight('True Approval Readiness', 'Not yet available', 'Requires linked ID, owner-phone registration, provider application, approval, disbursement, and repayment data.', 'warn')}
+          </div>
+        </div>
+        <div class="landing-card">
+          <h3>Linked Compliance Signals</h3>
+          ${barRowsHTML({
+            'National ID matched': eoiCrossref.matched_with_national_id || 0,
+            'EOI registration matched': eoiCrossref.matched_with_eoi_registration || 0,
+            'TIN matched': eoiCrossref.matched_with_tin || 0,
+            'NSSF matched': eoiCrossref.matched_with_nssf || 0,
+          }, null, Math.max(eoiCrossref.matched_total || 1, 1), 6)}
+        </div>
+      </div>
+
+      <div class="landing-grid three">
+        <div class="landing-card">
+          <h3>Demand Signals</h3>
+          ${Object.keys(signals).length ? barRowsHTML(signals, null, sumVals(signals), 6) : '<div class="no-data-note">No demand signal breakdown available</div>'}
+        </div>
+        <div class="landing-card">
+          <h3>Top Demand Sectors</h3>
+          ${Object.keys(demandBySector).length ? barRowsHTML(demandBySector, null, sumVals(demandBySector), 8) : '<div class="no-data-note">No sector demand data available</div>'}
+        </div>
+        <div class="landing-card">
+          <h3>Top Demand Districts</h3>
+          ${Object.keys(demandByDistrict).length ? barRowsHTML(demandByDistrict, null, sumVals(demandByDistrict), 8) : '<div class="no-data-note">No district demand data available</div>'}
+        </div>
+      </div>
+
+      <div class="landing-grid two">
+        <div class="landing-card">
+          <h3>ESO Credit Demand</h3>
+          <div class="credit-row" style="margin-bottom:8px">
+            <span style="font-size:.6rem;color:#94A3B8;font-weight:700">ESO</span>
+            <span></span>
+            <span style="font-size:.6rem;color:#94A3B8;text-align:right">Demand</span>
+            <span style="font-size:.6rem;color:#94A3B8;text-align:right">Ready</span>
+          </div>
+          ${esoRows || '<div class="no-data-note">No credit data</div>'}
+        </div>
+        <div class="landing-card">
+          <h3>Field Availability</h3>
+          <div class="insight-list">${availabilityRows}</div>
+        </div>
+      </div>
+
+      <div class="landing-grid two">
+        <div class="landing-card">
+          <h3>Data Quality</h3>
+          ${Object.keys(dataQuality).length ? barRowsHTML(dataQuality, null, Math.max(...Object.values(dataQuality), 1), 8) : '<div class="no-data-note">No data quality checks available</div>'}
+        </div>
+        <div class="landing-card">
+          <h3>Credit Stage Breakdown</h3>
+          ${Object.keys(byType).length
+            ? barRowsHTML(byType, {'Demand':'#1D4ED8','Ready for Screening':'#10B981','Eligible':'#F59E0B','Approved':'#7C3AED'}, sumVals(byType), 10)
+            : '<div class="no-data-note">No stage breakdown available</div>'}
+        </div>
+      </div>
+
+      <div class="section-hdr">
+        <h2>Impact &amp; Loan Cycle</h2>
+        <span class="type-badge badge-devices">Repeat borrowing</span>
+      </div>
+      <div class="landing-grid two">
+        <div class="landing-card">
+          <h3>Repeat Borrower Summary</h3>
+          <div class="insight-list">${loanCycleRows}</div>
+        </div>
+        <div class="landing-card">
+          <h3>Business Loan Journey</h3>
+          ${noRecords}
+        </div>
+      </div>
+
+      <div class="section-hdr">
+        <h2>ESO Credit Performance Scorecard</h2>
+        <span class="type-badge badge-eoi">Demand · readiness · inclusion</span>
+      </div>
+      <div class="landing-card">
+        <div style="overflow-x:auto">
+          <table class="eso-summary-table" style="border-collapse:collapse;width:100%">
+            <thead>
+              <tr>
+                <th>ESO</th>
+                <th>Demand</th>
+                <th>Ready</th>
+                <th>Follow-Up</th>
+                <th>PWD</th>
+                <th>Denied</th>
+                <th>Approved</th>
+                <th>Disbursed</th>
+                <th>Status</th>
+              </tr>
+            </thead>
+            <tbody>${scoreRows || '<tr><td colspan="9">No ESO credit demand data available</td></tr>'}</tbody>
+          </table>
+        </div>
+      </div>
+
+      <div class="section-hdr">
+        <h2>Financial Access by Group</h2>
+        <span class="type-badge badge-platforms">FSP access</span>
+      </div>
+      <div class="landing-grid three">
+        <div class="landing-card"><h3>Women vs Men</h3>${insight('Provider Access', 'Missing', 'Needs gender plus provider fields.', 'warn')}</div>
+        <div class="landing-card"><h3>PWD Access</h3>${insight('Provider Access', 'Missing', 'Needs PWD plus provider fields. PWD demand is available, but provider choice is not.', 'warn')}</div>
+        <div class="landing-card"><h3>Refugee Access</h3>${insight('Provider Access', 'Missing', 'Needs refugee plus provider fields.', 'warn')}</div>
+      </div>
+
+      <div class="section-hdr">
+        <h2>Individual Credit Records</h2>
+        <span class="type-badge badge-all">Provider data needed</span>
+      </div>
+      <div class="landing-card">
+        <div style="overflow-x:auto">
+          <table class="eso-summary-table" style="border-collapse:collapse;width:100%">
+            <thead>
+              <tr>
+                <th>Business</th>
+                <th>ESO</th>
+                <th>Amount (UGX)</th>
+                <th>FSP Provider</th>
+                <th>Previous Providers</th>
+                <th>Women-Led</th>
+                <th>PWD</th>
+                <th>Refugee</th>
+                <th>Status</th>
+                <th>Due Date</th>
+              </tr>
+            </thead>
+            <tbody><tr><td colspan="10">${noRecords}</td></tr></tbody>
+          </table>
+        </div>
+      </div>`;
   }
 
   /* ═══════════════════════════════════════════════════════════════
@@ -4432,7 +5091,7 @@ window.setTimePeriod = function(btn, period) {
 
     const intelTypeBtn = document.createElement('button');
     intelTypeBtn.className = 'type-tab-btn';
-    intelTypeBtn.textContent = 'Intelligence';
+    intelTypeBtn.textContent = 'Analysis';
     intelTypeBtn.dataset.type = 'intelligence';
     intelTypeBtn.onclick = () => showTypeGroup('intelligence');
     typeBar.appendChild(intelTypeBtn);
@@ -4446,7 +5105,7 @@ window.setTimePeriod = function(btn, period) {
 
     const intelSubBtn = document.createElement('button');
     intelSubBtn.className = 'sub-tab-btn';
-    intelSubBtn.textContent = 'Intelligence Center';
+    intelSubBtn.textContent = 'Analysis Center';
     intelSubBtn.dataset.panel = 'panel-intelligence';
     intelSubBtn.onclick = () => showPanel('panel-intelligence');
     _typeSubTabs['intelligence'] = [{ btn: intelSubBtn, pid: 'panel-intelligence' }];
@@ -4604,6 +5263,13 @@ window.setTimePeriod = function(btn, period) {
       esoMap[eso] = esoMap[eso] || { eoi: 0, buz_needs: 0, devices: 0, platforms: 0, digital_credit: 0, quality: 0 };
       esoMap[eso][p.type] = (esoMap[eso][p.type] || 0) + (p.stats?.total || 0);
       esoMap[eso].quality += Object.values(p.data_quality || {}).reduce((a, b) => a + (Number(b) || 0), 0);
+    });
+    (window.PORTFOLIO_DATA?.portfolios || []).filter(p => p.type === 'digital_credit').forEach(p => {
+      (p.eso_credit || []).forEach(row => {
+        const eso = row.eso || 'Unknown';
+        esoMap[eso] = esoMap[eso] || { eoi: 0, buz_needs: 0, devices: 0, platforms: 0, digital_credit: 0, quality: 0 };
+        esoMap[eso].digital_credit += Number(row.demand || row.businesses || 0);
+      });
     });
     const rows = [['ESO', 'EOI', 'Business Needs', 'Devices', 'Platforms', 'Digital Credit', 'Quality Signals']];
     Object.entries(esoMap).sort((a, b) => a[0].localeCompare(b[0])).forEach(([eso, d]) => {

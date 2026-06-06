@@ -18,6 +18,7 @@ import traceback
 import time
 import collections
 import urllib.request
+import hashlib
 from pathlib import Path
 
 BASE_DIR = Path(__file__).parent
@@ -225,6 +226,30 @@ def safe_mean(series):
         return float(m) if not pd.isna(m) else None
     except Exception:
         return None
+
+
+def _norm_match_text(value):
+    value = str(value or '').strip().lower()
+    value = re.sub(r'[^a-z0-9]+', ' ', value)
+    return ' '.join(value.split())
+
+
+def _norm_phone(value):
+    digits = re.sub(r'\D+', '', str(value or ''))
+    if len(digits) >= 9:
+        return digits[-9:]
+    return digits
+
+
+def _norm_email(value):
+    return str(value or '').strip().lower()
+
+
+def _hash_key(kind, value):
+    value = str(value or '').strip()
+    if not value:
+        return ''
+    return hashlib.sha256(f'{kind}:{value}'.encode('utf-8')).hexdigest()[:16]
 
 
 def find_col_like(df, *keywords):
@@ -2440,6 +2465,39 @@ def parse_kobo_buz_needs(records, asset_uid, name='Business Needs'):
                     counts[label] = counts.get(label, 0) + 1
         return dict(sorted(counts.items(), key=lambda x: -x[1])[:top_n])
 
+    def _has_option(r, key, phrase):
+        raw = str(r.get(key, '') or '').strip().lower().replace('_', ' ')
+        phrase = str(phrase or '').strip().lower().replace('_', ' ')
+        return bool(raw and phrase and phrase in ' '.join(raw.split()))
+
+    def _credit_demand(r):
+        return (
+            _has_option(r, 'group_xx9pw99/_20_What_digital_skills_would_', 'access digital credit')
+            or _has_option(r, 'group_wf5op54/_37_What_support_would_help_yo', 'understanding loans investors')
+            or _has_option(r, 'group_wf5op54/_37_What_support_would_help_yo', 'loans')
+        )
+
+    def _credit_readiness_score(r):
+        score = 0
+        if _yes(r, 'group_oj8uw97/_5_Is_your_business_registered'):
+            score += 1
+        if _yes(r, 'group_xx9pw99/_17_Do_you_use_mobil_or_business_payments'):
+            score += 1
+        internet = str(r.get('group_xx9pw99/_16_Do_you_have_access_to_internet', '')).strip().lower()
+        if internet in ('always', 'sometimes'):
+            score += 1
+        confidence = str(r.get('group_xx9pw99/_19_Do_you_feel_conf_ls_for_your_business', '')).strip().lower()
+        if confidence == 'yes':
+            score += 1
+        return score
+
+    def _readiness_bucket(score):
+        if score >= 3:
+            return 'Ready for Screening'
+        if score == 2:
+            return 'Needs Follow-Up'
+        return 'Not Ready Yet'
+
     pwd_count       = _yes_count('group_oj8uw97/Are_you_a_person_with_a_disabi')
     registered      = _yes_count('group_oj8uw97/_5_Is_your_business_registered')
     device_need     = _yes_count('group_xx9pw99/_14_Do_you_need_a_device_to_su')
@@ -2456,8 +2514,127 @@ def parse_kobo_buz_needs(records, asset_uid, name='Business Needs'):
     digital_skills = _count_multi_field('group_xx9pw99/_20_What_digital_skills_would_', 15)
     business_constraints = _count_multi_field('group_wy7an45/_23_What_part_of_your_business', 10)
     support_needed = _count_multi_field('group_wf5op54/_37_What_support_would_help_yo', 15)
+    prior_credit_sources = _count_multi_field('group_wf5op54/_32_Have_you_ever_got_a_loan_from', 15)
+    repay_capacity = _count_field('group_wf5op54/_34_If_you_received_could_you_repay_it', 8)
+    loan_purpose = _count_multi_field('group_wf5op54/_36_What_would_you_use_the_money_for', 15)
     device_types_needed = _count_multi_field('group_xx9pw99/b_if_yes_what_device', 10)
     device_budget = _count_field('group_xx9pw99/d_How_much_are_you_o_pay_for_the_device', 8)
+
+    credit_demand = 0
+    credit_skills_demand = 0
+    loan_literacy_need = 0
+    credit_readiness = {}
+    credit_demand_readiness = {}
+    credit_demand_by_sector = {}
+    credit_demand_by_district = {}
+    credit_demand_by_eso = {}
+    credit_amount_bands = {}
+    credit_amount_values = []
+    credit_match_records = []
+    denied_loan_count = 0
+    denied_reasons = {}
+    credit_ready_demand = 0
+    credit_pwd_demand = 0
+    credit_demand_registered = 0
+    credit_demand_sector_known = 0
+    credit_demand_repay_yes = 0
+    credit_demand_amount_known = 0
+
+    def _amount_num(value):
+        raw = str(value or '').strip().lower().replace(',', '')
+        if not raw or raw == 'nan':
+            return None
+        nums = re.findall(r'\d+(?:\.\d+)?', raw)
+        if not nums:
+            return None
+        n = float(nums[0])
+        if 'm' in raw or 'million' in raw:
+            n *= 1_000_000
+        elif 'k' in raw or 'thousand' in raw:
+            n *= 1_000
+        return int(n) if n > 0 else None
+
+    def _amount_band(value):
+        n = _amount_num(value)
+        if n is None:
+            return 'Missing Amount'
+        if n < 500_000:
+            return 'Under 500K'
+        if n < 1_000_000:
+            return '500K-1M'
+        if n < 2_000_000:
+            return '1M-2M'
+        if n < 5_000_000:
+            return '2M-5M'
+        return '5M+'
+
+    for r in records:
+        wants_credit_skill = _has_option(r, 'group_xx9pw99/_20_What_digital_skills_would_', 'access digital credit')
+        wants_loan_support = (
+            _has_option(r, 'group_wf5op54/_37_What_support_would_help_yo', 'understanding loans investors')
+            or _has_option(r, 'group_wf5op54/_37_What_support_would_help_yo', 'loans')
+        )
+        if wants_credit_skill:
+            credit_skills_demand += 1
+        if wants_loan_support:
+            loan_literacy_need += 1
+
+        denied = _yes(r, 'group_wf5op54/_33_Have_you_ever_been_denied_')
+        if denied:
+            denied_loan_count += 1
+            reason = _clean_label(r.get('group_wf5op54/if_yes_what_was_the_eing_denied_the_loan')) or 'Reason Not Provided'
+            denied_reasons[reason] = denied_reasons.get(reason, 0) + 1
+
+        score = _credit_readiness_score(r)
+        bucket = _readiness_bucket(score)
+        credit_readiness[bucket] = credit_readiness.get(bucket, 0) + 1
+
+        if _credit_demand(r):
+            credit_demand += 1
+            business_key = _norm_match_text(r.get('group_oj8uw97/_1_Business_Name'))
+            phone_key = _hash_key('phone', _norm_phone(r.get('group_oj8uw97/b_Phone_number') or r.get('b_Phone_number') or r.get('phone')))
+            email_key = _hash_key('email', _norm_email(r.get('group_oj8uw97/c_Email') or r.get('c_Email') or r.get('email')))
+            credit_match_records.append({
+                'business_key': business_key,
+                'phone_key': phone_key,
+                'email_key': email_key,
+            })
+            credit_demand_readiness[bucket] = credit_demand_readiness.get(bucket, 0) + 1
+            amount = _amount_num(r.get('group_wf5op54/_35_If_you_received_p_your_business_grow'))
+            if amount:
+                credit_amount_values.append(amount)
+                credit_demand_amount_known += 1
+            band = _amount_band(r.get('group_wf5op54/_35_If_you_received_p_your_business_grow'))
+            credit_amount_bands[band] = credit_amount_bands.get(band, 0) + 1
+            if _yes(r, 'group_oj8uw97/_5_Is_your_business_registered'):
+                credit_demand_registered += 1
+            if _yes(r, 'group_wf5op54/_34_If_you_received_could_you_repay_it'):
+                credit_demand_repay_yes += 1
+            is_pwd = _yes(r, 'group_oj8uw97/Are_you_a_person_with_a_disabi')
+            if is_pwd:
+                credit_pwd_demand += 1
+            if bucket == 'Ready for Screening':
+                credit_ready_demand += 1
+            sector = _clean_label(r.get('group_oj8uw97/sector')) or 'Unknown'
+            if sector != 'Unknown':
+                credit_demand_sector_known += 1
+            district = _clean_label(r.get('group_oj8uw97/e_Which_district_are_you_located_in')) or 'Unknown'
+            eso = _eso_label(r.get('group_oj8uw97/_1_Implementing_Partn_Support_Organization', '')) or 'Unknown'
+            credit_demand_by_sector[sector] = credit_demand_by_sector.get(sector, 0) + 1
+            credit_demand_by_district[district] = credit_demand_by_district.get(district, 0) + 1
+            credit_demand_by_eso[eso] = credit_demand_by_eso.get(eso, 0) + 1
+
+    credit_demand_by_sector = dict(sorted(credit_demand_by_sector.items(), key=lambda x: -x[1])[:15])
+    credit_demand_by_district = dict(sorted(credit_demand_by_district.items(), key=lambda x: -x[1])[:20])
+    credit_demand_by_eso = dict(sorted(credit_demand_by_eso.items(), key=lambda x: -x[1])[:20])
+    credit_amount_bands = dict(sorted(credit_amount_bands.items(), key=lambda x: -x[1]))
+    denied_reasons = dict(sorted(denied_reasons.items(), key=lambda x: -x[1])[:10])
+    credit_amount_stats = {
+        'count': len(credit_amount_values),
+        'total_requested_ugx': int(sum(credit_amount_values)),
+        'avg_requested_ugx': int(sum(credit_amount_values) / len(credit_amount_values)) if credit_amount_values else 0,
+        'median_requested_ugx': int(sorted(credit_amount_values)[len(credit_amount_values) // 2]) if credit_amount_values else 0,
+    }
 
     income_levels = {}
     for r in records:
@@ -2478,6 +2655,12 @@ def parse_kobo_buz_needs(records, asset_uid, name='Business Needs'):
                 'pwd': 0,
                 'internet_always': 0,
                 'mobile_payments': 0,
+                'credit_demand': 0,
+                'credit_ready': 0,
+                'credit_followup': 0,
+                'credit_pwd_demand': 0,
+                'credit_denied': 0,
+                'credit_repay_yes': 0,
                 'credit_eligible': 0,
                 'credit_approved': 0,
             })
@@ -2492,6 +2675,19 @@ def parse_kobo_buz_needs(records, asset_uid, name='Business Needs'):
                 by_eso[eso]['internet_always'] += 1
             if _yes(r, 'group_xx9pw99/_17_Do_you_use_mobil_or_business_payments'):
                 by_eso[eso]['mobile_payments'] += 1
+            score = _credit_readiness_score(r)
+            if _credit_demand(r):
+                by_eso[eso]['credit_demand'] += 1
+                if _yes(r, 'group_oj8uw97/Are_you_a_person_with_a_disabi'):
+                    by_eso[eso]['credit_pwd_demand'] += 1
+                if score >= 3:
+                    by_eso[eso]['credit_ready'] += 1
+                elif score == 2:
+                    by_eso[eso]['credit_followup'] += 1
+            if _yes(r, 'group_wf5op54/_33_Have_you_ever_been_denied_'):
+                by_eso[eso]['credit_denied'] += 1
+            if _yes(r, 'group_wf5op54/_34_If_you_received_could_you_repay_it'):
+                by_eso[eso]['credit_repay_yes'] += 1
 
     weekly_activity = {}
     sub_times = [r.get('_submission_time') for r in records if r.get('_submission_time')]
@@ -2535,9 +2731,34 @@ def parse_kobo_buz_needs(records, asset_uid, name='Business Needs'):
         'digital_confidence': digital_confidence,
         'business_constraints': business_constraints,
         'support_needed': support_needed,
+        'prior_credit_sources': prior_credit_sources,
+        'repay_capacity': repay_capacity,
+        'loan_purpose': loan_purpose,
         'device_types_needed': device_types_needed,
         'device_budget': device_budget,
         'respondent_roles': respondent_roles,
+        'credit_demand': credit_demand,
+        'credit_skills_demand': credit_skills_demand,
+        'loan_literacy_need': loan_literacy_need,
+        'credit_ready_demand': credit_ready_demand,
+        'credit_pwd_demand': credit_pwd_demand,
+        'credit_demand_registered': credit_demand_registered,
+        'credit_demand_sector_known': credit_demand_sector_known,
+        'credit_demand_repay_yes': credit_demand_repay_yes,
+        'credit_demand_amount_known': credit_demand_amount_known,
+        'credit_readiness': credit_readiness,
+        'credit_demand_readiness': credit_demand_readiness,
+        'credit_demand_by_sector': credit_demand_by_sector,
+        'credit_demand_by_district': credit_demand_by_district,
+        'credit_demand_by_eso': credit_demand_by_eso,
+        'credit_amount_bands': credit_amount_bands,
+        'credit_amount_stats': credit_amount_stats,
+        'credit_match_records': credit_match_records[:10000],
+        'denied_loan_count': denied_loan_count,
+        'denied_reasons': denied_reasons,
+        'credit_prior_sources': prior_credit_sources,
+        'credit_repay_capacity': repay_capacity,
+        'credit_loan_purpose': loan_purpose,
         'credit_eligible': 0,
         'credit_approved': 0,
         'credit_amount':   0,
@@ -2971,7 +3192,12 @@ def parse_kobo_eoi(records, asset_uid, eso_name='10X Digital Economy'):
         founder_missing_phone = 0
         founder_missing_district = 0
         founder_missing_gender = 0
+        eoi_match_index = []
         for r in eso_records:
+            business_key = _norm_match_text(r.get(F_BIZNAME))
+            founder_phone_keys = set()
+            founder_email_keys = set()
+            record_has_id = False
             flist = r.get(F_FOUNDERS) or []
             if isinstance(flist, str):
                 try: flist = json.loads(flist.replace("'", '"'))
@@ -2989,10 +3215,17 @@ def parse_kobo_eoi(records, asset_uid, eso_name='10X Digital Economy'):
                     founder_missing_phone += 1
                 else:
                     founder_phone_seen[phone] += 1
+                    phone_key = _hash_key('phone', _norm_phone(phone))
+                    if phone_key:
+                        founder_phone_keys.add(phone_key)
+                email_key = _hash_key('email', _norm_email(f.get('founders/founders_details/email_f')))
+                if email_key:
+                    founder_email_keys.add(email_key)
                 if not district_f: founder_missing_district += 1
                 id_upload = str(f.get('founders/founders_details/front_id_f') or '').strip()
                 if id_upload and id_upload.lower() != 'nan':
                     id_with += 1
+                    record_has_id = True
                 else:
                     id_without += 1
                 if str(f.get('founders/founders_details/has_disability_f') or '').lower() == 'yes':
@@ -3010,6 +3243,18 @@ def parse_kobo_eoi(records, asset_uid, eso_name='10X Digital Economy'):
                             if 18 <= age < 120: age_list.append(age)
                     except Exception:
                         pass
+            if business_key or founder_phone_keys or founder_email_keys:
+                eoi_match_index.append({
+                    'business_key': business_key,
+                    'phone_keys': sorted(founder_phone_keys),
+                    'email_keys': sorted(founder_email_keys),
+                    'has_national_id': record_has_id,
+                    'business_registered': str(r.get(F_URSB,'')).strip().lower() == 'yes',
+                    'tin': str(r.get(F_TIN,'')).strip().lower() == 'yes',
+                    'nssf': str(r.get(F_NSSF,'')).strip().lower() == 'yes',
+                    'sector': normalize_sector(r.get(F_SECTOR, '')),
+                    'eso': eso_label,
+                })
 
         fg_dict   = dict(fg)
         fem_pct   = min(100.0, round(fg.get('Female', 0) / max(sum(fg.values()), 1) * 100, 1))
@@ -3077,6 +3322,7 @@ def parse_kobo_eoi(records, asset_uid, eso_name='10X Digital Economy'):
             'nssf_status':    {k: v for k, v in {'Yes': nssf_yes, 'No': nssf_no}.items() if v},
             'id_status':      {k: v for k, v in {'Has National ID': id_with, 'Missing ID': id_without}.items() if v},
             'nin_status':     {k: v for k, v in {'Has NIN': nin_with, 'No NIN': nin_without}.items() if v},
+            'eoi_match_index': eoi_match_index[:5000],
             'data_quality': {
                 'missing_business_name': sum(1 for r in eso_records if not str(r.get(F_BIZNAME) or '').strip()),
                 'missing_district': sum(1 for r in eso_records if not str(r.get(F_DISTRICT) or '').strip()),
@@ -3300,27 +3546,313 @@ def main():
     # Aggregate Digital Credit from buz_needs
     real_credit_eso = []
     credit_raw_records = []
+    credit_demand_total = 0
+    credit_ready_total = 0
+    credit_followup_total = 0
+    credit_pwd_total = 0
+    credit_registered_total = 0
+    credit_sector_known_total = 0
+    credit_repay_yes_total = 0
+    credit_amount_known_total = 0
+    credit_signals = {}
+    credit_readiness = {}
+    credit_demand_readiness = {}
+    credit_demand_by_sector = {}
+    credit_demand_by_district = {}
+    credit_amount_bands = {}
+    credit_prior_sources = {}
+    credit_repay_capacity = {}
+    credit_loan_purpose = {}
+    denied_reasons = {}
+    credit_amount_stats = {'count': 0, 'total_requested_ugx': 0, 'avg_requested_ugx': 0, 'median_requested_ugx': 0}
+    denied_loan_total = 0
+    credit_data_quality = {
+        'missing_provider_fields': 1,
+        'missing_application_fields': 1,
+        'missing_approval_fields': 1,
+        'missing_disbursement_fields': 1,
+        'missing_repayment_fields': 1,
+    }
+
+    def _merge_counts(target, source):
+        for k, v in (source or {}).items():
+            target[k] = target.get(k, 0) + int(v or 0)
+
+    eoi_by_phone = {}
+    eoi_by_email = {}
+    eoi_by_business = {}
+    for p in portfolios:
+        if p.get('type') != 'eoi':
+            continue
+        for item in p.get('eoi_match_index') or []:
+            for key in item.get('phone_keys') or []:
+                eoi_by_phone.setdefault(key, []).append(item)
+            for key in item.get('email_keys') or []:
+                eoi_by_email.setdefault(key, []).append(item)
+            if item.get('business_key'):
+                eoi_by_business.setdefault(item['business_key'], []).append(item)
+
+    eoi_credit_crossref = {
+        'credit_records_checked': 0,
+        'matched_total': 0,
+        'matched_by_phone': 0,
+        'matched_by_email': 0,
+        'matched_by_business_name': 0,
+        'matched_with_national_id': 0,
+        'matched_with_eoi_registration': 0,
+        'matched_with_tin': 0,
+        'matched_with_nssf': 0,
+        'business_needs_phone_email_available': False,
+        'match_note': 'Business Needs currently has no phone/email fields, so matching falls back to normalized business name. Phone/email matching will activate automatically if those fields are added.',
+    }
+
     for p in portfolios:
         if p.get('type') == 'buz_needs' and 'credit_approved' in p:
-            real_credit_eso.append({
-                'eso': p.get('eso') or p.get('name'),
-                'amount_ugx': p.get('credit_amount', 0),
-                'businesses': p.get('credit_approved', 0),
-                'eligible': p.get('credit_eligible', 0),
-                'breakdown': [
-                    {'type': 'Eligible', 'count': p.get('credit_eligible', 0)},
-                    {'type': 'Approved', 'count': p.get('credit_approved', 0)}
-                ]
-            })
+            demand = int(p.get('credit_demand', 0) or 0)
+            ready = int(p.get('credit_ready_demand', 0) or 0)
+            followup = int((p.get('credit_demand_readiness') or {}).get('Needs Follow-Up', 0) or 0)
+            credit_demand_total += demand
+            credit_ready_total += ready
+            credit_followup_total += followup
+            credit_pwd_total += int(p.get('credit_pwd_demand', 0) or 0)
+            credit_registered_total += int(p.get('credit_demand_registered', 0) or 0)
+            credit_sector_known_total += int(p.get('credit_demand_sector_known', 0) or 0)
+            credit_repay_yes_total += int(p.get('credit_demand_repay_yes', 0) or 0)
+            credit_amount_known_total += int(p.get('credit_demand_amount_known', 0) or 0)
+            _merge_counts(credit_readiness, p.get('credit_readiness'))
+            _merge_counts(credit_demand_readiness, p.get('credit_demand_readiness'))
+            _merge_counts(credit_demand_by_sector, p.get('credit_demand_by_sector'))
+            _merge_counts(credit_demand_by_district, p.get('credit_demand_by_district'))
+            _merge_counts(credit_amount_bands, p.get('credit_amount_bands'))
+            _merge_counts(credit_prior_sources, p.get('credit_prior_sources'))
+            _merge_counts(credit_repay_capacity, p.get('credit_repay_capacity'))
+            _merge_counts(credit_loan_purpose, p.get('credit_loan_purpose'))
+            _merge_counts(denied_reasons, p.get('denied_reasons'))
+            denied_loan_total += int(p.get('denied_loan_count', 0) or 0)
+            stats = p.get('credit_amount_stats') or {}
+            credit_amount_stats['count'] += int(stats.get('count', 0) or 0)
+            credit_amount_stats['total_requested_ugx'] += int(stats.get('total_requested_ugx', 0) or 0)
+            if not credit_amount_stats['median_requested_ugx'] and stats.get('median_requested_ugx'):
+                credit_amount_stats['median_requested_ugx'] = int(stats.get('median_requested_ugx', 0) or 0)
+            if p.get('credit_skills_demand'):
+                credit_signals['Access Digital Credit Skills'] = credit_signals.get('Access Digital Credit Skills', 0) + int(p.get('credit_skills_demand', 0) or 0)
+            if p.get('loan_literacy_need'):
+                credit_signals['Loan / Investor Understanding'] = credit_signals.get('Loan / Investor Understanding', 0) + int(p.get('loan_literacy_need', 0) or 0)
+
+            for rec in p.get('credit_match_records') or []:
+                eoi_credit_crossref['credit_records_checked'] += 1
+                phone_key = rec.get('phone_key')
+                email_key = rec.get('email_key')
+                business_key = rec.get('business_key')
+                matches = []
+                method = ''
+                if phone_key:
+                    eoi_credit_crossref['business_needs_phone_email_available'] = True
+                    matches = eoi_by_phone.get(phone_key, [])
+                    if matches:
+                        method = 'phone'
+                if not matches and email_key:
+                    eoi_credit_crossref['business_needs_phone_email_available'] = True
+                    matches = eoi_by_email.get(email_key, [])
+                    if matches:
+                        method = 'email'
+                if not matches and business_key:
+                    matches = eoi_by_business.get(business_key, [])
+                    if matches:
+                        method = 'business_name'
+                if not matches:
+                    continue
+                eoi_credit_crossref['matched_total'] += 1
+                if method == 'phone':
+                    eoi_credit_crossref['matched_by_phone'] += 1
+                elif method == 'email':
+                    eoi_credit_crossref['matched_by_email'] += 1
+                else:
+                    eoi_credit_crossref['matched_by_business_name'] += 1
+                if any(m.get('has_national_id') for m in matches):
+                    eoi_credit_crossref['matched_with_national_id'] += 1
+                if any(m.get('business_registered') for m in matches):
+                    eoi_credit_crossref['matched_with_eoi_registration'] += 1
+                if any(m.get('tin') for m in matches):
+                    eoi_credit_crossref['matched_with_tin'] += 1
+                if any(m.get('nssf') for m in matches):
+                    eoi_credit_crossref['matched_with_nssf'] += 1
+
+            eso_map = p.get('by_eso') or {}
+            for eso, row in eso_map.items():
+                if int(row.get('credit_demand', 0) or 0) <= 0 and int(row.get('credit_approved', 0) or 0) <= 0:
+                    continue
+                real_credit_eso.append({
+                    'eso': eso,
+                    'amount_ugx': row.get('credit_amount', 0) or 0,
+                    'businesses': row.get('credit_approved', 0) or 0,
+                    'eligible': row.get('credit_eligible', 0) or 0,
+                    'demand': row.get('credit_demand', 0) or 0,
+                    'ready': row.get('credit_ready', 0) or 0,
+                    'followup': row.get('credit_followup', 0) or 0,
+                    'pwd_demand': row.get('credit_pwd_demand', 0) or 0,
+                    'denied': row.get('credit_denied', 0) or 0,
+                    'repay_yes': row.get('credit_repay_yes', 0) or 0,
+                    'breakdown': [
+                        {'type': 'Demand', 'count': row.get('credit_demand', 0) or 0},
+                        {'type': 'Ready for Screening', 'count': row.get('credit_ready', 0) or 0},
+                        {'type': 'Eligible', 'count': row.get('credit_eligible', 0) or 0},
+                        {'type': 'Approved', 'count': row.get('credit_approved', 0) or 0}
+                    ]
+                })
+
+            if not eso_map:
+                real_credit_eso.append({
+                    'eso': p.get('eso') or p.get('name'),
+                    'amount_ugx': p.get('credit_amount', 0),
+                    'businesses': p.get('credit_approved', 0),
+                    'eligible': p.get('credit_eligible', 0),
+                    'demand': demand,
+                    'ready': ready,
+                    'followup': followup,
+                    'pwd_demand': p.get('credit_pwd_demand', 0) or 0,
+                    'denied': p.get('denied_loan_count', 0) or 0,
+                    'repay_yes': (p.get('credit_repay_capacity') or {}).get('Yes', 0),
+                    'breakdown': [
+                        {'type': 'Demand', 'count': demand},
+                        {'type': 'Ready for Screening', 'count': ready},
+                        {'type': 'Eligible', 'count': p.get('credit_eligible', 0)},
+                        {'type': 'Approved', 'count': p.get('credit_approved', 0)}
+                    ]
+                })
             if p.get('raw_records'):
                 credit_raw_records.extend(p['raw_records'])
     
     if real_credit_eso:
+        credit_demand_by_sector = dict(sorted(credit_demand_by_sector.items(), key=lambda x: -x[1])[:15])
+        credit_demand_by_district = dict(sorted(credit_demand_by_district.items(), key=lambda x: -x[1])[:20])
+        credit_amount_bands = dict(sorted(credit_amount_bands.items(), key=lambda x: -x[1]))
+        denied_reasons = dict(sorted(denied_reasons.items(), key=lambda x: -x[1])[:10])
+        credit_amount_stats['avg_requested_ugx'] = int(credit_amount_stats['total_requested_ugx'] / credit_amount_stats['count']) if credit_amount_stats['count'] else 0
         portfolios.append({
-            'name': 'Digital Credit',
+            'name': 'Digital Credit Demand & Readiness',
             'type': 'digital_credit',
             'filename': 'aggregated_from_buz_needs',
-            'stats': {'total': sum(e['businesses'] for e in real_credit_eso)},
+            'stats': {'total': credit_demand_total},
+            'credit_demand': credit_demand_total,
+            'credit_ready': credit_ready_total,
+            'credit_followup': credit_followup_total,
+            'screening_readiness_note': 'Proxy score using business registration, mobile money, internet access, and digital confidence. This is not approval readiness.',
+            'true_readiness_checklist': {
+                'business_registered': {
+                    'available': True,
+                    'count': credit_registered_total,
+                    'denominator': credit_demand_total,
+                    'source': 'Business Needs',
+                },
+                'business_type_sector': {
+                    'available': True,
+                    'count': credit_sector_known_total,
+                    'denominator': credit_demand_total,
+                    'source': 'Business Needs',
+                },
+                'repay_confidence': {
+                    'available': True,
+                    'count': credit_repay_yes_total,
+                    'denominator': credit_demand_total,
+                    'source': 'Business Needs',
+                },
+                'amount_needed': {
+                    'available': True,
+                    'count': credit_amount_known_total,
+                    'denominator': credit_demand_total,
+                    'source': 'Business Needs',
+                },
+                'owner_national_id': {
+                    'available': eoi_credit_crossref['matched_with_national_id'] > 0,
+                    'count': eoi_credit_crossref['matched_with_national_id'],
+                    'denominator': credit_demand_total,
+                    'source': 'EOI cross-reference by phone/email when available; currently mostly normalized business-name fallback',
+                },
+                'eoi_business_registration': {
+                    'available': eoi_credit_crossref['matched_with_eoi_registration'] > 0,
+                    'count': eoi_credit_crossref['matched_with_eoi_registration'],
+                    'denominator': credit_demand_total,
+                    'source': 'EOI cross-reference registration signal',
+                },
+                'eoi_tin': {
+                    'available': eoi_credit_crossref['matched_with_tin'] > 0,
+                    'count': eoi_credit_crossref['matched_with_tin'],
+                    'denominator': credit_demand_total,
+                    'source': 'EOI cross-reference TIN signal',
+                },
+                'eoi_nssf': {
+                    'available': eoi_credit_crossref['matched_with_nssf'] > 0,
+                    'count': eoi_credit_crossref['matched_with_nssf'],
+                    'denominator': credit_demand_total,
+                    'source': 'EOI cross-reference NSSF signal',
+                },
+                'phone_registered_in_owner_name': {
+                    'available': False,
+                    'count': 0,
+                    'denominator': credit_demand_total,
+                    'source': 'Device Financing has SIM registration but is not linked to credit-demand records',
+                },
+                'actual_provider_application': {
+                    'available': False,
+                    'count': 0,
+                    'denominator': credit_demand_total,
+                    'source': 'Missing provider/application dataset',
+                },
+                'approved_or_disbursed': {
+                    'available': False,
+                    'count': 0,
+                    'denominator': credit_demand_total,
+                    'source': 'Missing credit outcome dataset',
+                },
+                'repayment_history': {
+                    'available': False,
+                    'count': 0,
+                    'denominator': credit_demand_total,
+                    'source': 'Missing repayment dataset',
+                },
+            },
+            'inclusion_metrics': {
+                'pwd_demand': credit_pwd_total,
+                'women_led': None,
+                'female_founders_pct': None,
+                'refugees': None,
+                'women_ready': None,
+                'pwd_ready': None,
+                'refugee_ready': None,
+            },
+            'credit_funnel': {
+                'Need Credit': credit_demand_total,
+                'Ready for Screening': credit_ready_total,
+                'Eligible': sum(e.get('eligible', 0) for e in real_credit_eso),
+                'Applied': 0,
+                'Approved': sum(e.get('businesses', 0) for e in real_credit_eso),
+                'Disbursed': sum(e.get('businesses', 0) for e in real_credit_eso),
+            },
+            'credit_readiness': credit_readiness,
+            'credit_demand_readiness': credit_demand_readiness,
+            'credit_signals': credit_signals,
+            'credit_demand_by_sector': credit_demand_by_sector,
+            'credit_demand_by_district': credit_demand_by_district,
+            'credit_amount_bands': credit_amount_bands,
+            'credit_amount_stats': credit_amount_stats,
+            'eoi_credit_crossref': eoi_credit_crossref,
+            'credit_prior_sources': credit_prior_sources,
+            'credit_repay_capacity': credit_repay_capacity,
+            'credit_loan_purpose': credit_loan_purpose,
+            'denied_loan_count': denied_loan_total,
+            'denied_reasons': denied_reasons,
+            'data_quality': credit_data_quality,
+            'field_availability': {
+                'demand': True,
+                'readiness': True,
+                'provider': False,
+                'application': False,
+                'eligibility': False,
+                'approval': False,
+                'disbursement': False,
+                'repayment': False,
+            },
             'eso_credit': real_credit_eso,
             'raw_records': credit_raw_records[:5000]
         })
