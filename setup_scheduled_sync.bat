@@ -22,8 +22,10 @@ if not exist "%SYNC_SCRIPT%" (
 )
 
 set "SCHEDULE_TYPE="
-set /p "SCHEDULE_TYPE=Run daily or weekly? Type D for daily, W for weekly [D]: "
-if /i "%SCHEDULE_TYPE%"=="" set "SCHEDULE_TYPE=D"
+set /p "SCHEDULE_TYPE=Run once daily, three times daily, or weekly? Type D, T, or W [T]: "
+if /i "%SCHEDULE_TYPE%"=="" set "SCHEDULE_TYPE=T"
+
+if /i "%SCHEDULE_TYPE%"=="T" goto three_daily
 
 set "RUN_TIME="
 set /p "RUN_TIME=What time should it run? Use 24-hour HH:MM, example 07:30 [07:30]: "
@@ -31,6 +33,21 @@ if "%RUN_TIME%"=="" set "RUN_TIME=07:30"
 
 if /i "%SCHEDULE_TYPE%"=="W" goto weekly
 goto daily
+
+:three_daily
+set "RUN_TIMES="
+set /p "RUN_TIMES=Enter 3 run times, comma-separated, example 07:00,12:00,17:00 [07:00,12:00,17:00]: "
+if "%RUN_TIMES%"=="" set "RUN_TIMES=07:00,12:00,17:00"
+(
+echo $Action = New-ScheduledTaskAction -Execute 'cmd.exe' -Argument '/c ""%SYNC_SCRIPT%""' -WorkingDirectory '%~dp0'
+echo $Times = '%RUN_TIMES%'.Split^(','^) ^| ForEach-Object { $_.Trim^(^) } ^| Where-Object { $_ }
+echo if ^($Times.Count -lt 1^) { throw 'At least one run time is required.' }
+echo $Triggers = foreach ^($Time in $Times^) { New-ScheduledTaskTrigger -Daily -At $Time }
+echo $Settings = New-ScheduledTaskSettingsSet -StartWhenAvailable -AllowStartIfOnBatteries -DontStopIfGoingOnBatteries
+echo Register-ScheduledTask -TaskName '%TASK_NAME%' -Action $Action -Trigger $Triggers -Settings $Settings -Force ^| Out-Null
+) > "%TASK_SCRIPT%"
+powershell -NoProfile -ExecutionPolicy Bypass -File "%TASK_SCRIPT%"
+goto done
 
 :daily
 (
@@ -75,9 +92,11 @@ echo  Schedule saved successfully.
 echo.
 echo  Task name: %TASK_NAME%
 echo  Script: %SYNC_SCRIPT%
-echo  Time: %RUN_TIME%
+if /i "%SCHEDULE_TYPE%"=="T" echo  Times: %RUN_TIMES%
+if /i not "%SCHEDULE_TYPE%"=="T" echo  Time: %RUN_TIME%
 if /i "%SCHEDULE_TYPE%"=="W" echo  Day: %RUN_DAY%
-if /i not "%SCHEDULE_TYPE%"=="W" echo  Frequency: Daily
+if /i "%SCHEDULE_TYPE%"=="T" echo  Frequency: Three times daily
+if /i "%SCHEDULE_TYPE%"=="D" echo  Frequency: Daily
 echo.
 echo  The dashboard will update data.js on that schedule.
 echo  Reload the browser after a scheduled run to see the latest data.
