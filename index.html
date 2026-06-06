@@ -1583,30 +1583,85 @@
 <script>
 /* ─── Global Time Period Filter ─── */
 window.TIME_FILTER = 'all';
+window.getRecordDate = function(r) {
+  const raw = r && (r.date || r.d || r._submission_time || r.submission_time || r.SubmissionDate);
+  if (!raw) return null;
+  if (raw instanceof Date && !Number.isNaN(raw.getTime())) return raw;
+
+  const text = String(raw).trim();
+  if (!text) return null;
+
+  const monthMap = {
+    jan: 0, january: 0, feb: 1, february: 1, mar: 2, march: 2,
+    apr: 3, april: 3, may: 4, jun: 5, june: 5, jul: 6, july: 6,
+    aug: 7, august: 7, sep: 8, sept: 8, september: 8, oct: 9,
+    october: 9, nov: 10, november: 10, dec: 11, december: 11
+  };
+  let match = text.match(/^(\d{1,2})\/([A-Za-z]{3,9})\/(\d{4})$/);
+  if (match) {
+    const month = monthMap[match[2].toLowerCase()];
+    if (month != null) return new Date(Number(match[3]), month, Number(match[1]));
+  }
+
+  match = text.match(/^(\d{1,2})[/-](\d{1,2})[/-](\d{4})$/);
+  if (match) {
+    const first = Number(match[1]);
+    const second = Number(match[2]);
+    const year = Number(match[3]);
+    const day = first > 12 ? first : second;
+    const month = first > 12 ? second - 1 : first - 1;
+    return new Date(year, month, day);
+  }
+
+  const parsed = new Date(text);
+  return Number.isNaN(parsed.getTime()) ? null : parsed;
+};
+
+window.getPeriodRange = function(period, records) {
+  const dated = (records || [])
+    .map(r => window.getRecordDate(r))
+    .filter(Boolean)
+    .sort((a, b) => b - a);
+  const anchor = dated[0] || new Date();
+  const start = new Date(anchor);
+  start.setHours(0, 0, 0, 0);
+  let end = new Date(start);
+  end.setDate(end.getDate() + 1);
+
+  if (period === 'yday') {
+    start.setDate(start.getDate() - 1);
+    end.setDate(end.getDate() - 1);
+  } else if (period === 'week' || period === 'lweek') {
+    const day = start.getDay() || 7;
+    start.setDate(start.getDate() - day + 1);
+    if (period === 'lweek') start.setDate(start.getDate() - 7);
+    end = new Date(start);
+    end.setDate(end.getDate() + 7);
+  } else if (period === 'month' || period === 'lmonth') {
+    start.setDate(1);
+    if (period === 'lmonth') start.setMonth(start.getMonth() - 1);
+    end = new Date(start);
+    end.setMonth(end.getMonth() + 1);
+  } else if (period === 'qtr' || period === 'lqtr') {
+    start.setMonth(Math.floor(start.getMonth() / 3) * 3, 1);
+    if (period === 'lqtr') start.setMonth(start.getMonth() - 3);
+    end = new Date(start);
+    end.setMonth(end.getMonth() + 3);
+  }
+
+  return { start, end, anchor };
+};
+
 window.recalculatePortfolio = function(p, period) {
   if (period === 'all' || !p.raw_records || p.raw_records.length === 0) return p;
 
   // Deep clone to avoid mutating the all-time original data
   const p_dyn = JSON.parse(JSON.stringify(p));
-  
-  const now = new Date();
-  const start = new Date(now);
-  start.setHours(0,0,0,0);
-  let end = new Date(start);
-  end.setDate(end.getDate() + 1);
-
-  if (period === 'today') {}
-  else if (period === 'yday') { start.setDate(start.getDate()-1); end.setDate(end.getDate()-1); }
-  else if (period === 'week') { const d = start.getDay()||7; start.setDate(start.getDate() - d + 1); }
-  else if (period === 'lweek') { const d = start.getDay()||7; start.setDate(start.getDate() - d - 6); end.setDate(end.getDate() - d - 6 + 7); }
-  else if (period === 'month') { start.setDate(1); }
-  else if (period === 'lmonth') { start.setMonth(start.getMonth()-1); start.setDate(1); end = new Date(now); end.setDate(1); }
-  else if (period === 'qtr') { start.setMonth(Math.floor(start.getMonth()/3)*3); start.setDate(1); }
-  else if (period === 'lqtr') { start.setMonth(Math.floor(start.getMonth()/3)*3 - 3); start.setDate(1); end = new Date(start); end.setMonth(end.getMonth()+3); }
+  const { start, end } = window.getPeriodRange(period, p.raw_records);
 
   const records = p.raw_records.filter(r => {
-    if (!r.date) return false;
-    const rd = new Date(r.date);
+    const rd = window.getRecordDate(r);
+    if (!rd) return false;
     return rd >= start && rd < end;
   });
 
@@ -1615,9 +1670,23 @@ window.recalculatePortfolio = function(p, period) {
     return acc;
   }, {});
 
+  p_dyn.raw_records = records;
   p_dyn.sectors = agg('sector');
   p_dyn.districts = agg('district');
   p_dyn.archetypes = agg('archetype');
+  p_dyn.by_district = p_dyn.districts;
+
+  const yes = v => /^(yes|true|1)$/i.test(String(v || '').trim());
+  if (p_dyn.stats) {
+    p_dyn.stats.total = records.length;
+    p_dyn.stats.record_count = records.length;
+    p_dyn.stats.clean = records.length;
+    p_dyn.stats.ursb = records.filter(r => yes(r.ursb) || yes(r.business_registered)).length;
+    p_dyn.stats.tin = records.filter(r => yes(r.tin)).length;
+    p_dyn.stats.nssf = records.filter(r => yes(r.nssf)).length;
+    p_dyn.stats.pwd = records.filter(r => yes(r.pwd) || yes(r.disability) || String(r.disability_status || '').toLowerCase().includes('with')).length;
+    p_dyn.stats.refugee = records.filter(r => yes(r.refugee)).length;
+  }
   
   // Re-aggregate gender globally or within founders if necessary
   const genAgg = agg('gender');
@@ -1629,10 +1698,6 @@ window.recalculatePortfolio = function(p, period) {
       const m = genAgg.Male || 0;
       p_dyn.founders.female_pct = (f+m) > 0 ? Number(((f/(f+m))*100).toFixed(1)) : 0;
   }
-
-  p_dyn.stats.total = records.length;
-  p_dyn.stats.record_count = records.length;
-  p_dyn.stats.clean = records.length;
 
   if (p_dyn.revenue && p.revenue) {
     const revs = records.map(r => r.revenue).filter(v => v>0).sort((a,b)=>a-b);
