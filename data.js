@@ -1,5 +1,5 @@
 window.PORTFOLIO_DATA = {
-  "generated": "06 Jun 2026, 13:05",
+  "generated": "08 Jun 2026, 12:05",
   "portfolios": [
     {
       "raw_records": [
@@ -68624,10 +68624,10 @@ window.PORTFOLIO_DATA = {
         "refugees": 0
       },
       "age_bands": {
-        "18\u201325": 834,
+        "18\u201325": 835,
         "26\u201335": 1695,
-        "36\u201345": 421,
-        "46\u201355": 28,
+        "36\u201345": 420,
+        "46\u201355": 29,
         "56+": 20
       },
       "refugee_nationalities": {}
@@ -98516,8 +98516,8 @@ window.PORTFOLIO_DATA = {
         "refugees": 0
       },
       "age_bands": {
-        "18\u201325": 292,
-        "26\u201335": 752,
+        "18\u201325": 291,
+        "26\u201335": 753,
         "36\u201345": 83,
         "46\u201355": 6,
         "56+": 1
@@ -139648,6 +139648,30 @@ window.PORTFOLIO_DATA = {
           "missing_business_name": false,
           "missing_district": false,
           "missing_sector": false
+        },
+        {
+          "d": "2026-06-06",
+          "b": "Farmer",
+          "district": "Nakaseke",
+          "sector": "Agriculture",
+          "ursb": "no",
+          "tin": "no",
+          "nssf": "No",
+          "missing_business_name": false,
+          "missing_district": false,
+          "missing_sector": false
+        },
+        {
+          "d": "2026-06-07",
+          "b": "Poultry",
+          "district": "Nakaseke",
+          "sector": "Agriculture",
+          "ursb": "no",
+          "tin": "no",
+          "nssf": "No",
+          "missing_business_name": false,
+          "missing_district": false,
+          "missing_sector": false
         }
       ],
       "type": "eoi",
@@ -139655,15 +139679,15 @@ window.PORTFOLIO_DATA = {
       "eso": "CURAD",
       "filename": "kobo:a9dTHTe72X7zPceKxVtSxV",
       "stats": {
-        "total": 946,
+        "total": 948,
         "ursb": 3,
         "pwd": 3,
         "refugees": 0,
-        "record_count": 946
+        "record_count": 948
       },
       "ursb_pct": 0.3,
       "sectors": {
-        "Agriculture": 533,
+        "Agriculture": 535,
         "Trade & Services": 276,
         "Fashion & Design": 97,
         "Light Manufacturing": 28,
@@ -139672,34 +139696,34 @@ window.PORTFOLIO_DATA = {
       },
       "districts": {
         "Nakasongola": 389,
-        "Nakaseke": 318,
+        "Nakaseke": 320,
         "Luwero": 239
       },
-      "total_founders": 953,
-      "female_founders": 970,
+      "total_founders": 956,
+      "female_founders": 974,
       "revenue_bands": {},
       "funding_bands": {},
       "archetypes": {
-        "Gig Workers": 784,
+        "Gig Workers": 786,
         "Invisibles": 67,
         "Bootstrappers": 94,
         "Bootstrappers SME": 1
       },
       "tin_status": {
         "Yes": 2,
-        "No": 944
+        "No": 946
       },
       "nssf_status": {
         "Yes": 1,
-        "No": 945
+        "No": 947
       },
       "id_status": {
-        "Has National ID": 354,
+        "Has National ID": 357,
         "Missing ID": 599
       },
       "nin_status": {
-        "Has NIN": 204,
-        "No NIN": 1010
+        "Has NIN": 208,
+        "No NIN": 1011
       },
       "eoi_match_index": [
         {
@@ -153884,6 +153908,36 @@ window.PORTFOLIO_DATA = {
           "nssf": false,
           "sector": "Fashion & Design",
           "eso": "CURAD"
+        },
+        {
+          "business_key": "farmer",
+          "phone_keys": [
+            "937033310a7fa135"
+          ],
+          "email_keys": [
+            "c5a41fa0b3cc1855"
+          ],
+          "has_national_id": true,
+          "business_registered": false,
+          "tin": false,
+          "nssf": false,
+          "sector": "Agriculture",
+          "eso": "CURAD"
+        },
+        {
+          "business_key": "poultry",
+          "phone_keys": [
+            "aeb43234fd50ab33"
+          ],
+          "email_keys": [
+            "70919d744c17c5ff"
+          ],
+          "has_national_id": true,
+          "business_registered": false,
+          "tin": false,
+          "nssf": false,
+          "sector": "Agriculture",
+          "eso": "CURAD"
         }
       ],
       "data_quality": {
@@ -153894,11 +153948,11 @@ window.PORTFOLIO_DATA = {
         "missing_founder_phone": 5,
         "missing_founder_district": 0,
         "missing_founder_gender": 0,
-        "duplicate_founder_phones": 139
+        "duplicate_founder_phones": 140
       },
       "founders": {
         "gender": {
-          "Female": 931,
+          "Female": 934,
           "Male": 22
         },
         "female_pct": 97.7,
@@ -153907,7 +153961,7 @@ window.PORTFOLIO_DATA = {
       },
       "age_bands": {
         "18\u201325": 282,
-        "26\u201335": 465,
+        "26\u201335": 469,
         "36\u201345": 137,
         "46\u201355": 42,
         "56+": 24
@@ -177652,8 +177706,8 @@ window.PORTFOLIO_DATA = {
         "refugees": 0
       },
       "age_bands": {
-        "18\u201325": 184,
-        "26\u201335": 608,
+        "18\u201325": 183,
+        "26\u201335": 609,
         "36\u201345": 111,
         "46\u201355": 21,
         "56+": 6
@@ -242242,6 +242296,114 @@ window.PORTFOLIO_DATA = {
           "missing_business_name": false,
           "missing_district": false,
           "missing_sector": false
+        },
+        {
+          "d": "2026-06-06",
+          "b": "Shop",
+          "district": "Kamwenge",
+          "sector": "Agriculture",
+          "ursb": "no",
+          "tin": "no",
+          "nssf": "No",
+          "missing_business_name": false,
+          "missing_district": false,
+          "missing_sector": false
+        },
+        {
+          "d": "2026-06-07",
+          "b": "Diary",
+          "district": "Kamwenge",
+          "sector": "Agriculture",
+          "ursb": "no",
+          "tin": "no",
+          "nssf": "No",
+          "missing_business_name": false,
+          "missing_district": false,
+          "missing_sector": false
+        },
+        {
+          "d": "2026-06-07",
+          "b": "Poultry keeping",
+          "district": "Kamwenge",
+          "sector": "Agriculture",
+          "ursb": "no",
+          "tin": "no",
+          "nssf": "No",
+          "missing_business_name": false,
+          "missing_district": false,
+          "missing_sector": false
+        },
+        {
+          "d": "2026-06-07",
+          "b": "Hotel",
+          "district": "Kamwenge",
+          "sector": "Agriculture",
+          "ursb": "no",
+          "tin": "no",
+          "nssf": "No",
+          "missing_business_name": false,
+          "missing_district": false,
+          "missing_sector": false
+        },
+        {
+          "d": "2026-06-07",
+          "b": "Hotel",
+          "district": "Kamwenge",
+          "sector": "Agriculture",
+          "ursb": "no",
+          "tin": "no",
+          "nssf": "No",
+          "missing_business_name": false,
+          "missing_district": false,
+          "missing_sector": false
+        },
+        {
+          "d": "2026-06-07",
+          "b": "Farming",
+          "district": "Kamwenge",
+          "sector": "Agriculture",
+          "ursb": "no",
+          "tin": "no",
+          "nssf": "No",
+          "missing_business_name": false,
+          "missing_district": false,
+          "missing_sector": false
+        },
+        {
+          "d": "2026-06-07",
+          "b": "Hotel",
+          "district": "Kamwenge",
+          "sector": "Agriculture",
+          "ursb": "no",
+          "tin": "no",
+          "nssf": "No",
+          "missing_business_name": false,
+          "missing_district": false,
+          "missing_sector": false
+        },
+        {
+          "d": "2026-06-07",
+          "b": "Glossary",
+          "district": "Kamwenge",
+          "sector": "Agriculture",
+          "ursb": "no",
+          "tin": "no",
+          "nssf": "No",
+          "missing_business_name": false,
+          "missing_district": false,
+          "missing_sector": false
+        },
+        {
+          "d": "2026-06-07",
+          "b": "Shop",
+          "district": "Kamwenge",
+          "sector": "Agriculture",
+          "ursb": "no",
+          "tin": "no",
+          "nssf": "No",
+          "missing_business_name": false,
+          "missing_district": false,
+          "missing_sector": false
         }
       ],
       "type": "eoi",
@@ -242249,15 +242411,15 @@ window.PORTFOLIO_DATA = {
       "eso": "AGDI",
       "filename": "kobo:a9dTHTe72X7zPceKxVtSxV",
       "stats": {
-        "total": 225,
+        "total": 234,
         "ursb": 11,
         "pwd": 21,
         "refugees": 0,
-        "record_count": 225
+        "record_count": 234
       },
-      "ursb_pct": 4.9,
+      "ursb_pct": 4.7,
       "sectors": {
-        "Agriculture": 149,
+        "Agriculture": 158,
         "Trade & Services": 66,
         "Light Manufacturing": 7,
         "Fashion & Design": 1,
@@ -242266,33 +242428,33 @@ window.PORTFOLIO_DATA = {
       },
       "districts": {
         "Isingiro": 108,
-        "Kamwenge": 71,
+        "Kamwenge": 80,
         "Kyegegwa": 46
       },
-      "total_founders": 258,
-      "female_founders": 237,
+      "total_founders": 267,
+      "female_founders": 246,
       "revenue_bands": {},
       "funding_bands": {},
       "archetypes": {
-        "Gig Workers": 167,
+        "Gig Workers": 176,
         "Bootstrappers": 23,
         "Invisibles": 35
       },
       "tin_status": {
         "Yes": 7,
-        "No": 218
+        "No": 227
       },
       "nssf_status": {
         "Yes": 1,
-        "No": 224
+        "No": 233
       },
       "id_status": {
         "Has National ID": 17,
-        "Missing ID": 241
+        "Missing ID": 250
       },
       "nin_status": {
         "Has NIN": 33,
-        "No NIN": 335
+        "No NIN": 353
       },
       "eoi_match_index": [
         {
@@ -245709,6 +245871,141 @@ window.PORTFOLIO_DATA = {
           "nssf": false,
           "sector": "Trade & Services",
           "eso": "AGDI"
+        },
+        {
+          "business_key": "shop",
+          "phone_keys": [
+            "569d1f922222c523"
+          ],
+          "email_keys": [
+            "9c3cbd3b5d53b664"
+          ],
+          "has_national_id": false,
+          "business_registered": false,
+          "tin": false,
+          "nssf": false,
+          "sector": "Agriculture",
+          "eso": "AGDI"
+        },
+        {
+          "business_key": "diary",
+          "phone_keys": [
+            "cd8bb588ac4a9adc"
+          ],
+          "email_keys": [
+            "b94f1dce083668d3"
+          ],
+          "has_national_id": false,
+          "business_registered": false,
+          "tin": false,
+          "nssf": false,
+          "sector": "Agriculture",
+          "eso": "AGDI"
+        },
+        {
+          "business_key": "poultry keeping",
+          "phone_keys": [
+            "8232cfa94ce42fc4"
+          ],
+          "email_keys": [
+            "77a50cda6ac50c3e"
+          ],
+          "has_national_id": false,
+          "business_registered": false,
+          "tin": false,
+          "nssf": false,
+          "sector": "Agriculture",
+          "eso": "AGDI"
+        },
+        {
+          "business_key": "hotel",
+          "phone_keys": [
+            "705ef1aab8081ba4"
+          ],
+          "email_keys": [
+            "879c1954a0888945"
+          ],
+          "has_national_id": false,
+          "business_registered": false,
+          "tin": false,
+          "nssf": false,
+          "sector": "Agriculture",
+          "eso": "AGDI"
+        },
+        {
+          "business_key": "hotel",
+          "phone_keys": [
+            "fc9e9ad54dcf133a"
+          ],
+          "email_keys": [
+            "a15b9d8ff027d774"
+          ],
+          "has_national_id": false,
+          "business_registered": false,
+          "tin": false,
+          "nssf": false,
+          "sector": "Agriculture",
+          "eso": "AGDI"
+        },
+        {
+          "business_key": "farming",
+          "phone_keys": [
+            "4bd61aaea4a076d1"
+          ],
+          "email_keys": [
+            "e2195b9ccb7cf266"
+          ],
+          "has_national_id": false,
+          "business_registered": false,
+          "tin": false,
+          "nssf": false,
+          "sector": "Agriculture",
+          "eso": "AGDI"
+        },
+        {
+          "business_key": "hotel",
+          "phone_keys": [
+            "3a15b9e6d933867d"
+          ],
+          "email_keys": [
+            "6199d03c14669a9e"
+          ],
+          "has_national_id": false,
+          "business_registered": false,
+          "tin": false,
+          "nssf": false,
+          "sector": "Agriculture",
+          "eso": "AGDI"
+        },
+        {
+          "business_key": "glossary",
+          "phone_keys": [
+            "b3acc71429d99131"
+          ],
+          "email_keys": [
+            "89f8f6ada2669132"
+          ],
+          "has_national_id": false,
+          "business_registered": false,
+          "tin": false,
+          "nssf": false,
+          "sector": "Agriculture",
+          "eso": "AGDI"
+        },
+        {
+          "business_key": "shop",
+          "phone_keys": [
+            "8d1dbff5b0b1ad53"
+          ],
+          "email_keys": [
+            "f24f59c12dc4874f"
+          ],
+          "has_national_id": false,
+          "business_registered": false,
+          "tin": false,
+          "nssf": false,
+          "sector": "Agriculture",
+          "eso": "AGDI"
         }
       ],
       "data_quality": {
@@ -245723,16 +246020,16 @@ window.PORTFOLIO_DATA = {
       },
       "founders": {
         "gender": {
-          "Female": 222,
+          "Female": 231,
           "Male": 36
         },
-        "female_pct": 86.0,
+        "female_pct": 86.5,
         "with_pwd": 21,
         "refugees": 0
       },
       "age_bands": {
-        "18\u201325": 76,
-        "26\u201335": 160,
+        "18\u201325": 82,
+        "26\u201335": 163,
         "36\u201345": 16
       },
       "refugee_nationalities": {}
@@ -246170,6 +246467,378 @@ window.PORTFOLIO_DATA = {
           "missing_business_name": false,
           "missing_district": false,
           "missing_sector": false
+        },
+        {
+          "d": "2026-06-06",
+          "b": "Immy Ks Sented Bliss",
+          "district": "Kagadi",
+          "sector": "trade_and_services",
+          "ursb": "no",
+          "tin": "no",
+          "nssf": "No",
+          "missing_business_name": false,
+          "missing_district": false,
+          "missing_sector": false
+        },
+        {
+          "d": "2026-06-06",
+          "b": "Atuhairwe Gladys",
+          "district": "Kagadi",
+          "sector": "fashion_and_design",
+          "ursb": "no",
+          "tin": "no",
+          "nssf": "No",
+          "missing_business_name": false,
+          "missing_district": false,
+          "missing_sector": false
+        },
+        {
+          "d": "2026-06-06",
+          "b": "ALINAITWE  MUSIIMENTA",
+          "district": "Kagadi",
+          "sector": "Agriculture",
+          "ursb": "no",
+          "tin": "no",
+          "nssf": "No",
+          "missing_business_name": false,
+          "missing_district": false,
+          "missing_sector": false
+        },
+        {
+          "d": "2026-06-06",
+          "b": "NYARASAFARI ANNET",
+          "district": "Kagadi",
+          "sector": "Agriculture",
+          "ursb": "no",
+          "tin": "no",
+          "nssf": "No",
+          "missing_business_name": false,
+          "missing_district": false,
+          "missing_sector": false
+        },
+        {
+          "d": "2026-06-06",
+          "b": "Mary's Tailoring Workshop",
+          "district": "Kagadi",
+          "sector": "fashion_and_design",
+          "ursb": "no",
+          "tin": "no",
+          "nssf": "No",
+          "missing_business_name": false,
+          "missing_district": false,
+          "missing_sector": false
+        },
+        {
+          "d": "2026-06-06",
+          "b": "Gift Fashions & Design",
+          "district": "Kagadi",
+          "sector": "fashion_and_design",
+          "ursb": "no",
+          "tin": "no",
+          "nssf": "No",
+          "missing_business_name": false,
+          "missing_district": false,
+          "missing_sector": false
+        },
+        {
+          "d": "2026-06-06",
+          "b": "No business name",
+          "district": "Kikuube",
+          "sector": "trade_and_services",
+          "ursb": "no",
+          "tin": "no",
+          "nssf": "No",
+          "missing_business_name": false,
+          "missing_district": false,
+          "missing_sector": false
+        },
+        {
+          "d": "2026-06-07",
+          "b": "Bear Bar",
+          "district": "Kikuube",
+          "sector": "trade_and_services",
+          "ursb": "no",
+          "tin": "no",
+          "nssf": "No",
+          "missing_business_name": false,
+          "missing_district": false,
+          "missing_sector": false
+        },
+        {
+          "d": "2026-06-07",
+          "b": "Angel saloon",
+          "district": "Kikuube",
+          "sector": "fashion_and_design",
+          "ursb": "no",
+          "tin": "no",
+          "nssf": "No",
+          "missing_business_name": false,
+          "missing_district": false,
+          "missing_sector": false
+        },
+        {
+          "d": "2026-06-07",
+          "b": "No business name",
+          "district": "Kikuube",
+          "sector": "trade_and_services",
+          "ursb": "no",
+          "tin": "no",
+          "nssf": "No",
+          "missing_business_name": false,
+          "missing_district": false,
+          "missing_sector": false
+        },
+        {
+          "d": "2026-06-07",
+          "b": "No business name",
+          "district": "Kikuube",
+          "sector": "fashion_and_design",
+          "ursb": "no",
+          "tin": "no",
+          "nssf": "No",
+          "missing_business_name": false,
+          "missing_district": false,
+          "missing_sector": false
+        },
+        {
+          "d": "2026-06-07",
+          "b": "no business name",
+          "district": "Kikuube",
+          "sector": "fashion_and_design",
+          "ursb": "no",
+          "tin": "no",
+          "nssf": "No",
+          "missing_business_name": false,
+          "missing_district": false,
+          "missing_sector": false
+        },
+        {
+          "d": "2026-06-07",
+          "b": "no business name",
+          "district": "Kikuube",
+          "sector": "fashion_and_design",
+          "ursb": "no",
+          "tin": "no",
+          "nssf": "No",
+          "missing_business_name": false,
+          "missing_district": false,
+          "missing_sector": false
+        },
+        {
+          "d": "2026-06-07",
+          "b": "no business name",
+          "district": "Kikuube",
+          "sector": "trade_and_services",
+          "ursb": "no",
+          "tin": "no",
+          "nssf": "No",
+          "missing_business_name": false,
+          "missing_district": false,
+          "missing_sector": false
+        },
+        {
+          "d": "2026-06-07",
+          "b": "No business name",
+          "district": "Kikuube",
+          "sector": "fashion_and_design",
+          "ursb": "no",
+          "tin": "no",
+          "nssf": "No",
+          "missing_business_name": false,
+          "missing_district": false,
+          "missing_sector": false
+        },
+        {
+          "d": "2026-06-07",
+          "b": "no business name",
+          "district": "Kikuube",
+          "sector": "fashion_and_design",
+          "ursb": "no",
+          "tin": "no",
+          "nssf": "No",
+          "missing_business_name": false,
+          "missing_district": false,
+          "missing_sector": false
+        },
+        {
+          "d": "2026-06-07",
+          "b": "Immaculate Nyangoma",
+          "district": "Kagadi",
+          "sector": "Agriculture",
+          "ursb": "no",
+          "tin": "no",
+          "nssf": "No",
+          "missing_business_name": false,
+          "missing_district": false,
+          "missing_sector": false
+        },
+        {
+          "d": "2026-06-07",
+          "b": "Nakibuka Margret",
+          "district": "Kagadi",
+          "sector": "trade_and_services",
+          "ursb": "no",
+          "tin": "no",
+          "nssf": "No",
+          "missing_business_name": false,
+          "missing_district": false,
+          "missing_sector": false
+        },
+        {
+          "d": "2026-06-07",
+          "b": "Denise Depot",
+          "district": "Kikuube",
+          "sector": "trade_and_services",
+          "ursb": "no",
+          "tin": "no",
+          "nssf": "No",
+          "missing_business_name": false,
+          "missing_district": false,
+          "missing_sector": false
+        },
+        {
+          "d": "2026-06-07",
+          "b": "Retai business selling food items",
+          "district": "Kikuube",
+          "sector": "fashion_and_design",
+          "ursb": "no",
+          "tin": "no",
+          "nssf": "No",
+          "missing_business_name": false,
+          "missing_district": false,
+          "missing_sector": false
+        },
+        {
+          "d": "2026-06-07",
+          "b": "no business name",
+          "district": "Kikuube",
+          "sector": "trade_and_services",
+          "ursb": "no",
+          "tin": "no",
+          "nssf": "No",
+          "missing_business_name": false,
+          "missing_district": false,
+          "missing_sector": false
+        },
+        {
+          "d": "2026-06-07",
+          "b": "Kusemererwa Justine",
+          "district": "Kagadi",
+          "sector": "trade_and_services",
+          "ursb": "no",
+          "tin": "no",
+          "nssf": "No",
+          "missing_business_name": false,
+          "missing_district": false,
+          "missing_sector": false
+        },
+        {
+          "d": "2026-06-07",
+          "b": "No business name",
+          "district": "Kikuube",
+          "sector": "fashion_and_design",
+          "ursb": "no",
+          "tin": "no",
+          "nssf": "No",
+          "missing_business_name": false,
+          "missing_district": false,
+          "missing_sector": false
+        },
+        {
+          "d": "2026-06-07",
+          "b": "ESOA uganda",
+          "district": "Kagadi",
+          "sector": "trade_and_services",
+          "ursb": "no",
+          "tin": "no",
+          "nssf": "No",
+          "missing_business_name": false,
+          "missing_district": false,
+          "missing_sector": false
+        },
+        {
+          "d": "2026-06-07",
+          "b": "Beauty Centre",
+          "district": "Kagadi",
+          "sector": "trade_and_services",
+          "ursb": "no",
+          "tin": "no",
+          "nssf": "No",
+          "missing_business_name": false,
+          "missing_district": false,
+          "missing_sector": false
+        },
+        {
+          "d": "2026-06-07",
+          "b": "no business name",
+          "district": "Kikuube",
+          "sector": "trade_and_services",
+          "ursb": "no",
+          "tin": "no",
+          "nssf": "No",
+          "missing_business_name": false,
+          "missing_district": false,
+          "missing_sector": false
+        },
+        {
+          "d": "2026-06-07",
+          "b": "no name for the business",
+          "district": "Kikuube",
+          "sector": "trade_and_services",
+          "ursb": "no",
+          "tin": "no",
+          "nssf": "No",
+          "missing_business_name": false,
+          "missing_district": false,
+          "missing_sector": false
+        },
+        {
+          "d": "2026-06-07",
+          "b": "no business name",
+          "district": "Kikuube",
+          "sector": "trade_and_services",
+          "ursb": "no",
+          "tin": "no",
+          "nssf": "No",
+          "missing_business_name": false,
+          "missing_district": false,
+          "missing_sector": false
+        },
+        {
+          "d": "2026-06-07",
+          "b": "no business name",
+          "district": "Kikuube",
+          "sector": "trade_and_services",
+          "ursb": "no",
+          "tin": "no",
+          "nssf": "No",
+          "missing_business_name": false,
+          "missing_district": false,
+          "missing_sector": false
+        },
+        {
+          "d": "2026-06-07",
+          "b": "no business name",
+          "district": "Kikuube",
+          "sector": "Agriculture",
+          "ursb": "no",
+          "tin": "no",
+          "nssf": "No",
+          "missing_business_name": false,
+          "missing_district": false,
+          "missing_sector": false
+        },
+        {
+          "d": "2026-06-07",
+          "b": "Gods Able",
+          "district": "Kikuube",
+          "sector": "HealthNutrition",
+          "ursb": "no",
+          "tin": "no",
+          "nssf": "No",
+          "missing_business_name": false,
+          "missing_district": false,
+          "missing_sector": false
         }
       ],
       "type": "eoi",
@@ -246177,49 +246846,51 @@ window.PORTFOLIO_DATA = {
       "eso": "Living Earth Uganda",
       "filename": "kobo:a9dTHTe72X7zPceKxVtSxV",
       "stats": {
-        "total": 36,
+        "total": 67,
         "ursb": 0,
-        "pwd": 0,
+        "pwd": 1,
         "refugees": 0,
-        "record_count": 36
+        "record_count": 67
       },
       "ursb_pct": 0.0,
       "sectors": {
-        "Trade & Services": 17,
-        "Agriculture": 13,
-        "Fashion & Design": 5,
-        "Others": 1
+        "Trade & Services": 32,
+        "Agriculture": 17,
+        "Fashion & Design": 16,
+        "Others": 1,
+        "Health & Nutrition": 1
       },
       "districts": {
-        "Kagadi": 20,
-        "Kikuube": 12,
+        "Kikuube": 32,
+        "Kagadi": 31,
         "Wakiso": 2,
         "Kamwenge": 1,
         "Isingiro": 1
       },
-      "total_founders": 41,
-      "female_founders": 38,
+      "total_founders": 74,
+      "female_founders": 70,
       "revenue_bands": {},
       "funding_bands": {},
       "archetypes": {
-        "Gig Workers": 25,
+        "Gig Workers": 48,
         "Invisibles": 1,
-        "Bootstrappers": 10
+        "Bootstrappers": 17,
+        "Bootstrappers SME": 1
       },
       "tin_status": {
         "Yes": 1,
-        "No": 35
+        "No": 66
       },
       "nssf_status": {
-        "No": 36
+        "No": 67
       },
       "id_status": {
         "Has National ID": 1,
-        "Missing ID": 40
+        "Missing ID": 73
       },
       "nin_status": {
         "Has NIN": 5,
-        "No NIN": 51
+        "No NIN": 89
       },
       "eoi_match_index": [
         {
@@ -246767,6 +247438,475 @@ window.PORTFOLIO_DATA = {
           "nssf": false,
           "sector": "Fashion & Design",
           "eso": "Living Earth Uganda"
+        },
+        {
+          "business_key": "immy ks sented bliss",
+          "phone_keys": [
+            "16ca96283c6d1427"
+          ],
+          "email_keys": [
+            "0cd3c255fac27d0b"
+          ],
+          "has_national_id": false,
+          "business_registered": false,
+          "tin": false,
+          "nssf": false,
+          "sector": "Trade & Services",
+          "eso": "Living Earth Uganda"
+        },
+        {
+          "business_key": "atuhairwe gladys",
+          "phone_keys": [
+            "96a5ca63b539427e"
+          ],
+          "email_keys": [
+            "724a1f2d991ca401"
+          ],
+          "has_national_id": false,
+          "business_registered": false,
+          "tin": false,
+          "nssf": false,
+          "sector": "Fashion & Design",
+          "eso": "Living Earth Uganda"
+        },
+        {
+          "business_key": "alinaitwe musiimenta",
+          "phone_keys": [
+            "9eabf837d3d3e41b"
+          ],
+          "email_keys": [
+            "360af13b3bb10f8d"
+          ],
+          "has_national_id": false,
+          "business_registered": false,
+          "tin": false,
+          "nssf": false,
+          "sector": "Agriculture",
+          "eso": "Living Earth Uganda"
+        },
+        {
+          "business_key": "nyarasafari annet",
+          "phone_keys": [
+            "b8e9eb18b27f80ef"
+          ],
+          "email_keys": [
+            "5d6f104f1587ee58"
+          ],
+          "has_national_id": false,
+          "business_registered": false,
+          "tin": false,
+          "nssf": false,
+          "sector": "Agriculture",
+          "eso": "Living Earth Uganda"
+        },
+        {
+          "business_key": "mary s tailoring workshop",
+          "phone_keys": [
+            "75a3d1c4eda7d71f"
+          ],
+          "email_keys": [
+            "293497e201823e05"
+          ],
+          "has_national_id": false,
+          "business_registered": false,
+          "tin": false,
+          "nssf": false,
+          "sector": "Fashion & Design",
+          "eso": "Living Earth Uganda"
+        },
+        {
+          "business_key": "gift fashions design",
+          "phone_keys": [
+            "0d0d2d04643ae6a4",
+            "1574758e15dc1c80"
+          ],
+          "email_keys": [
+            "4cdd98bacc23af4f",
+            "789a3996039a61e7"
+          ],
+          "has_national_id": false,
+          "business_registered": false,
+          "tin": false,
+          "nssf": false,
+          "sector": "Fashion & Design",
+          "eso": "Living Earth Uganda"
+        },
+        {
+          "business_key": "no business name",
+          "phone_keys": [
+            "a3cac2fed0da3827"
+          ],
+          "email_keys": [
+            "f5cb37c5256800e9"
+          ],
+          "has_national_id": false,
+          "business_registered": false,
+          "tin": false,
+          "nssf": false,
+          "sector": "Trade & Services",
+          "eso": "Living Earth Uganda"
+        },
+        {
+          "business_key": "bear bar",
+          "phone_keys": [
+            "5ad578808a9165d0"
+          ],
+          "email_keys": [
+            "937d08743fb9d9b4"
+          ],
+          "has_national_id": false,
+          "business_registered": false,
+          "tin": false,
+          "nssf": false,
+          "sector": "Trade & Services",
+          "eso": "Living Earth Uganda"
+        },
+        {
+          "business_key": "angel saloon",
+          "phone_keys": [
+            "3c34a4e613508a5c"
+          ],
+          "email_keys": [
+            "2e6330047c7bf749"
+          ],
+          "has_national_id": false,
+          "business_registered": false,
+          "tin": false,
+          "nssf": false,
+          "sector": "Fashion & Design",
+          "eso": "Living Earth Uganda"
+        },
+        {
+          "business_key": "no business name",
+          "phone_keys": [
+            "878a612299809d2b"
+          ],
+          "email_keys": [
+            "a15652f03cebe368"
+          ],
+          "has_national_id": false,
+          "business_registered": false,
+          "tin": false,
+          "nssf": false,
+          "sector": "Trade & Services",
+          "eso": "Living Earth Uganda"
+        },
+        {
+          "business_key": "no business name",
+          "phone_keys": [
+            "a8a7a6337208da9c"
+          ],
+          "email_keys": [
+            "3af22107c255b76a"
+          ],
+          "has_national_id": false,
+          "business_registered": false,
+          "tin": false,
+          "nssf": false,
+          "sector": "Fashion & Design",
+          "eso": "Living Earth Uganda"
+        },
+        {
+          "business_key": "no business name",
+          "phone_keys": [
+            "744732791a6ba85e"
+          ],
+          "email_keys": [
+            "c751a97348b5dcd1"
+          ],
+          "has_national_id": false,
+          "business_registered": false,
+          "tin": false,
+          "nssf": false,
+          "sector": "Fashion & Design",
+          "eso": "Living Earth Uganda"
+        },
+        {
+          "business_key": "no business name",
+          "phone_keys": [
+            "1f878b461ae17056"
+          ],
+          "email_keys": [
+            "ea34be0bdc5aefba"
+          ],
+          "has_national_id": false,
+          "business_registered": false,
+          "tin": false,
+          "nssf": false,
+          "sector": "Fashion & Design",
+          "eso": "Living Earth Uganda"
+        },
+        {
+          "business_key": "no business name",
+          "phone_keys": [
+            "207a167e8ef89db9"
+          ],
+          "email_keys": [
+            "7c5d188b7c30d949"
+          ],
+          "has_national_id": false,
+          "business_registered": false,
+          "tin": false,
+          "nssf": false,
+          "sector": "Trade & Services",
+          "eso": "Living Earth Uganda"
+        },
+        {
+          "business_key": "no business name",
+          "phone_keys": [
+            "99bf1f2b8d2a43e8"
+          ],
+          "email_keys": [
+            "72137adfc3a736e4"
+          ],
+          "has_national_id": false,
+          "business_registered": false,
+          "tin": false,
+          "nssf": false,
+          "sector": "Fashion & Design",
+          "eso": "Living Earth Uganda"
+        },
+        {
+          "business_key": "no business name",
+          "phone_keys": [
+            "042baec9e39ffa08"
+          ],
+          "email_keys": [
+            "0716e197a69eb834"
+          ],
+          "has_national_id": false,
+          "business_registered": false,
+          "tin": false,
+          "nssf": false,
+          "sector": "Fashion & Design",
+          "eso": "Living Earth Uganda"
+        },
+        {
+          "business_key": "immaculate nyangoma",
+          "phone_keys": [
+            "80ab71ae229d9ffd",
+            "8a5e3507fab423f6"
+          ],
+          "email_keys": [
+            "a2f8d4f99bd3040d",
+            "af1a0f1c0b93da49"
+          ],
+          "has_national_id": false,
+          "business_registered": false,
+          "tin": false,
+          "nssf": false,
+          "sector": "Agriculture",
+          "eso": "Living Earth Uganda"
+        },
+        {
+          "business_key": "nakibuka margret",
+          "phone_keys": [
+            "e58047b5f86fb6d8"
+          ],
+          "email_keys": [
+            "ea8033f12d54e7ac"
+          ],
+          "has_national_id": false,
+          "business_registered": false,
+          "tin": false,
+          "nssf": false,
+          "sector": "Trade & Services",
+          "eso": "Living Earth Uganda"
+        },
+        {
+          "business_key": "denise depot",
+          "phone_keys": [
+            "ab8ac8fb610a6737"
+          ],
+          "email_keys": [
+            "60c3d3501be5c2a4"
+          ],
+          "has_national_id": false,
+          "business_registered": false,
+          "tin": false,
+          "nssf": false,
+          "sector": "Trade & Services",
+          "eso": "Living Earth Uganda"
+        },
+        {
+          "business_key": "retai business selling food items",
+          "phone_keys": [
+            "a532e5036b570cfc"
+          ],
+          "email_keys": [
+            "d719bde93da1a128"
+          ],
+          "has_national_id": false,
+          "business_registered": false,
+          "tin": false,
+          "nssf": false,
+          "sector": "Fashion & Design",
+          "eso": "Living Earth Uganda"
+        },
+        {
+          "business_key": "no business name",
+          "phone_keys": [
+            "0ebb66266eeb6478"
+          ],
+          "email_keys": [
+            "2854eaba1c284665"
+          ],
+          "has_national_id": false,
+          "business_registered": false,
+          "tin": false,
+          "nssf": false,
+          "sector": "Trade & Services",
+          "eso": "Living Earth Uganda"
+        },
+        {
+          "business_key": "kusemererwa justine",
+          "phone_keys": [
+            "c02407861b840430"
+          ],
+          "email_keys": [
+            "e559223bd4e495ac"
+          ],
+          "has_national_id": false,
+          "business_registered": false,
+          "tin": false,
+          "nssf": false,
+          "sector": "Trade & Services",
+          "eso": "Living Earth Uganda"
+        },
+        {
+          "business_key": "no business name",
+          "phone_keys": [
+            "a22a50e3f1434ef9"
+          ],
+          "email_keys": [
+            "63ba0fc617683616"
+          ],
+          "has_national_id": false,
+          "business_registered": false,
+          "tin": false,
+          "nssf": false,
+          "sector": "Fashion & Design",
+          "eso": "Living Earth Uganda"
+        },
+        {
+          "business_key": "esoa uganda",
+          "phone_keys": [
+            "313a815def8dd7de"
+          ],
+          "email_keys": [
+            "b92099f5a95385c7"
+          ],
+          "has_national_id": false,
+          "business_registered": false,
+          "tin": false,
+          "nssf": false,
+          "sector": "Trade & Services",
+          "eso": "Living Earth Uganda"
+        },
+        {
+          "business_key": "beauty centre",
+          "phone_keys": [
+            "3f011f2c0a581e79"
+          ],
+          "email_keys": [
+            "7c23c0035a44cb9a"
+          ],
+          "has_national_id": false,
+          "business_registered": false,
+          "tin": false,
+          "nssf": false,
+          "sector": "Trade & Services",
+          "eso": "Living Earth Uganda"
+        },
+        {
+          "business_key": "no business name",
+          "phone_keys": [
+            "f6ff496f4bf6a443"
+          ],
+          "email_keys": [
+            "acb621a1147ef15c"
+          ],
+          "has_national_id": false,
+          "business_registered": false,
+          "tin": false,
+          "nssf": false,
+          "sector": "Trade & Services",
+          "eso": "Living Earth Uganda"
+        },
+        {
+          "business_key": "no name for the business",
+          "phone_keys": [
+            "1f009773ac6fff1a"
+          ],
+          "email_keys": [
+            "c073a7540631e900"
+          ],
+          "has_national_id": false,
+          "business_registered": false,
+          "tin": false,
+          "nssf": false,
+          "sector": "Trade & Services",
+          "eso": "Living Earth Uganda"
+        },
+        {
+          "business_key": "no business name",
+          "phone_keys": [
+            "1bcf40cbcc52f195"
+          ],
+          "email_keys": [
+            "25f29484c2df0c41"
+          ],
+          "has_national_id": false,
+          "business_registered": false,
+          "tin": false,
+          "nssf": false,
+          "sector": "Trade & Services",
+          "eso": "Living Earth Uganda"
+        },
+        {
+          "business_key": "no business name",
+          "phone_keys": [
+            "aa3ddbd85caf6c94"
+          ],
+          "email_keys": [
+            "3c71b258940142e8"
+          ],
+          "has_national_id": false,
+          "business_registered": false,
+          "tin": false,
+          "nssf": false,
+          "sector": "Trade & Services",
+          "eso": "Living Earth Uganda"
+        },
+        {
+          "business_key": "no business name",
+          "phone_keys": [
+            "2685899049f68439"
+          ],
+          "email_keys": [
+            "982704f59436f4f9"
+          ],
+          "has_national_id": false,
+          "business_registered": false,
+          "tin": false,
+          "nssf": false,
+          "sector": "Agriculture",
+          "eso": "Living Earth Uganda"
+        },
+        {
+          "business_key": "gods able",
+          "phone_keys": [
+            "01e93aa93d50dda6"
+          ],
+          "email_keys": [
+            "bc1dd7ba1d67b450"
+          ],
+          "has_national_id": false,
+          "business_registered": false,
+          "tin": false,
+          "nssf": false,
+          "sector": "Health & Nutrition",
+          "eso": "Living Earth Uganda"
         }
       ],
       "data_quality": {
@@ -246782,16 +247922,16 @@ window.PORTFOLIO_DATA = {
       "founders": {
         "gender": {
           "Male": 5,
-          "Female": 36
+          "Female": 69
         },
-        "female_pct": 87.8,
-        "with_pwd": 0,
+        "female_pct": 93.2,
+        "with_pwd": 1,
         "refugees": 0
       },
       "age_bands": {
-        "18\u201325": 15,
-        "26\u201335": 24,
-        "36\u201345": 2
+        "18\u201325": 23,
+        "26\u201335": 48,
+        "36\u201345": 3
       },
       "refugee_nationalities": {}
     },
@@ -246952,10 +248092,10 @@ window.PORTFOLIO_DATA = {
       "name": "Youth in Work",
       "filename": "kobo:aB7GSLygTqk9DF4CK7hdPm",
       "stats": {
-        "total": 26569,
-        "record_count": 26569
+        "total": 26883,
+        "record_count": 26883
       },
-      "earned_income_pct": 79.6,
+      "earned_income_pct": 79.7,
       "work_improved_pct": 0.6,
       "foundation_done_pct": 1.4,
       "by_eso": {
@@ -246972,37 +248112,37 @@ window.PORTFOLIO_DATA = {
           "total": 412
         },
         "Mkazipreneur": {
-          "total": 3388
+          "total": 3462
         },
         "Stanbic Business Incubator": {
-          "total": 2196
+          "total": 2234
         },
         "Finding XY": {
           "total": 231
         },
         "MUBS EIIC": {
-          "total": 2401
+          "total": 2465
         },
         "CURAD": {
           "total": 1962
         },
         "Living Earth Uganda": {
-          "total": 14
+          "total": 15
         },
         "AGDI": {
-          "total": 505
+          "total": 568
         },
         "AID": {
-          "total": 520
+          "total": 594
         }
       },
       "sectors": {},
       "districts": {},
       "income_levels": {},
       "weekly_activity": {
-        "apps_this_week": 1040,
-        "apps_last_week": 2885,
-        "apps_this_month": 1040
+        "apps_this_week": 1,
+        "apps_last_week": 1353,
+        "apps_this_month": 1354
       }
     },
     {
@@ -247010,14 +248150,14 @@ window.PORTFOLIO_DATA = {
       "name": "Business Needs",
       "filename": "kobo:ab6tQxBi8LZfJYmqmbkZho",
       "stats": {
-        "total": 6638,
+        "total": 6697,
         "pwd": 197,
         "refugees": 0,
-        "record_count": 6638
+        "record_count": 6697
       },
-      "registered_pct": 19.6,
-      "device_need_pct": 78.7,
-      "pwd_pct": 3.0,
+      "registered_pct": 19.5,
+      "device_need_pct": 78.1,
+      "pwd_pct": 2.9,
       "by_eso": {
         "DFCU Foundation": {
           "total": 2534,
@@ -247068,18 +248208,18 @@ window.PORTFOLIO_DATA = {
           "credit_approved": 0
         },
         "AGDI": {
-          "total": 368,
-          "registered": 23,
-          "device_need": 317,
+          "total": 379,
+          "registered": 25,
+          "device_need": 328,
           "pwd": 18,
-          "internet_always": 178,
-          "mobile_payments": 284,
+          "internet_always": 179,
+          "mobile_payments": 285,
           "credit_demand": 169,
           "credit_ready": 80,
           "credit_followup": 67,
           "credit_pwd_demand": 11,
           "credit_denied": 11,
-          "credit_repay_yes": 347,
+          "credit_repay_yes": 358,
           "credit_eligible": 0,
           "credit_approved": 0
         },
@@ -247164,18 +248304,18 @@ window.PORTFOLIO_DATA = {
           "credit_approved": 0
         },
         "AID": {
-          "total": 165,
-          "registered": 14,
-          "device_need": 39,
+          "total": 213,
+          "registered": 15,
+          "device_need": 40,
           "pwd": 0,
-          "internet_always": 112,
-          "mobile_payments": 119,
-          "credit_demand": 151,
-          "credit_ready": 101,
+          "internet_always": 160,
+          "mobile_payments": 167,
+          "credit_demand": 199,
+          "credit_ready": 149,
           "credit_followup": 8,
           "credit_pwd_demand": 0,
           "credit_denied": 27,
-          "credit_repay_yes": 132,
+          "credit_repay_yes": 180,
           "credit_eligible": 0,
           "credit_approved": 0
         },
@@ -247214,7 +248354,7 @@ window.PORTFOLIO_DATA = {
       },
       "sectors": {
         "Trade And Services": 2613,
-        "Agriculture": 2418,
+        "Agriculture": 2477,
         "Fashion And Design": 1252,
         "Others": 106,
         "Lightmanufacturing": 104,
@@ -247233,104 +248373,104 @@ window.PORTFOLIO_DATA = {
         "Sironko": 301,
         "Kampala": 263,
         "Luweero": 249,
+        "Kamwenge": 169,
         "Gulu": 160,
-        "Kamwenge": 159,
         "Wakiso": 157,
+        "Bunyangabo": 157,
         "Isingiro": 148,
         "Lamwo": 146,
         "Kapchorwa": 128,
-        "Kyegegwa": 126,
-        "Mukono": 124,
-        "Bunyangabo": 109
+        "Kyegegwa": 127,
+        "Mukono": 124
       },
       "income_levels": {
-        "between_250_000_and_270_000": 3184,
-        "below_250_000": 2306,
-        "above_270_000": 1148
+        "between_250_000_and_270_000": 3206,
+        "below_250_000": 2341,
+        "above_270_000": 1150
       },
       "digital_skills": {
-        "Sell Products Online": 4140,
-        "Keep Digital Records": 4074,
-        "Social Media Marketing": 3289,
-        "Branding And Marketing": 2966,
-        "Access Digital Credit": 2096,
-        "Online Customer Service": 1718,
+        "Sell Products Online": 4187,
+        "Keep Digital Records": 4128,
+        "Social Media Marketing": 3325,
+        "Branding And Marketing": 3010,
+        "Access Digital Credit": 2128,
+        "Online Customer Service": 1751,
         "Sell Products Onlin": 28,
         "Others": 10
       },
       "business_age": {
-        "1 3 Years": 4129,
+        "1 3 Years": 4160,
         "More Than 3 Years": 1454,
-        "Less Than 1 Year": 1041,
+        "Less Than 1 Year": 1069,
         "1 3 Years More Than 3 Years": 10,
         "Less Than 1 Year 1 3 Years": 3,
         "Less Than 1 Year More Than 3 Years": 1
       },
       "growth_status": {
-        "Growing": 5472,
+        "Growing": 5530,
         "Stagnant Not Growing": 798,
-        "Just Starting": 312,
+        "Just Starting": 313,
         "Declining": 56
       },
       "income_frequency": {
-        "Daily": 4578,
+        "Daily": 4636,
         "Monthly": 743,
-        "Weekly": 708,
+        "Weekly": 709,
         "Seasonal": 609
       },
       "income_stability": {
-        "Sometimes High Sometimes Low": 4951,
-        "Stable": 1176,
-        "Very Unpredictable": 511
+        "Sometimes High Sometimes Low": 5007,
+        "Stable": 1178,
+        "Very Unpredictable": 512
       },
       "internet_access": {
-        "Always": 2708,
+        "Always": 2757,
         "Sometimes": 2469,
-        "Rarely": 1461
+        "Rarely": 1471
       },
       "mobile_payments": {
-        "Yes": 4721,
-        "No": 1917
+        "Yes": 4770,
+        "No": 1927
       },
       "digital_confidence": {
-        "Yes": 5030,
-        "Not Sure": 804,
-        "No": 804
+        "Yes": 5087,
+        "Not Sure": 805,
+        "No": 805
       },
       "business_constraints": {
-        "Money": 1912,
-        "Customers": 1824,
-        "Marking": 1646,
-        "Suppliers": 1050,
-        "Staff": 148,
+        "Money": 1916,
+        "Customers": 1829,
+        "Marking": 1688,
+        "Suppliers": 1057,
+        "Staff": 149,
         "Others": 58
       },
       "support_needed": {
-        "Training In Business Planning": 4530,
-        "Help With Record Keeping": 3155,
-        "Digital Skills Training": 2937,
-        "Understanding Loans Investors": 2864,
-        "Market Access Support": 2161,
+        "Training In Business Planning": 4572,
+        "Help With Record Keeping": 3183,
+        "Digital Skills Training": 2964,
+        "Understanding Loans Investors": 2904,
+        "Market Access Support": 2186,
         "Others": 10
       },
       "prior_credit_sources": {
-        "None": 3610,
+        "None": 3631,
         "Sacco": 1306,
-        "Family Friends": 1052,
-        "Vsla": 869,
+        "Family Friends": 1073,
+        "Vsla": 892,
         "Bank": 499,
         "Grant": 77
       },
       "repay_capacity": {
-        "Yes": 5753,
+        "Yes": 5812,
         "Not Sure": 513,
         "No": 372
       },
       "loan_purpose": {
-        "Working Capital To Purchase More Stock": 5531,
-        "Purchase Equipment Device For The Busi": 2604,
-        "Improve The Business Operations Welfar": 1906,
-        "Enhance Marketing Of The Buisness": 1719,
+        "Working Capital To Purchase More Stock": 5577,
+        "Purchase Equipment Device For The Busi": 2613,
+        "Improve The Business Operations Welfar": 1927,
+        "Enhance Marketing Of The Buisness": 1723,
         "Hire More Employees": 1054,
         "Access Certification": 978,
         "Stock": 68,
@@ -247341,42 +248481,42 @@ window.PORTFOLIO_DATA = {
         "Marketing": 1
       },
       "device_types_needed": {
-        "Smart Phone": 4164,
-        "Computer": 1072,
-        "Tablets": 874,
+        "Smart Phone": 4170,
+        "Computer": 1074,
+        "Tablets": 879,
         "Feature Phone": 303,
         "Point Of Sale Machine Pos": 151
       },
       "device_budget": {
-        "Between 100 000 To 250 000": 3065,
+        "Between 100 000 To 250 000": 3069,
         "Above 300 000": 1157,
-        "Below 100 000": 1000
+        "Below 100 000": 1008
       },
       "respondent_roles": {
-        "Owner Founder": 6390,
-        "Employee": 198
+        "Owner Founder": 6448,
+        "Employee": 199
       },
-      "credit_demand": 3449,
-      "credit_skills_demand": 2096,
-      "loan_literacy_need": 2864,
-      "credit_ready_demand": 2171,
+      "credit_demand": 3497,
+      "credit_skills_demand": 2128,
+      "loan_literacy_need": 2904,
+      "credit_ready_demand": 2219,
       "credit_pwd_demand": 136,
-      "credit_demand_registered": 619,
-      "credit_demand_sector_known": 3440,
-      "credit_demand_repay_yes": 3192,
-      "credit_demand_amount_known": 3444,
+      "credit_demand_registered": 620,
+      "credit_demand_sector_known": 3488,
+      "credit_demand_repay_yes": 3240,
+      "credit_demand_amount_known": 3492,
       "credit_readiness": {
-        "Needs Follow-Up": 1473,
-        "Ready for Screening": 3896,
-        "Not Ready Yet": 1269
+        "Needs Follow-Up": 1475,
+        "Ready for Screening": 3945,
+        "Not Ready Yet": 1277
       },
       "credit_demand_readiness": {
         "Needs Follow-Up": 733,
-        "Ready for Screening": 2171,
+        "Ready for Screening": 2219,
         "Not Ready Yet": 545
       },
       "credit_demand_by_sector": {
-        "Agriculture": 1346,
+        "Agriculture": 1394,
         "Trade And Services": 1343,
         "Fashion And Design": 622,
         "Lightmanufacturing": 61,
@@ -247393,11 +248533,11 @@ window.PORTFOLIO_DATA = {
         "Nakaseke": 204,
         "Sironko": 184,
         "Kampala": 174,
+        "Bunyangabo": 150,
         "Gulu": 144,
         "Pallisa": 140,
         "Busia": 128,
         "Luweero": 125,
-        "Bunyangabo": 102,
         "Wakiso": 99,
         "Budaka": 86,
         "Kamwenge": 82,
@@ -247413,10 +248553,10 @@ window.PORTFOLIO_DATA = {
         "Challenges Uganda": 349,
         "Mkazipreneur": 336,
         "MUBS EIIC": 268,
+        "AID": 199,
         "PEDN": 173,
         "AGDI": 169,
         "Finding XY": 156,
-        "AID": 151,
         "Unknown": 13,
         "Living Earth Uganda": 6,
         "Stanbic Business Incubator": 1
@@ -247425,14 +248565,14 @@ window.PORTFOLIO_DATA = {
         "5M+": 1062,
         "2M-5M": 996,
         "1M-2M": 666,
-        "500K-1M": 367,
-        "Under 500K": 353,
+        "Under 500K": 391,
+        "500K-1M": 377,
         "Missing Amount": 5
       },
       "credit_amount_stats": {
-        "count": 3444,
-        "total_requested_ugx": 102800356136,
-        "avg_requested_ugx": 29849116,
+        "count": 3492,
+        "total_requested_ugx": 102816766136,
+        "avg_requested_ugx": 29443518,
         "median_requested_ugx": 2000000
       },
       "credit_match_records": [
@@ -264680,6 +265820,246 @@ window.PORTFOLIO_DATA = {
           "business_key": "",
           "phone_key": "",
           "email_key": ""
+        },
+        {
+          "business_key": "",
+          "phone_key": "",
+          "email_key": ""
+        },
+        {
+          "business_key": "",
+          "phone_key": "",
+          "email_key": ""
+        },
+        {
+          "business_key": "",
+          "phone_key": "",
+          "email_key": ""
+        },
+        {
+          "business_key": "",
+          "phone_key": "",
+          "email_key": ""
+        },
+        {
+          "business_key": "",
+          "phone_key": "",
+          "email_key": ""
+        },
+        {
+          "business_key": "",
+          "phone_key": "",
+          "email_key": ""
+        },
+        {
+          "business_key": "",
+          "phone_key": "",
+          "email_key": ""
+        },
+        {
+          "business_key": "",
+          "phone_key": "",
+          "email_key": ""
+        },
+        {
+          "business_key": "",
+          "phone_key": "",
+          "email_key": ""
+        },
+        {
+          "business_key": "",
+          "phone_key": "",
+          "email_key": ""
+        },
+        {
+          "business_key": "",
+          "phone_key": "",
+          "email_key": ""
+        },
+        {
+          "business_key": "",
+          "phone_key": "",
+          "email_key": ""
+        },
+        {
+          "business_key": "",
+          "phone_key": "",
+          "email_key": ""
+        },
+        {
+          "business_key": "",
+          "phone_key": "",
+          "email_key": ""
+        },
+        {
+          "business_key": "",
+          "phone_key": "",
+          "email_key": ""
+        },
+        {
+          "business_key": "",
+          "phone_key": "",
+          "email_key": ""
+        },
+        {
+          "business_key": "",
+          "phone_key": "",
+          "email_key": ""
+        },
+        {
+          "business_key": "",
+          "phone_key": "",
+          "email_key": ""
+        },
+        {
+          "business_key": "",
+          "phone_key": "",
+          "email_key": ""
+        },
+        {
+          "business_key": "",
+          "phone_key": "",
+          "email_key": ""
+        },
+        {
+          "business_key": "",
+          "phone_key": "",
+          "email_key": ""
+        },
+        {
+          "business_key": "",
+          "phone_key": "",
+          "email_key": ""
+        },
+        {
+          "business_key": "",
+          "phone_key": "",
+          "email_key": ""
+        },
+        {
+          "business_key": "",
+          "phone_key": "",
+          "email_key": ""
+        },
+        {
+          "business_key": "",
+          "phone_key": "",
+          "email_key": ""
+        },
+        {
+          "business_key": "",
+          "phone_key": "",
+          "email_key": ""
+        },
+        {
+          "business_key": "",
+          "phone_key": "",
+          "email_key": ""
+        },
+        {
+          "business_key": "",
+          "phone_key": "",
+          "email_key": ""
+        },
+        {
+          "business_key": "",
+          "phone_key": "",
+          "email_key": ""
+        },
+        {
+          "business_key": "",
+          "phone_key": "",
+          "email_key": ""
+        },
+        {
+          "business_key": "",
+          "phone_key": "",
+          "email_key": ""
+        },
+        {
+          "business_key": "",
+          "phone_key": "",
+          "email_key": ""
+        },
+        {
+          "business_key": "",
+          "phone_key": "",
+          "email_key": ""
+        },
+        {
+          "business_key": "",
+          "phone_key": "",
+          "email_key": ""
+        },
+        {
+          "business_key": "",
+          "phone_key": "",
+          "email_key": ""
+        },
+        {
+          "business_key": "",
+          "phone_key": "",
+          "email_key": ""
+        },
+        {
+          "business_key": "",
+          "phone_key": "",
+          "email_key": ""
+        },
+        {
+          "business_key": "",
+          "phone_key": "",
+          "email_key": ""
+        },
+        {
+          "business_key": "",
+          "phone_key": "",
+          "email_key": ""
+        },
+        {
+          "business_key": "",
+          "phone_key": "",
+          "email_key": ""
+        },
+        {
+          "business_key": "",
+          "phone_key": "",
+          "email_key": ""
+        },
+        {
+          "business_key": "",
+          "phone_key": "",
+          "email_key": ""
+        },
+        {
+          "business_key": "",
+          "phone_key": "",
+          "email_key": ""
+        },
+        {
+          "business_key": "",
+          "phone_key": "",
+          "email_key": ""
+        },
+        {
+          "business_key": "",
+          "phone_key": "",
+          "email_key": ""
+        },
+        {
+          "business_key": "",
+          "phone_key": "",
+          "email_key": ""
+        },
+        {
+          "business_key": "",
+          "phone_key": "",
+          "email_key": ""
+        },
+        {
+          "business_key": "",
+          "phone_key": "",
+          "email_key": ""
         }
       ],
       "denied_loan_count": 138,
@@ -264696,23 +266076,23 @@ window.PORTFOLIO_DATA = {
         "Lack Of Collateral Security": 2
       },
       "credit_prior_sources": {
-        "None": 3610,
+        "None": 3631,
         "Sacco": 1306,
-        "Family Friends": 1052,
-        "Vsla": 869,
+        "Family Friends": 1073,
+        "Vsla": 892,
         "Bank": 499,
         "Grant": 77
       },
       "credit_repay_capacity": {
-        "Yes": 5753,
+        "Yes": 5812,
         "Not Sure": 513,
         "No": 372
       },
       "credit_loan_purpose": {
-        "Working Capital To Purchase More Stock": 5531,
-        "Purchase Equipment Device For The Busi": 2604,
-        "Improve The Business Operations Welfar": 1906,
-        "Enhance Marketing Of The Buisness": 1719,
+        "Working Capital To Purchase More Stock": 5577,
+        "Purchase Equipment Device For The Busi": 2613,
+        "Improve The Business Operations Welfar": 1927,
+        "Enhance Marketing Of The Buisness": 1723,
         "Hire More Employees": 1054,
         "Access Certification": 978,
         "Stock": 68,
@@ -264726,9 +266106,9 @@ window.PORTFOLIO_DATA = {
       "credit_approved": 0,
       "credit_amount": 0,
       "weekly_activity": {
-        "apps_this_week": 94,
-        "apps_last_week": 103,
-        "apps_this_month": 94
+        "apps_this_week": 1,
+        "apps_last_week": 152,
+        "apps_this_month": 153
       }
     },
     {
@@ -336357,8 +337737,8 @@ window.PORTFOLIO_DATA = {
         "No": 747
       },
       "weekly_activity": {
-        "apps_this_week": 5,
-        "apps_last_week": 17,
+        "apps_this_week": 0,
+        "apps_last_week": 5,
         "apps_this_month": 5
       },
       "eso_weekly": {
@@ -336376,14 +337756,14 @@ window.PORTFOLIO_DATA = {
         },
         "Other": {
           "total": 778,
-          "this_week": 3,
-          "last_week": 13,
+          "this_week": 0,
+          "last_week": 3,
           "this_month": 3
         },
         "Challenges": {
           "total": 389,
           "this_week": 0,
-          "last_week": 1,
+          "last_week": 0,
           "this_month": 0
         },
         "Excelhort": {
@@ -336426,7 +337806,7 @@ window.PORTFOLIO_DATA = {
       "device_weekly": {
         "Smartphone": {
           "total": 3445,
-          "this_week": 2,
+          "this_week": 0,
           "this_month": 2
         },
         "Tablet": {
@@ -336441,7 +337821,7 @@ window.PORTFOLIO_DATA = {
         },
         "POS": {
           "total": 92,
-          "this_week": 1,
+          "this_week": 0,
           "this_month": 1
         },
         "Software": {
@@ -366481,83 +367861,83 @@ window.PORTFOLIO_DATA = {
       "type": "digital_credit",
       "filename": "aggregated_from_buz_needs",
       "stats": {
-        "total": 3449
+        "total": 3497
       },
-      "credit_demand": 3449,
-      "credit_ready": 2171,
+      "credit_demand": 3497,
+      "credit_ready": 2219,
       "credit_followup": 733,
       "screening_readiness_note": "Proxy score using business registration, mobile money, internet access, and digital confidence. This is not approval readiness.",
       "true_readiness_checklist": {
         "business_registered": {
           "available": true,
-          "count": 619,
-          "denominator": 3449,
+          "count": 620,
+          "denominator": 3497,
           "source": "Business Needs"
         },
         "business_type_sector": {
           "available": true,
-          "count": 3440,
-          "denominator": 3449,
+          "count": 3488,
+          "denominator": 3497,
           "source": "Business Needs"
         },
         "repay_confidence": {
           "available": true,
-          "count": 3192,
-          "denominator": 3449,
+          "count": 3240,
+          "denominator": 3497,
           "source": "Business Needs"
         },
         "amount_needed": {
           "available": true,
-          "count": 3444,
-          "denominator": 3449,
+          "count": 3492,
+          "denominator": 3497,
           "source": "Business Needs"
         },
         "owner_national_id": {
           "available": true,
           "count": 2,
-          "denominator": 3449,
+          "denominator": 3497,
           "source": "EOI cross-reference by phone/email when available; currently mostly normalized business-name fallback"
         },
         "eoi_business_registration": {
           "available": true,
           "count": 2,
-          "denominator": 3449,
+          "denominator": 3497,
           "source": "EOI cross-reference registration signal"
         },
         "eoi_tin": {
           "available": true,
           "count": 1,
-          "denominator": 3449,
+          "denominator": 3497,
           "source": "EOI cross-reference TIN signal"
         },
         "eoi_nssf": {
           "available": true,
           "count": 1,
-          "denominator": 3449,
+          "denominator": 3497,
           "source": "EOI cross-reference NSSF signal"
         },
         "phone_registered_in_owner_name": {
           "available": false,
           "count": 0,
-          "denominator": 3449,
+          "denominator": 3497,
           "source": "Device Financing has SIM registration but is not linked to credit-demand records"
         },
         "actual_provider_application": {
           "available": false,
           "count": 0,
-          "denominator": 3449,
+          "denominator": 3497,
           "source": "Missing provider/application dataset"
         },
         "approved_or_disbursed": {
           "available": false,
           "count": 0,
-          "denominator": 3449,
+          "denominator": 3497,
           "source": "Missing credit outcome dataset"
         },
         "repayment_history": {
           "available": false,
           "count": 0,
-          "denominator": 3449,
+          "denominator": 3497,
           "source": "Missing repayment dataset"
         }
       },
@@ -366571,29 +367951,29 @@ window.PORTFOLIO_DATA = {
         "refugee_ready": null
       },
       "credit_funnel": {
-        "Need Credit": 3449,
-        "Ready for Screening": 2171,
+        "Need Credit": 3497,
+        "Ready for Screening": 2219,
         "Eligible": 0,
         "Applied": 0,
         "Approved": 0,
         "Disbursed": 0
       },
       "credit_readiness": {
-        "Needs Follow-Up": 1473,
-        "Ready for Screening": 3896,
-        "Not Ready Yet": 1269
+        "Needs Follow-Up": 1475,
+        "Ready for Screening": 3945,
+        "Not Ready Yet": 1277
       },
       "credit_demand_readiness": {
         "Needs Follow-Up": 733,
-        "Ready for Screening": 2171,
+        "Ready for Screening": 2219,
         "Not Ready Yet": 545
       },
       "credit_signals": {
-        "Access Digital Credit Skills": 2096,
-        "Loan / Investor Understanding": 2864
+        "Access Digital Credit Skills": 2128,
+        "Loan / Investor Understanding": 2904
       },
       "credit_demand_by_sector": {
-        "Agriculture": 1346,
+        "Agriculture": 1394,
         "Trade And Services": 1343,
         "Fashion And Design": 622,
         "Lightmanufacturing": 61,
@@ -366610,11 +367990,11 @@ window.PORTFOLIO_DATA = {
         "Nakaseke": 204,
         "Sironko": 184,
         "Kampala": 174,
+        "Bunyangabo": 150,
         "Gulu": 144,
         "Pallisa": 140,
         "Busia": 128,
         "Luweero": 125,
-        "Bunyangabo": 102,
         "Wakiso": 99,
         "Budaka": 86,
         "Kamwenge": 82,
@@ -366628,18 +368008,18 @@ window.PORTFOLIO_DATA = {
         "5M+": 1062,
         "2M-5M": 996,
         "1M-2M": 666,
-        "500K-1M": 367,
-        "Under 500K": 353,
+        "Under 500K": 391,
+        "500K-1M": 377,
         "Missing Amount": 5
       },
       "credit_amount_stats": {
-        "count": 3444,
-        "total_requested_ugx": 102800356136,
-        "avg_requested_ugx": 29849116,
+        "count": 3492,
+        "total_requested_ugx": 102816766136,
+        "avg_requested_ugx": 29443518,
         "median_requested_ugx": 2000000
       },
       "eoi_credit_crossref": {
-        "credit_records_checked": 3449,
+        "credit_records_checked": 3497,
         "matched_total": 2,
         "matched_by_phone": 0,
         "matched_by_email": 0,
@@ -366652,23 +368032,23 @@ window.PORTFOLIO_DATA = {
         "match_note": "Business Needs currently has no phone/email fields, so matching falls back to normalized business name. Phone/email matching will activate automatically if those fields are added."
       },
       "credit_prior_sources": {
-        "None": 3610,
+        "None": 3631,
         "Sacco": 1306,
-        "Family Friends": 1052,
-        "Vsla": 869,
+        "Family Friends": 1073,
+        "Vsla": 892,
         "Bank": 499,
         "Grant": 77
       },
       "credit_repay_capacity": {
-        "Yes": 5753,
+        "Yes": 5812,
         "Not Sure": 513,
         "No": 372
       },
       "credit_loan_purpose": {
-        "Working Capital To Purchase More Stock": 5531,
-        "Purchase Equipment Device For The Busi": 2604,
-        "Improve The Business Operations Welfar": 1906,
-        "Enhance Marketing Of The Buisness": 1719,
+        "Working Capital To Purchase More Stock": 5577,
+        "Purchase Equipment Device For The Busi": 2613,
+        "Improve The Business Operations Welfar": 1927,
+        "Enhance Marketing Of The Buisness": 1723,
         "Hire More Employees": 1054,
         "Access Certification": 978,
         "Stock": 68,
@@ -366809,7 +368189,7 @@ window.PORTFOLIO_DATA = {
           "followup": 67,
           "pwd_demand": 11,
           "denied": 11,
-          "repay_yes": 347,
+          "repay_yes": 358,
           "breakdown": [
             {
               "type": "Demand",
@@ -366984,20 +368364,20 @@ window.PORTFOLIO_DATA = {
           "amount_ugx": 0,
           "businesses": 0,
           "eligible": 0,
-          "demand": 151,
-          "ready": 101,
+          "demand": 199,
+          "ready": 149,
           "followup": 8,
           "pwd_demand": 0,
           "denied": 27,
-          "repay_yes": 132,
+          "repay_yes": 180,
           "breakdown": [
             {
               "type": "Demand",
-              "count": 151
+              "count": 199
             },
             {
               "type": "Ready for Screening",
-              "count": 101
+              "count": 149
             },
             {
               "type": "Eligible",

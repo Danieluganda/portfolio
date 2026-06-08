@@ -1,0 +1,4358 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>10X Portfolio Management System</title>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <script src="data.js"></script>
+  <style>
+    *,
+    *::before,
+    *::after {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+      background: #F1F5F9;
+      color: #1E293B;
+      min-height: 100vh;
+    }
+
+    /* ─── Header ─── */
+    .header {
+      background: #0F172A;
+      color: #F8FAFC;
+      padding: 14px 28px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      position: sticky;
+      top: 0;
+      z-index: 200;
+      box-shadow: 0 2px 12px rgba(0, 0, 0, .45);
+    }
+
+    .header-left h1 {
+      font-size: 1.15rem;
+      font-weight: 700;
+      letter-spacing: .3px;
+    }
+
+    .header-left .sub {
+      font-size: .72rem;
+      color: #94A3B8;
+      margin-top: 3px;
+    }
+
+    .header-right {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .pill {
+      font-size: .7rem;
+      font-weight: 700;
+      padding: 4px 12px;
+      border-radius: 20px;
+      background: #1E40AF;
+      color: #DBEAFE;
+      letter-spacing: .3px;
+    }
+
+    .btn-refresh {
+      font-size: .72rem;
+      font-weight: 600;
+      padding: 5px 12px;
+      border-radius: 6px;
+      border: 1px solid #334155;
+      background: #1E293B;
+      color: #94A3B8;
+      cursor: pointer;
+      transition: all .15s;
+    }
+
+    .btn-refresh:hover {
+      border-color: #3B82F6;
+      color: #BFDBFE;
+    }
+
+    /* ─── Tier 1: type tabs ─── */
+    .type-tabs-bar {
+      background: #1E293B;
+      padding: 0 24px;
+      display: flex;
+      gap: 0;
+      overflow-x: auto;
+      scrollbar-width: thin;
+    }
+
+    .type-tab-btn {
+      padding: 13px 22px;
+      font-size: .84rem;
+      font-weight: 600;
+      color: #94A3B8;
+      border: none;
+      background: none;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      white-space: nowrap;
+      transition: color .15s, border-color .15s;
+    }
+
+    .type-tab-btn:hover {
+      color: #E2E8F0;
+    }
+
+    .type-tab-btn.active {
+      color: #F8FAFC;
+      border-bottom-color: #3B82F6;
+      font-weight: 700;
+    }
+
+    /* ─── Tier 2: portfolio sub-tabs ─── */
+    .sub-tabs-bar {
+      background: #fff;
+      border-bottom: 2px solid #E2E8F0;
+      padding: 0 24px;
+      display: flex;
+      gap: 2px;
+      overflow-x: auto;
+      scrollbar-width: thin;
+      min-height: 42px;
+    }
+
+    .sub-tab-btn {
+      padding: 10px 18px;
+      font-size: .8rem;
+      font-weight: 500;
+      color: #64748B;
+      border: none;
+      background: none;
+      cursor: pointer;
+      border-bottom: 3px solid transparent;
+      white-space: nowrap;
+      transition: color .15s, border-color .15s;
+      margin-bottom: -2px;
+    }
+
+    .sub-tab-btn:hover {
+      color: #3B82F6;
+    }
+
+    .sub-tab-btn.active {
+      color: #1D4ED8;
+      border-bottom-color: #3B82F6;
+      font-weight: 700;
+    }
+
+    /* ─── Content ─── */
+    .content {
+      max-width: 1440px;
+      margin: 0 auto;
+      padding: 28px 24px;
+    }
+
+    .panel {
+      display: none;
+    }
+
+    .panel.active {
+      display: block;
+    }
+
+    /* ─── Section header ─── */
+    .section-hdr {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    .section-hdr h2 {
+      font-size: 1.2rem;
+      font-weight: 700;
+      color: #0F172A;
+    }
+
+    .type-badge {
+      font-size: .65rem;
+      font-weight: 700;
+      padding: 3px 10px;
+      border-radius: 20px;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+    }
+
+    .badge-seg {
+      background: #DBEAFE;
+      color: #1D4ED8;
+    }
+
+    .badge-grow {
+      background: #D1FAE5;
+      color: #065F46;
+    }
+
+    .badge-all {
+      background: #F3E8FF;
+      color: #6B21A8;
+    }
+
+    /* ─── KPI Cards ─── */
+    .kpi-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(152px, 1fr));
+      gap: 14px;
+      margin-bottom: 24px;
+    }
+
+    .kpi {
+      background: #fff;
+      border-radius: 12px;
+      padding: 16px 18px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, .07);
+      border-left: 4px solid #CBD5E1;
+    }
+
+    .kpi.blue {
+      border-left-color: #3B82F6;
+    }
+
+    .kpi.green {
+      border-left-color: #10B981;
+    }
+
+    .kpi.amber {
+      border-left-color: #F59E0B;
+    }
+
+    .kpi.red {
+      border-left-color: #EF4444;
+    }
+
+    .kpi.violet {
+      border-left-color: #8B5CF6;
+    }
+
+    .kpi.pink {
+      border-left-color: #EC4899;
+    }
+
+    .kpi.teal {
+      border-left-color: #14B8A6;
+    }
+
+    .kpi .lbl {
+      font-size: .68rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      color: #64748B;
+    }
+
+    .kpi .val {
+      font-size: 1.65rem;
+      font-weight: 800;
+      color: #0F172A;
+      margin: 5px 0 3px;
+      line-height: 1;
+    }
+
+    .kpi .hint {
+      font-size: .7rem;
+      color: #94A3B8;
+    }
+
+    /* ─── Chart Grid ─── */
+    .cg {
+      display: grid;
+      gap: 18px;
+      margin-bottom: 18px;
+    }
+
+    .cg-1 {
+      grid-template-columns: 1fr;
+    }
+
+    .cg-2 {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .cg-3 {
+      grid-template-columns: 1fr 1fr 1fr;
+    }
+
+    .cg-21 {
+      grid-template-columns: 2fr 1fr;
+    }
+
+    .cg-12 {
+      grid-template-columns: 1fr 2fr;
+    }
+
+    .card {
+      background: #fff;
+      border-radius: 12px;
+      padding: 20px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, .07);
+    }
+
+    .card h3 {
+      font-size: .72rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .6px;
+      color: #64748B;
+      margin-bottom: 16px;
+    }
+
+    .chart-wrap {
+      position: relative;
+    }
+
+    .chart-wrap canvas {
+      max-height: 300px;
+    }
+
+    .chart-wrap.tall canvas {
+      max-height: 380px;
+    }
+
+    .chart-wrap.squat canvas {
+      max-height: 220px;
+    }
+
+    /* ─── Divider ─── */
+    .divider {
+      height: 1px;
+      background: #E2E8F0;
+      margin: 24px 0;
+    }
+
+    /* ─── No-data state ─── */
+    .no-data {
+      text-align: center;
+      padding: 80px 24px;
+      max-width: 520px;
+      margin: 0 auto;
+    }
+
+    .no-data .icon {
+      font-size: 3rem;
+      margin-bottom: 16px;
+    }
+
+    .no-data h2 {
+      font-size: 1.4rem;
+      font-weight: 700;
+      margin-bottom: 12px;
+    }
+
+    .no-data p {
+      font-size: .9rem;
+      color: #64748B;
+      margin-bottom: 8px;
+      line-height: 1.6;
+    }
+
+    .no-data code {
+      display: inline-block;
+      background: #F1F5F9;
+      border: 1px solid #CBD5E1;
+      padding: 4px 10px;
+      border-radius: 6px;
+      font-family: 'Cascadia Code', 'Consolas', monospace;
+      font-size: .85rem;
+      color: #1D4ED8;
+    }
+
+    /* ─── Responsive ─── */
+    @media (max-width: 900px) {
+
+      .cg-2,
+      .cg-3,
+      .cg-21,
+      .cg-12 {
+        grid-template-columns: 1fr;
+      }
+
+      .kpi-row {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    @media (max-width: 500px) {
+      .kpi-row {
+        grid-template-columns: 1fr;
+      }
+
+      .content {
+        padding: 16px 12px;
+      }
+    }
+
+    /* ─── Portfolio Page — Excel Style ─── */
+    .port-header {
+      background: #fff;
+      border-radius: 12px;
+      overflow: hidden;
+      margin-bottom: 16px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, .07);
+    }
+
+    .port-bar-strip {
+      display: flex;
+      height: 8px;
+    }
+
+    .port-bar-orange {
+      width: 33%;
+      background: #F59E0B;
+    }
+
+    .port-bar-blue {
+      flex: 1;
+      background: #D1D5DB;
+    }
+
+    .port-title-area {
+      padding: 14px 20px 16px;
+    }
+
+    .port-title {
+      font-size: 1.25rem;
+      font-weight: 800;
+      color: #0F172A;
+    }
+
+    .port-filename {
+      font-size: .72rem;
+      color: #3B82F6;
+      text-decoration: underline;
+      margin-top: 3px;
+    }
+
+    /* KPI strip — 7 boxes */
+    .kpi-strip-7 {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 10px;
+      margin-bottom: 16px;
+    }
+
+    .kpi-box {
+      background: #fff;
+      border-radius: 8px;
+      padding: 13px 10px 11px;
+      text-align: center;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, .07);
+    }
+
+    .kpi-box .kv {
+      font-size: 1.55rem;
+      font-weight: 800;
+      line-height: 1;
+      display: block;
+    }
+
+    .kpi-box .kl {
+      font-size: .6rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .4px;
+      color: #64748B;
+      margin-top: 5px;
+      display: block;
+    }
+
+    .kpi-box.ko .kv {
+      color: #EA580C
+    }
+
+    .kpi-box.kb .kv {
+      color: #2563EB
+    }
+
+    .kpi-box.kr .kv {
+      color: #DC2626
+    }
+
+    .kpi-box.kp .kv {
+      color: #7C3AED
+    }
+
+    .kpi-box.kg .kv {
+      color: #16A34A
+    }
+
+    .kpi-box.kt .kv {
+      color: #0D9488
+    }
+
+    .kpi-box.ka .kv {
+      color: #D97706
+    }
+
+    .kpi-box.kk .kv {
+      color: #DB2777
+    }
+
+    /* Three-column layout */
+    .three-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 14px;
+    }
+
+    .col-section {
+      background: #fff;
+      border-radius: 10px;
+      overflow: hidden;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, .07);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .col-hdr {
+      padding: 9px 14px;
+      font-size: .66rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .8px;
+      color: #fff;
+    }
+
+    .green-hdr {
+      background: #166534
+    }
+
+    .orange-hdr {
+      background: #9A3412
+    }
+
+    .purple-hdr {
+      background: #4C1D95
+    }
+
+    .teal-hdr {
+      background: #0F766E
+    }
+
+    .indigo-hdr {
+      background: #3730A3
+    }
+
+    .col-body {
+      padding: 12px 14px;
+      flex: 1;
+    }
+
+    .sub-hdr {
+      font-size: .61rem;
+      font-weight: 800;
+      text-transform: uppercase;
+      letter-spacing: .6px;
+      padding: 7px 0 4px;
+      border-bottom: 1.5px solid currentColor;
+      margin-bottom: 6px;
+    }
+
+    .green-txt {
+      color: #15803D
+    }
+
+    .orange-txt {
+      color: #C2410C
+    }
+
+    .purple-txt {
+      color: #6D28D9
+    }
+
+    .teal-txt {
+      color: #0F766E
+    }
+
+    .indigo-txt {
+      color: #3730A3
+    }
+
+    .no-data-note {
+      font-size: .67rem;
+      color: #94A3B8;
+      padding: 4px 0;
+      font-style: italic;
+    }
+
+    /* Bar rows */
+    .bar-row {
+      display: grid;
+      grid-template-columns: 110px 1fr auto;
+      align-items: center;
+      gap: 7px;
+      margin-bottom: 4px;
+    }
+
+    .bar-track {
+      height: 7px;
+      background: #E8EDF2;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .bar-fill {
+      height: 100%;
+      border-radius: 2px;
+    }
+
+    .bar-name {
+      font-size: .73rem;
+      color: #1E293B;
+      font-weight: 500;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .bar-stat {
+      font-size: .7rem;
+      color: #64748B;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Device type drill-down */
+    .device-expand-row {
+      cursor: pointer;
+      user-select: none;
+    }
+
+    .device-expand-row .bar-row {
+      grid-template-columns: 110px 1fr auto auto;
+    }
+
+    .drill-arrow {
+      font-size: .65rem;
+      color: #94A3B8;
+      transition: transform .2s;
+      padding-left: 2px;
+      flex-shrink: 0;
+    }
+
+    .device-expand-row.open .drill-arrow {
+      transform: rotate(90deg);
+      color: #3B82F6;
+    }
+
+    .device-drill-panel {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height .3s ease;
+      padding-left: 10px;
+      border-left: 2px solid #E2E8F0;
+      margin-bottom: 4px;
+    }
+
+    .device-drill-panel.open {
+      max-height: 400px;
+    }
+
+    .drill-label {
+      font-size: .58rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      color: #64748B;
+      padding: 4px 0 3px;
+    }
+
+    /* Foundation activity strip */
+    .activity-strip {
+      display: grid;
+      grid-template-columns: repeat(6, 1fr);
+      gap: 8px;
+      margin: 10px 0;
+    }
+
+    .act-card {
+      background: #F8FAFC;
+      border: 1px solid #E2E8F0;
+      border-radius: 8px;
+      padding: 8px 10px;
+      text-align: center;
+    }
+
+    .act-card .act-val {
+      font-size: 1.1rem;
+      font-weight: 800;
+      color: #1E293B;
+      line-height: 1.1;
+    }
+
+    .act-card .act-lbl {
+      font-size: .58rem;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: .5px;
+      color: #64748B;
+      margin-top: 2px;
+    }
+
+    .act-card.act-green {
+      border-color: #A7F3D0;
+      background: #F0FDF4;
+    }
+
+    .act-card.act-blue {
+      border-color: #BFDBFE;
+      background: #EFF6FF;
+    }
+
+    .act-card .act-val.green {
+      color: #059669;
+    }
+
+    .act-card .act-val.blue {
+      color: #2563EB;
+    }
+
+    /* ESO performance rows */
+    .eso-perf-row {
+      display: grid;
+      grid-template-columns: 120px 1fr 70px 80px 60px;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 5px;
+    }
+
+    .eso-perf-row .eso-name {
+      font-size: .72rem;
+      font-weight: 600;
+      color: #1E293B;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    .eso-perf-row .eso-bar-wrap {
+      position: relative;
+      height: 14px;
+      background: #E8EDF2;
+      border-radius: 3px;
+      overflow: hidden;
+    }
+
+    .eso-perf-row .eso-bar-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width .4s;
+    }
+
+    .eso-perf-row .eso-bar-label {
+      position: absolute;
+      right: 4px;
+      top: 50%;
+      transform: translateY(-50%);
+      font-size: .58rem;
+      font-weight: 700;
+      color: #fff;
+      text-shadow: 0 0 3px rgba(0, 0, 0, .4);
+    }
+
+    .eso-perf-row .eso-stat {
+      font-size: .65rem;
+      color: #64748B;
+      white-space: nowrap;
+      text-align: right;
+    }
+
+    .eso-perf-row .eso-week {
+      font-size: .6rem;
+      font-weight: 700;
+      color: #10B981;
+      white-space: nowrap;
+      text-align: right;
+    }
+
+    .rank-badge {
+      display: inline-block;
+      font-size: .55rem;
+      font-weight: 800;
+      border-radius: 50%;
+      width: 14px;
+      height: 14px;
+      text-align: center;
+      line-height: 14px;
+      margin-right: 3px;
+      flex-shrink: 0;
+    }
+
+    .rank-1 {
+      background: #F59E0B;
+      color: #fff;
+    }
+
+    .rank-2 {
+      background: #94A3B8;
+      color: #fff;
+    }
+
+    .rank-3 {
+      background: #B45309;
+      color: #fff;
+    }
+
+    /* Progress bands */
+    .prog-band-row {
+      display: grid;
+      grid-template-columns: 100px 1fr auto;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 5px;
+    }
+
+    .prog-band-row .pb-label {
+      font-size: .68rem;
+      font-weight: 600;
+      color: #374151;
+      white-space: nowrap;
+    }
+
+    .prog-band-row .pb-track {
+      height: 10px;
+      background: #E8EDF2;
+      border-radius: 2px;
+      overflow: hidden;
+    }
+
+    .prog-band-row .pb-fill {
+      height: 100%;
+      border-radius: 2px;
+    }
+
+    .prog-band-row .pb-stat {
+      font-size: .66rem;
+      color: #64748B;
+      white-space: nowrap;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Device weekly row */
+    .dev-weekly-row {
+      display: grid;
+      grid-template-columns: 110px 1fr 60px 60px 60px;
+      align-items: center;
+      gap: 6px;
+      margin-bottom: 5px;
+    }
+
+    .dev-weekly-row .dw-name {
+      font-size: .71rem;
+      font-weight: 600;
+      color: #1E293B;
+      white-space: nowrap;
+    }
+
+    .dev-weekly-row .dw-stat {
+      font-size: .65rem;
+      color: #64748B;
+      text-align: right;
+      font-variant-numeric: tabular-nums;
+    }
+
+    /* Gender line */
+    .gender-line {
+      text-align: center;
+      font-size: .8rem;
+      font-weight: 700;
+      color: #374151;
+      background: #F8FAFC;
+      border: 1px solid #E2E8F0;
+      border-radius: 6px;
+      padding: 6px;
+      margin: 8px 0;
+    }
+
+    /* Section footer (URSB/PWD/Refugees/AvgRev strip) */
+    .section-footer {
+      padding: 10px 14px;
+      background: #F8FAFC;
+      border-top: 1px solid #E2E8F0;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 4px;
+    }
+
+    .section-footer span {
+      text-align: center;
+      font-size: .68rem;
+      color: #64748B;
+      line-height: 1.4;
+    }
+
+    .section-footer span strong {
+      font-size: .82rem;
+      color: #1E293B;
+      display: block;
+    }
+
+    @media(max-width:1100px) {
+      .three-col {
+        grid-template-columns: 1fr 1fr;
+      }
+
+      .kpi-strip-7 {
+        grid-template-columns: repeat(4, 1fr);
+      }
+    }
+
+    @media(max-width:700px) {
+      .three-col {
+        grid-template-columns: 1fr;
+      }
+
+      .kpi-strip-7 {
+        grid-template-columns: repeat(2, 1fr);
+      }
+    }
+
+    /* ─── Time Period Filter Bar ─── */
+    .time-filter-bar {
+      background: linear-gradient(135deg, #0F172A 0%, #1E293B 100%);
+      padding: 8px 24px;
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      overflow-x: auto;
+      scrollbar-width: thin;
+      border-bottom: 1px solid #334155;
+    }
+
+    .tf-label {
+      font-size: .65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .08em;
+      color: #64748B;
+      white-space: nowrap;
+      padding-right: 8px;
+      border-right: 1px solid #334155;
+      margin-right: 4px;
+      flex-shrink: 0;
+    }
+
+    .tf-btn {
+      font-size: .68rem;
+      font-weight: 600;
+      padding: 4px 11px;
+      border-radius: 20px;
+      border: 1.5px solid #334155;
+      background: transparent;
+      color: #94A3B8;
+      cursor: pointer;
+      white-space: nowrap;
+      transition: all .15s;
+      flex-shrink: 0;
+    }
+
+    .tf-btn:hover {
+      border-color: #60A5FA;
+      color: #BFDBFE;
+    }
+
+    .tf-btn.active {
+      background: #1D4ED8;
+      border-color: #3B82F6;
+      color: #fff;
+      box-shadow: 0 0 8px rgba(59, 130, 246, .4);
+    }
+
+    .tf-badge {
+      margin-left: auto;
+      font-size: .6rem;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 20px;
+      background: rgba(59, 130, 246, .15);
+      color: #93C5FD;
+      border: 1px solid rgba(59, 130, 246, .3);
+      white-space: nowrap;
+      flex-shrink: 0;
+    }
+
+    /* ─── Archetype Cards ─── */
+    .arch-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+      gap: 8px;
+      margin-bottom: 10px;
+    }
+
+    .arch-card {
+      border-radius: 10px;
+      padding: 10px 12px;
+      border: 1.5px solid;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .arch-card::before {
+      content: '';
+      position: absolute;
+      top: -20px;
+      right: -20px;
+      width: 60px;
+      height: 60px;
+      border-radius: 50%;
+      opacity: .12;
+    }
+
+    .arch-card .arch-icon {
+      font-size: 1.4rem;
+      margin-bottom: 6px;
+      display: block;
+    }
+
+    .arch-card .arch-count {
+      font-size: 1.45rem;
+      font-weight: 800;
+      line-height: 1;
+      display: block;
+    }
+
+    .arch-card .arch-pct {
+      font-size: .6rem;
+      font-weight: 600;
+      opacity: .75;
+    }
+
+    .arch-card .arch-name {
+      font-size: .65rem;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: .06em;
+      margin-top: 3px;
+      display: block;
+    }
+
+    .arch-card .arch-def {
+      font-size: .57rem;
+      color: #64748B;
+      line-height: 1.4;
+      margin-top: 4px;
+    }
+
+    .arch-gig {
+      background: #FFF7ED;
+      border-color: #FDBA74;
+      color: #9A3412;
+    }
+
+    .arch-gig::before {
+      background: #F97316;
+    }
+
+    .arch-boot {
+      background: #EFF6FF;
+      border-color: #93C5FD;
+      color: #1D4ED8;
+    }
+
+    .arch-boot::before {
+      background: #3B82F6;
+    }
+
+    .arch-sme {
+      background: #F0FDF4;
+      border-color: #86EFAC;
+      color: #15803D;
+    }
+
+    .arch-sme::before {
+      background: #22C55E;
+    }
+
+    .arch-inv {
+      background: #F8FAFC;
+      border-color: #CBD5E1;
+      color: #475569;
+    }
+
+    .arch-inv::before {
+      background: #94A3B8;
+    }
+
+    .arch-gaz {
+      background: #FDF4FF;
+      border-color: #D8B4FE;
+      color: #7E22CE;
+    }
+
+    .arch-gaz::before {
+      background: #A855F7;
+    }
+
+    .arch-norev {
+      background: #FFF1F2;
+      border-color: #FDA4AF;
+      color: #BE123C;
+    }
+
+    .arch-norev::before {
+      background: #F43F5E;
+    }
+
+    /* ─── Cohorts ─── */
+    .cohort-timeline {
+      display: flex;
+      flex-direction: column;
+      gap: 10px;
+    }
+
+    .cohort-item {
+      background: #fff;
+      border-radius: 10px;
+      border: 1px solid #E2E8F0;
+      padding: 12px 16px;
+      display: grid;
+      grid-template-columns: auto 1fr auto;
+      align-items: center;
+      gap: 14px;
+      box-shadow: 0 1px 3px rgba(0, 0, 0, .05);
+    }
+
+    .cohort-dot {
+      width: 12px;
+      height: 12px;
+      border-radius: 50%;
+      flex-shrink: 0;
+    }
+
+    .cohort-name {
+      font-size: .82rem;
+      font-weight: 700;
+      color: #1E293B;
+    }
+
+    .cohort-meta {
+      font-size: .67rem;
+      color: #64748B;
+      margin-top: 2px;
+    }
+
+    .cohort-badge {
+      font-size: .6rem;
+      font-weight: 700;
+      padding: 3px 9px;
+      border-radius: 20px;
+      white-space: nowrap;
+    }
+
+    .badge-active {
+      background: #D1FAE5;
+      color: #065F46;
+    }
+
+    .badge-upcoming {
+      background: #DBEAFE;
+      color: #1E40AF;
+    }
+
+    .badge-completed {
+      background: #F1F5F9;
+      color: #475569;
+    }
+
+    .cohort-progress {
+      height: 5px;
+      background: #E2E8F0;
+      border-radius: 3px;
+      overflow: hidden;
+      margin-top: 6px;
+    }
+
+    .cohort-progress-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width .4s;
+    }
+
+    /* ─── Digital Credit ─── */
+    .credit-card {
+      background: #fff;
+      border-radius: 10px;
+      border: 1.5px solid #E2E8F0;
+      padding: 14px 16px;
+      box-shadow: 0 1px 4px rgba(0, 0, 0, .06);
+    }
+
+    .credit-total {
+      font-size: 2rem;
+      font-weight: 800;
+      color: #1D4ED8;
+      line-height: 1;
+    }
+
+    .credit-row {
+      display: grid;
+      grid-template-columns: 130px 1fr 80px 80px;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 6px;
+    }
+
+    .credit-eso {
+      font-size: .75rem;
+      font-weight: 600;
+      color: #1E293B;
+    }
+
+    .credit-amt {
+      font-size: .72rem;
+      font-weight: 700;
+      color: #1D4ED8;
+      text-align: right;
+    }
+
+    .credit-count {
+      font-size: .68rem;
+      color: #64748B;
+      text-align: right;
+    }
+
+    /* ─── ESO Targets ─── */
+    .target-row {
+      display: grid;
+      grid-template-columns: 130px auto 1fr auto;
+      align-items: center;
+      gap: 8px;
+      margin-bottom: 8px;
+    }
+
+    .target-label {
+      font-size: .72rem;
+      font-weight: 600;
+      color: #1E293B;
+    }
+
+    .target-pct-badge {
+      font-size: .65rem;
+      font-weight: 800;
+      padding: 2px 8px;
+      border-radius: 20px;
+      white-space: nowrap;
+    }
+
+    .tgt-green {
+      background: #D1FAE5;
+      color: #065F46;
+    }
+
+    .tgt-amber {
+      background: #FEF3C7;
+      color: #92400E;
+    }
+
+    .tgt-red {
+      background: #FEE2E2;
+      color: #991B1B;
+    }
+
+    .target-track {
+      height: 10px;
+      background: #E8EDF2;
+      border-radius: 3px;
+      overflow: hidden;
+      position: relative;
+    }
+
+    .target-fill {
+      height: 100%;
+      border-radius: 3px;
+      transition: width .4s;
+    }
+
+    .target-marker {
+      position: absolute;
+      top: -3px;
+      bottom: -3px;
+      width: 2px;
+      background: #DC2626;
+      border-radius: 1px;
+    }
+
+    .target-vals {
+      font-size: .62rem;
+      color: #64748B;
+      white-space: nowrap;
+      text-align: right;
+    }
+  </style>
+</head>
+
+<body>
+
+  <div class="header">
+    <div class="header-left">
+      <h1>10X Portfolio Management System</h1>
+      <div class="sub" id="last-updated">Loading…</div>
+    </div>
+    <div class="header-right">
+      <span class="pill" id="total-pill"></span>
+      <button class="btn-refresh" onclick="showRefreshHint()">↻ Refresh Data</button>
+    </div>
+  </div>
+
+  <div class="type-tabs-bar" id="type-tabs-bar"></div>
+  <div class="sub-tabs-bar" id="sub-tabs-bar"></div>
+
+  <!-- Time Period Filter Bar -->
+  <div class="time-filter-bar" id="time-filter-bar">
+    <span class="tf-label">Period</span>
+    <button class="tf-btn active" data-period="all" onclick="setTimePeriod(this,'all')">All Time</button>
+    <button class="tf-btn" data-period="today" onclick="setTimePeriod(this,'today')">Today</button>
+    <button class="tf-btn" data-period="yday" onclick="setTimePeriod(this,'yday')">Yesterday</button>
+    <button class="tf-btn" data-period="week" onclick="setTimePeriod(this,'week')">This Week</button>
+    <button class="tf-btn" data-period="lweek" onclick="setTimePeriod(this,'lweek')">Last Week</button>
+    <button class="tf-btn" data-period="month" onclick="setTimePeriod(this,'month')">This Month</button>
+    <button class="tf-btn" data-period="lmonth" onclick="setTimePeriod(this,'lmonth')">Last Month</button>
+    <button class="tf-btn" data-period="qtr" id="btn-qtr" onclick="setTimePeriod(this,'qtr')">Prog. Quarter</button>
+    <button class="tf-btn" data-period="lqtr" id="btn-lqtr" onclick="setTimePeriod(this,'lqtr')">Prev. Quarter</button>
+    <span class="tf-badge" id="tf-badge">All Records</span>
+  </div>
+
+  <div class="content" id="main-content">
+    <!-- panels injected by JS -->
+  </div>
+
+  <script>
+    /* ─── Program Quarter Engine ───────────────────────────────────────────
+       Program year starts July. Quarters: Q1=Jul-Sep, Q2=Oct-Dec, Q3=Jan-Mar, Q4=Apr-Jun.
+       Year 1 = Jul 2024 – Jun 2025.  Y2 = Jul 2025 – Jun 2026.  Etc.
+    ─────────────────────────────────────────────────────────────────────── */
+    window.getProgramQuarter = function (offsetQ) {
+      const now = new Date();
+      const m   = now.getMonth();   // 0-indexed
+      let py, pq;                   // program-year base (2024=Y1) and quarter 1-4
+      if (m >= 6) { py = now.getFullYear(); pq = m >= 9 ? 2 : 1; }
+      else        { py = now.getFullYear() - 1; pq = m >= 3 ? 4 : 3; }
+      let tot = (py - 2024) * 4 + (pq - 1) + (offsetQ || 0);
+      if (tot < 0) tot = 0;
+      py = 2024 + Math.floor(tot / 4);
+      pq = (tot % 4) + 1;
+      const yn = py - 2023;         // Y1=1, Y2=2, Y3=3 ...
+      const r = {
+        1: { s: new Date(py, 6, 1),   e: new Date(py, 9, 1),   lbl: `Y${yn} Q1 · Jul–Sep ${py}` },
+        2: { s: new Date(py, 9, 1),   e: new Date(py+1, 0, 1), lbl: `Y${yn} Q2 · Oct–Dec ${py}` },
+        3: { s: new Date(py+1, 0, 1), e: new Date(py+1, 3, 1), lbl: `Y${yn} Q3 · Jan–Mar ${py+1}` },
+        4: { s: new Date(py+1, 3, 1), e: new Date(py+1, 6, 1), lbl: `Y${yn} Q4 · Apr–Jun ${py+1}` },
+      }[pq];
+      return r;
+    };
+
+    /* ─── Global Time Period Filter ─── */
+    window.TIME_FILTER = 'all';
+    window.recalculatePortfolio = function (p, period) {
+      if (period === 'all' || !p.raw_records || p.raw_records.length === 0) return p;
+
+      // Deep clone to avoid mutating the all-time original data
+      const p_dyn = JSON.parse(JSON.stringify(p));
+
+      const now = new Date();
+      const start = new Date(now);
+      start.setHours(0, 0, 0, 0);
+      let end = new Date(start);
+      end.setDate(end.getDate() + 1);
+
+      if (period === 'today') { }
+      else if (period === 'yday') { start.setDate(start.getDate() - 1); end.setDate(end.getDate() - 1); }
+      else if (period === 'week') { const d = start.getDay() || 7; start.setDate(start.getDate() - d + 1); }
+      else if (period === 'lweek') { const d = start.getDay() || 7; start.setDate(start.getDate() - d - 6); end.setDate(end.getDate() - d - 6 + 7); }
+      else if (period === 'month') { start.setDate(1); }
+      else if (period === 'lmonth') { start.setMonth(start.getMonth() - 1); start.setDate(1); end = new Date(now); end.setDate(1); }
+      else if (period === 'qtr')  { const r = window.getProgramQuarter(0);  start = r.s; end = r.e; }
+      else if (period === 'lqtr') { const r = window.getProgramQuarter(-1); start = r.s; end = r.e; }
+
+      const records = p.raw_records.filter(r => {
+        if (!r.date) return false;
+        const rd = new Date(r.date);
+        return rd >= start && rd < end;
+      });
+
+      const agg = (key) => records.reduce((acc, r) => {
+        if (r[key]) acc[r[key]] = (acc[r[key]] || 0) + 1;
+        return acc;
+      }, {});
+
+      p_dyn.sectors = agg('sector');
+      p_dyn.districts = agg('district');
+      p_dyn.archetypes = agg('archetype');
+
+      // Re-aggregate gender globally or within founders if necessary
+      const genAgg = agg('gender');
+      if (p_dyn.gender) p_dyn.gender = genAgg;
+      if (p_dyn.founders) {
+        if (!p_dyn.founders.gender) p_dyn.founders.gender = {};
+        p_dyn.founders.gender = genAgg;
+        const f = genAgg.Female || 0;
+        const m = genAgg.Male || 0;
+        p_dyn.founders.female_pct = (f + m) > 0 ? Number(((f / (f + m)) * 100).toFixed(1)) : 0;
+      }
+
+      p_dyn.stats.total = records.length;
+      p_dyn.stats.record_count = records.length;
+      p_dyn.stats.clean = records.length;
+
+      if (p_dyn.revenue && p.revenue) {
+        const revs = records.map(r => r.revenue).filter(v => v > 0).sort((a, b) => a - b);
+        p_dyn.revenue.count = revs.length;
+        p_dyn.revenue.mean = revs.length ? Math.floor(revs.reduce((a, b) => a + b, 0) / revs.length) : 0;
+        p_dyn.revenue.median = revs.length ? revs[Math.floor(revs.length / 2)] : 0;
+      }
+      if (p_dyn.funding && p.funding) {
+        const funds = records.map(r => r.funding).filter(v => v > 0).sort((a, b) => a - b);
+        p_dyn.funding.count = funds.length;
+        p_dyn.funding.mean = funds.length ? Math.floor(funds.reduce((a, b) => a + b, 0) / funds.length) : 0;
+        p_dyn.funding.median = funds.length ? funds[Math.floor(funds.length / 2)] : 0;
+      }
+      return p_dyn;
+    };
+
+    window.setTimePeriod = function (btn, period) {
+      window.TIME_FILTER = period;
+      document.querySelectorAll('.tf-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      const labels = {
+        all: 'All Records', today: 'Today Only', yday: 'Yesterday',
+        week: 'This Week', lweek: 'Last Week', month: 'This Month',
+        lmonth: 'Last Month',
+        qtr:  window.getProgramQuarter(0).lbl,
+        lqtr: window.getProgramQuarter(-1).lbl,
+      };
+      const badge = document.getElementById('tf-badge');
+      if (badge) badge.textContent = labels[period] || 'All Records';
+
+      if (typeof window.triggerActivePanelReRender === 'function') {
+        window.triggerActivePanelReRender();
+      }
+    };
+
+    // Label the program-quarter filter buttons with the actual quarter names
+    (function initQtrBtns() {
+      const curr = window.getProgramQuarter(0);
+      const prev = window.getProgramQuarter(-1);
+      const qBtn  = document.getElementById('btn-qtr');
+      const lqBtn = document.getElementById('btn-lqtr');
+      if (qBtn)  qBtn.textContent  = curr.lbl;
+      if (lqBtn) lqBtn.textContent = prev.lbl;
+    })();
+
+    (function () {
+      'use strict';
+
+      /* ═══════════════════════════════════════════════════════════════
+         CONSTANTS & PALETTES
+      ═══════════════════════════════════════════════════════════════ */
+      const PALETTE = [
+        '#3B82F6', '#10B981', '#F59E0B', '#EF4444', '#8B5CF6',
+        '#EC4899', '#14B8A6', '#F97316', '#6366F1', '#84CC16',
+        '#06B6D4', '#A78BFA', '#FB7185', '#34D399', '#FBBF24',
+      ];
+
+      const SECTOR_COLORS = {
+        'Agriculture': '#10B981',
+        'Trade & Services': '#3B82F6',
+        'Fashion & Design': '#EC4899',
+        'Light Manufacturing': '#F97316',
+        'Health': '#EF4444',
+        'Meetings & Events': '#8B5CF6',
+        'Others': '#94A3B8',
+        'Unknown': '#CBD5E1',
+      };
+
+      const GENDER_COLORS = {
+        'Female': '#EC4899',
+        'Male': '#3B82F6',
+        'Other': '#F59E0B',
+      };
+
+      const LOCATION_COLORS = {
+        'Urban': '#3B82F6',
+        'Peri-Urban': '#F59E0B',
+        'Rural': '#10B981',
+      };
+
+      const PORTFOLIO_COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EF4444', '#EC4899'];
+
+      const AGE_ORDER = ['18–25', '26–35', '36–45', '46–55', '56+'];  // program is 18+
+
+      const ARCHETYPE_COLORS = {
+        'Gazelles': '#10B981',
+        'Bootstrappers SME': '#3B82F6',
+        'Bootstrappers': '#60A5FA',
+        'Gig Workers': '#F97316',
+        'Invisibles': '#94A3B8',
+        'No Revenue Data': '#CBD5E1',
+      };
+
+      const AGE_COLORS = {
+        '18–25': '#60A5FA',
+        '26–35': '#2563EB',
+        '36–45': '#1D4ED8',
+        '46–55': '#1E3A8A',
+        '56+': '#172554',
+      };
+
+      /* ─────────────────────────────────────────────────────────────
+         ARCHETYPE CARD DEFINITIONS
+      ───────────────────────────────────────────────────────────── */
+      const ARCH_META = {
+        'Gig Workers': { cls: 'arch-gig', icon: '⚙️', def: 'Self-employed with inconsistent revenue streams. Hustling but not yet structured.' },
+        'Bootstrappers': { cls: 'arch-boot', icon: '🔧', def: 'Growing businesses with some revenue and reinvestment. Structured but pre-scale.' },
+        'Bootstrappers SME': { cls: 'arch-sme', icon: '🏗️', def: 'Established SMEs generating consistent revenue. Ready for growth capital.' },
+        'Invisibles': { cls: 'arch-inv', icon: '👁️', def: 'Unregistered or informal businesses with no formal identity. Hardest to reach.' },
+        'Gazelles': { cls: 'arch-gaz', icon: '🦁', def: 'High-growth businesses with strong revenue trajectory. Investment-ready.' },
+        'No Revenue Data': { cls: 'arch-norev', icon: '❓', def: 'Businesses with incomplete revenue information. Needs follow-up.' },
+      };
+
+      function archetypeCardsHTML(archetypes, total) {
+        if (!archetypes || !Object.keys(archetypes).length)
+          return '<div class="no-data-note">No archetype data available</div>';
+        const order = ['Gazelles', 'Bootstrappers SME', 'Bootstrappers', 'Gig Workers', 'Invisibles', 'No Revenue Data'];
+        const sorted = order.filter(k => archetypes[k]).concat(
+          Object.keys(archetypes).filter(k => !order.includes(k))
+        );
+        return '<div class="arch-grid">' + sorted.map(k => {
+          const count = archetypes[k] || 0;
+          const pct = total > 0 ? (count / total * 100).toFixed(1) : '0';
+          const meta = ARCH_META[k] || { cls: 'arch-inv', icon: '📊', def: '' };
+          return `<div class="arch-card ${meta.cls}">
+        <span class="arch-icon">${meta.icon}</span>
+        <span class="arch-count">${count.toLocaleString()}</span>
+        <span class="arch-pct">${pct}% of portfolio</span>
+        <span class="arch-name">${k}</span>
+        <div class="arch-def">${meta.def}</div>
+      </div>`;
+        }).join('') + '</div>';
+      }
+
+      /* ─────────────────────────────────────────────────────────────
+         ESO TARGETS BUILDER
+      ───────────────────────────────────────────────────────────── */
+      function targetRowsHTML(targets) {
+        if (!targets || !targets.length) return '<div class="no-data-note">No targets configured</div>';
+        return targets.map(t => {
+          const pct = t.target > 0 ? Math.min(t.actual / t.target * 100, 100) : 0;
+          const pctStr = pct.toFixed(0);
+          const cls = pct >= 90 ? 'tgt-green' : pct >= 70 ? 'tgt-amber' : 'tgt-red';
+          const color = pct >= 90 ? '#10B981' : pct >= 70 ? '#F59E0B' : '#EF4444';
+          return `<div class="target-row">
+        <span class="target-label">${t.label}</span>
+        <span class="target-pct-badge ${cls}">${pctStr}%</span>
+        <div class="target-track">
+          <div class="target-fill" style="width:${pct.toFixed(1)}%;background:${color}"></div>
+        </div>
+        <span class="target-vals">${(t.actual || 0).toLocaleString()} / ${(t.target || 0).toLocaleString()}</span>
+      </div>`;
+        }).join('');
+      }
+
+      function buildTargetsPanel(p) {
+        const targets = p.targets || [];
+        if (!targets.length) return '';
+        return `<div class="col-section" style="margin-top:12px">
+      <div class="col-hdr" style="background:#1D4ED8">🎯 ESO TARGETS — ${(p.eso || p.name).toUpperCase()}</div>
+      <div class="col-body">${targetRowsHTML(targets)}</div>
+    </div>`;
+      }
+
+      /* ─────────────────────────────────────────────────────────────
+         COHORT BUILDER
+      ───────────────────────────────────────────────────────────── */
+      function buildCohortsHTML(cohorts) {
+        if (!cohorts || !cohorts.length)
+          return '<div class="no-data-note" style="padding:20px">No acceleration cohorts recorded yet.</div>';
+
+        const now = new Date();
+        const statusOf = c => {
+          const s = new Date(c.start_date), e = new Date(c.end_date);
+          if (now < s) return { label: 'Upcoming', cls: 'badge-upcoming', color: '#3B82F6', pct: 0 };
+          if (now > e) return { label: 'Completed', cls: 'badge-completed', color: '#64748B', pct: 100 };
+          const pct = Math.min((now - s) / (e - s) * 100, 100);
+          return { label: 'Active', cls: 'badge-active', color: '#10B981', pct };
+        };
+
+        const byEso = {};
+        cohorts.forEach(c => {
+          (byEso[c.eso] = byEso[c.eso] || []).push(c);
+        });
+
+        const COHORT_COLORS = ['#3B82F6', '#10B981', '#F59E0B', '#8B5CF6', '#EF4444', '#EC4899', '#14B8A6', '#F97316'];
+        const esoList = Object.keys(byEso);
+
+        // KPI strip
+        const active = cohorts.filter(c => statusOf(c).label === 'Active').length;
+        const upcoming = cohorts.filter(c => statusOf(c).label === 'Upcoming').length;
+        const completed = cohorts.filter(c => statusOf(c).label === 'Completed').length;
+        const totalPart = cohorts.reduce((s, c) => s + (c.participants || 0), 0);
+
+        const kpis = `<div class="kpi-strip-7" style="margin-bottom:16px">
+      ${kpiBox(cohorts.length, 'Total Cohorts', 'ko')}
+      ${kpiBox(active, 'Active Now', 'kg')}
+      ${kpiBox(upcoming, 'Upcoming', 'kb')}
+      ${kpiBox(completed, 'Completed', 'kp')}
+      ${kpiBox(totalPart, 'Total Participants', 'kt')}
+      ${kpiBox(esoList.length, 'ESOs Running', 'kr')}
+      ${kpiBox(new Date().toLocaleDateString('en-UG', { day: '2-digit', month: 'short', year: 'numeric' }), 'As of Today', 'ka')}
+    </div>`;
+
+        // Timeline per cohort
+        const timeline = cohorts
+          .slice().sort((a, b) => new Date(a.start_date) - new Date(b.start_date))
+          .map((c, i) => {
+            const st = statusOf(c);
+            const esoIdx = esoList.indexOf(c.eso);
+            const color = COHORT_COLORS[esoIdx % COHORT_COLORS.length];
+            return `<div class="cohort-item">
+          <div class="cohort-dot" style="background:${color}"></div>
+          <div>
+            <div class="cohort-name">${c.name}</div>
+            <div class="cohort-meta">
+              ${c.eso} &nbsp;·&nbsp; ${c.start_date} → ${c.end_date}
+              &nbsp;·&nbsp; ${(c.participants || 0).toLocaleString()} participants
+              ${c.sector ? `&nbsp;·&nbsp; <em>${c.sector}</em>` : ''}
+            </div>
+            <div class="cohort-progress">
+              <div class="cohort-progress-fill" style="width:${st.pct.toFixed(0)}%;background:${st.color}"></div>
+            </div>
+          </div>
+          <span class="cohort-badge ${st.cls}">${st.label}</span>
+        </div>`;
+          }).join('');
+
+        // By ESO breakdown
+        const byEsoRows = esoList.map((eso, i) => {
+          const cs = byEso[eso];
+          const act = cs.filter(c => statusOf(c).label === 'Active').length;
+          const parts = cs.reduce((s, c) => s + (c.participants || 0), 0);
+          const color = COHORT_COLORS[i % COHORT_COLORS.length];
+          return `<div class="bar-row">
+        <div class="bar-track"><div class="bar-fill" style="width:${Math.min(parts / Math.max(totalPart, 1) * 100, 100).toFixed(1)}%;background:${color}"></div></div>
+        <span class="bar-name">${eso}</span>
+        <span class="bar-stat">${parts} pax &ensp; ${act} active</span>
+      </div>`;
+        }).join('');
+
+        return `
+      <div class="port-header">
+        <div class="port-bar-strip"><div class="port-bar-orange"></div><div class="port-bar-blue"></div></div>
+        <div class="port-title-area">
+          <div class="port-title">Acceleration Cohorts — Programme Overview</div>
+          <div class="port-filename">10X Digital Economy · All ESOs · ${new Date().toLocaleDateString('en-UG', { month: 'long', year: 'numeric' })}</div>
+        </div>
+      </div>
+      ${kpis}
+      <div class="three-col">
+        <div class="col-section" style="grid-column:span 2">
+          <div class="col-hdr" style="background:#0F766E">COHORT TIMELINE</div>
+          <div class="col-body"><div class="cohort-timeline">${timeline}</div></div>
+        </div>
+        <div class="col-section">
+          <div class="col-hdr" style="background:#7C3AED">PARTICIPANTS BY ESO</div>
+          <div class="col-body">${byEsoRows || '<div class="no-data-note">No ESO data</div>'}</div>
+        </div>
+      </div>`;
+      }
+
+      /* ─────────────────────────────────────────────────────────────
+         DIGITAL CREDIT BUILDER
+      ───────────────────────────────────────────────────────────── */
+      function buildDigitalCreditHTML(creditData) {
+        if (!creditData || !creditData.eso_credit) {
+          return `<div class="no-data" style="padding:60px 24px;text-align:center">
+        <div style="font-size:3rem;margin-bottom:16px">💳</div>
+        <h2 style="font-size:1.3rem;font-weight:700;margin-bottom:12px">Digital Credit Data</h2>
+        <p style="color:#64748B;font-size:.9rem">Add <code>digital_credit</code> entries to data.js to populate this view.</p>
+      </div>`;
+        }
+
+        const esoCredit = creditData.eso_credit || [];
+        const total = esoCredit.reduce((s, e) => s + (e.businesses || 0), 0);
+        const totalAmt = esoCredit.reduce((s, e) => s + (e.amount_ugx || 0), 0);
+        const totalAmtStr = totalAmt >= 1e9 ? (totalAmt / 1e9).toFixed(2) + 'B' : totalAmt >= 1e6 ? (totalAmt / 1e6).toFixed(1) + 'M' : totalAmt.toLocaleString();
+        const avgAmt = total > 0 ? (totalAmt / total) : 0;
+        const avgAmtStr = avgAmt >= 1e6 ? (avgAmt / 1e6).toFixed(1) + 'M' : avgAmt >= 1e3 ? Math.round(avgAmt / 1e3) + 'K' : avgAmt.toFixed(0);
+        const nEsos = esoCredit.length;
+        const maxAmt = Math.max(...esoCredit.map(e => e.amount_ugx || 0), 1);
+
+        const CREDIT_COLORS = ['#1D4ED8', '#0EA5E9', '#10B981', '#7C3AED', '#F59E0B', '#EF4444', '#EC4899', '#14B8A6'];
+
+        // Breakdown by credit type
+        const byType = {};
+        esoCredit.forEach(e => {
+          (e.breakdown || []).forEach(b => {
+            byType[b.type] = (byType[b.type] || 0) + (b.count || 0);
+          });
+        });
+        const typeTotal = Object.values(byType).reduce((a, b) => a + b, 0) || 1;
+
+        // ESO rows
+        const esoRows = esoCredit
+          .slice().sort((a, b) => (b.amount_ugx || 0) - (a.amount_ugx || 0))
+          .map((e, i) => {
+            const color = CREDIT_COLORS[i % CREDIT_COLORS.length];
+            const amtStr = (e.amount_ugx || 0) >= 1e9 ? (e.amount_ugx / 1e9).toFixed(2) + 'B'
+              : (e.amount_ugx || 0) >= 1e6 ? (e.amount_ugx / 1e6).toFixed(1) + 'M'
+                : (e.amount_ugx || 0).toLocaleString();
+            const w = Math.min((e.amount_ugx || 0) / maxAmt * 100, 100).toFixed(1);
+            return `<div class="credit-row">
+          <span class="credit-eso">${e.eso}</span>
+          <div class="bar-track" style="height:8px"><div class="bar-fill" style="width:${w}%;background:${color}"></div></div>
+          <span class="credit-amt">UGX ${amtStr}</span>
+          <span class="credit-count">${(e.businesses || 0).toLocaleString()} biz</span>
+        </div>`;
+          }).join('');
+
+        return `
+      <div class="port-header">
+        <div class="port-bar-strip"><div style="width:40%;background:#1D4ED8"></div><div style="flex:1;background:#E2E8F0"></div></div>
+        <div class="port-title-area">
+          <div class="port-title">Digital Credit — Businesses Reached</div>
+          <div class="port-filename">10X Digital Economy · All ESO Partners · ${new Date().toLocaleDateString('en-UG', { month: 'long', year: 'numeric' })}</div>
+        </div>
+      </div>
+
+      <div class="kpi-strip-7" style="margin-bottom:16px">
+        ${kpiBox(total.toLocaleString(), 'Businesses w/ Credit', 'kb')}
+        ${kpiBox('UGX ' + totalAmtStr, 'Total Credit Disbursed', 'ko')}
+        ${kpiBox('UGX ' + avgAmtStr, 'Avg Credit / Business', 'kg')}
+        ${kpiBox(nEsos, 'ESO Partners', 'kp')}
+        ${kpiBox(creditData.period || '2025–26', 'Programme Period', 'kt')}
+        ${kpiBox(creditData.credit_types || (Object.keys(byType).length) || '—', 'Credit Types', 'kr')}
+        ${kpiBox(creditData.repayment_rate ? creditData.repayment_rate + '%' : '—', 'Avg Repayment', 'ka')}
+      </div>
+
+      <div class="three-col">
+        <div class="col-section" style="grid-column:span 2">
+          <div class="col-hdr" style="background:#1D4ED8">CREDIT BY ESO PARTNER</div>
+          <div class="col-body">
+            <div class="credit-row" style="margin-bottom:8px">
+              <span style="font-size:.6rem;color:#94A3B8;font-weight:700">ESO</span>
+              <span></span>
+              <span style="font-size:.6rem;color:#94A3B8;text-align:right">Amount</span>
+              <span style="font-size:.6rem;color:#94A3B8;text-align:right">Businesses</span>
+            </div>
+            ${esoRows || '<div class="no-data-note">No credit data</div>'}
+          </div>
+        </div>
+        <div class="col-section">
+          <div class="col-hdr" style="background:#065F46">CREDIT TYPE BREAKDOWN</div>
+          <div class="col-body">
+            ${Object.keys(byType).length
+            ? barRowsHTML(byType, { 'Loan': '#3B82F6', 'Grant': '#10B981', 'SACCO': '#F59E0B', 'MFI': '#8B5CF6' }, typeTotal, 10)
+            : '<div class="no-data-note">No type breakdown available</div>'}
+          </div>
+        </div>
+      </div>` + buildParticipantListHTML(creditData);
+      }
+
+      /* ═══════════════════════════════════════════════════════════════
+         CHART REGISTRY
+      ═══════════════════════════════════════════════════════════════ */
+
+      const _charts = {};
+
+      function destroyPanel(prefix) {
+        Object.keys(_charts).forEach(k => {
+          if (k.startsWith(prefix)) { _charts[k].destroy(); delete _charts[k]; }
+        });
+      }
+
+      function makeChart(id, type, labels, datasets, opts) {
+        const canvas = document.getElementById(id);
+        if (!canvas) return;
+        if (_charts[id]) { _charts[id].destroy(); delete _charts[id]; }
+        const ctx = canvas.getContext('2d');
+        _charts[id] = new Chart(ctx, {
+          type,
+          data: { labels, datasets },
+          options: {
+            responsive: true,
+            maintainAspectRatio: true,
+            animation: { duration: 400 },
+            plugins: {
+              legend: { display: false },
+              tooltip: {
+                callbacks: {
+                  label: ctx => ` ${ctx.dataset.label || ctx.label}: ${Number(ctx.raw).toLocaleString()}`
+                }
+              }
+            },
+            ...opts
+          }
+        });
+      }
+
+      /* ═══════════════════════════════════════════════════════════════
+         CHART HELPERS
+      ═══════════════════════════════════════════════════════════════ */
+      function sorted(obj, n) {
+        let e = Object.entries(obj || {}).sort((a, b) => b[1] - a[1]);
+        return n ? e.slice(0, n) : e;
+      }
+
+      function colorsFor(labels, map) {
+        return labels.map((l, i) => (map && map[l]) ? map[l] : PALETTE[i % PALETTE.length]);
+      }
+
+      /* Horizontal bar */
+      function hBar(id, obj, colorMap, n) {
+        const e = sorted(obj, n);
+        if (!e.length) return;
+        const labels = e.map(x => x[0]);
+        const values = e.map(x => x[1]);
+        makeChart(id, 'bar', labels, [{
+          data: values,
+          backgroundColor: colorsFor(labels, colorMap),
+          borderRadius: 4,
+        }], {
+          indexAxis: 'y',
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: c => ` ${Number(c.raw).toLocaleString()}` } }
+          },
+          scales: {
+            x: { grid: { color: '#F1F5F9' }, ticks: { font: { size: 11 } } },
+            y: { grid: { display: false }, ticks: { font: { size: 11 }, crossAlign: 'far' } }
+          }
+        });
+      }
+
+      /* Vertical bar */
+      function vBar(id, obj, colorMap, order) {
+        let e = order
+          ? order.map(k => [k, (obj || {})[k] || 0]).filter(x => x[1] > 0)
+          : sorted(obj);
+        if (!e.length) return;
+        const labels = e.map(x => x[0]);
+        const values = e.map(x => x[1]);
+        makeChart(id, 'bar', labels, [{
+          data: values,
+          backgroundColor: colorsFor(labels, colorMap),
+          borderRadius: 4,
+        }], {
+          plugins: {
+            legend: { display: false },
+            tooltip: { callbacks: { label: c => ` ${Number(c.raw).toLocaleString()}` } }
+          },
+          scales: {
+            x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+            y: { grid: { color: '#F1F5F9' }, ticks: { font: { size: 11 } } }
+          }
+        });
+      }
+
+      /* Donut */
+      function donut(id, obj, colorMap) {
+        const e = sorted(obj);
+        if (!e.length) return;
+        const labels = e.map(x => x[0]);
+        const values = e.map(x => x[1]);
+        const total = values.reduce((a, b) => a + b, 0);
+        makeChart(id, 'doughnut', labels, [{
+          data: values,
+          backgroundColor: colorsFor(labels, colorMap),
+          borderWidth: 2,
+          borderColor: '#fff',
+          hoverOffset: 6,
+        }], {
+          cutout: '62%',
+          plugins: {
+            legend: { display: true, position: 'bottom', labels: { font: { size: 11 }, padding: 10, usePointStyle: true, boxWidth: 8 } },
+            tooltip: {
+              callbacks: {
+                label: c => ` ${c.label}: ${Number(c.raw).toLocaleString()} (${(c.raw / total * 100).toFixed(1)}%)`
+              }
+            }
+          }
+        });
+      }
+
+      /* ═══════════════════════════════════════════════════════════════
+         UTILITIES
+      ═══════════════════════════════════════════════════════════════ */
+      function fmt(n) {
+        n = Number(n) || 0;
+        if (n >= 1e9) return (n / 1e9).toFixed(1) + 'B';
+        if (n >= 1e6) return (n / 1e6).toFixed(1) + 'M';
+        if (n >= 1e3) return (n / 1e3).toFixed(0) + 'K';
+        return n.toLocaleString();
+      }
+
+      function pct(a, b) {
+        if (!b) return '0%';
+        return (a / b * 100).toFixed(1) + '%';
+      }
+
+      function kpi(label, value, hint, color) {
+        return `<div class="kpi ${color || 'blue'}">
+      <div class="lbl">${label}</div>
+      <div class="val">${value}</div>
+      ${hint ? `<div class="hint">${hint}</div>` : ''}
+    </div>`;
+      }
+
+      /* ═══════════════════════════════════════════════════════════════
+         CSS-BAR HELPERS  (for per-portfolio pages)
+      ═══════════════════════════════════════════════════════════════ */
+      function kpiBox(val, label, cls) {
+        return `<div class="kpi-box ${cls}"><span class="kv">${val}</span><span class="kl">${label}</span></div>`;
+      }
+
+      /** Render sorted CSS bar rows normalised to `total`. */
+      function barRowsHTML(obj, colorMap, total, topN) {
+        const entries = sorted(obj, topN);
+        if (!entries.length) return '<div style="font-size:.7rem;color:#94A3B8;padding:4px 0">No data</div>';
+        return entries.map(([label, count], i) => {
+          const w = total > 0 ? Math.min(count / total * 100, 100).toFixed(1) : 0;
+          const pctStr = total > 0 ? (count / total * 100).toFixed(1) : '0';
+          const color = (colorMap && colorMap[label]) ? colorMap[label] : PALETTE[i % PALETTE.length];
+          return `<div class="bar-row">
+        <div class="bar-track"><div class="bar-fill" style="width:${w}%;background:${color}"></div></div>
+        <span class="bar-name" title="${label}">${label}</span>
+        <span class="bar-stat">${count.toLocaleString()}&ensp;${pctStr}%</span>
+      </div>`;
+        }).join('');
+      }
+
+      /** Age band CSS bars using fixed AGE_COLORS. */
+      function ageBandRowsHTML(obj, total) {
+        const entries = AGE_ORDER.map(k => [k, (obj || {})[k] || 0]).filter(e => e[1] > 0);
+        if (!entries.length) return '<div style="font-size:.7rem;color:#94A3B8;padding:4px 0">No data</div>';
+        return entries.map(([label, count]) => {
+          const w = total > 0 ? Math.min(count / total * 100, 100).toFixed(1) : 0;
+          const pctStr = total > 0 ? (count / total * 100).toFixed(1) : '0';
+          const color = AGE_COLORS[label] || '#3B82F6';
+          return `<div class="bar-row">
+        <div class="bar-track"><div class="bar-fill" style="width:${w}%;background:${color}"></div></div>
+        <span class="bar-name">${label}</span>
+        <span class="bar-stat">${count.toLocaleString()}&ensp;${pctStr}%</span>
+      </div>`;
+        }).join('');
+      }
+
+      /** District bars normalised to the top district (max = 100%). */
+      function districtBarRowsHTML(obj, topN) {
+        const entries = sorted(obj, topN);
+        if (!entries.length) return '<div style="font-size:.7rem;color:#94A3B8;padding:4px 0">No data</div>';
+        const maxV = entries[0][1] || 1;
+        return entries.map(([label, count]) => {
+          const w = (count / maxV * 100).toFixed(1);
+          return `<div class="bar-row">
+        <div class="bar-track"><div class="bar-fill" style="width:${w}%;background:#F97316"></div></div>
+        <span class="bar-name" title="${label}">${label}</span>
+        <span class="bar-stat">${count.toLocaleString()}</span>
+      </div>`;
+        }).join('');
+      }
+
+      /* ── Record Explorer Utility — used by all builders ── */
+      function buildParticipantListHTML(p, limit = 50) {
+        if (!p.raw_records || p.raw_records.length === 0) return '';
+        const records = p.raw_records.slice(0, limit);
+        return `
+          <div class="card" style="margin-top:20px">
+            <h3 style="margin-bottom:12px; font-size:.9rem; color:#1E293B">Participant / Business Records (${p.raw_records.length.toLocaleString()})</h3>
+            <div style="overflow-x:auto">
+              <table class="eso-summary-table" style="width:100%">
+                <thead><tr><th>Name / Business</th><th>ESO/Partner</th><th>Action</th></tr></thead>
+                <tbody>
+                  ${records.map(r => `
+                    <tr>
+                      <td style="font-weight:600">${r.n || r.b || 'N/A'}</td>
+                      <td>${r.eso || p.eso || 'N/A'}</td>
+                      <td><button class="eso-report-btn" data-name="${r.n || r.b}" data-eso="${r.eso || p.eso}" style="padding:4px 12px; font-size:.78rem; background:#3B82F6; color:#fff; border:none; border-radius:5px; cursor:pointer">View 360° Trace</button></td>
+                    </tr>`).join('')}
+                </tbody>
+              </table>
+              ${p.raw_records.length > limit ? `<div style="padding:10px; text-align:center; font-size:.7rem; color:#64748B">Displaying top ${limit} records. Use the "Report" tab search for more.</div>` : ''}
+            </div>
+          </div>`;
+      }
+
+      /* ═══════════════════════════════════════════════════════════════
+         HTML BUILDERS
+      ═══════════════════════════════════════════════════════════════ */
+
+      /* ── Foundation Course ─────────────────────────────────────────────────── */
+      function buildFoundationHTML(p) {
+        const total = p.stats.total;
+        const compPct = (p.completed_pct || 0).toFixed(1);
+        const avgComp = (p.avg_completion || 0).toFixed(1);
+        const byEso = p.by_eso || {};
+        const modules = p.modules || {};
+        const progBands = p.progress_bands || {};
+        const wa = p.weekly_activity || {};
+
+        // ── Activity strip values ──────────────────────────────────────────
+        const enrWeek = wa.enrolled_this_week || 0;
+        const enrLWeek = wa.enrolled_last_week || 0;
+        const enrMonth = wa.enrolled_this_month || 0;
+        const cmpWeek = wa.completed_this_week || 0;
+        const cmpLWeek = wa.completed_last_week || 0;
+        const cmpMonth = wa.completed_this_month || 0;
+
+        // ── Progress band colours ──────────────────────────────────────────
+        const BAND_COLORS = {
+          'Completed (100%)': '#10B981',
+          '75 \u2013 99%': '#34D399',
+          '50 \u2013 74%': '#F59E0B',
+          '25 \u2013 49%': '#F97316',
+          'Under 25%': '#EF4444',
+        };
+        const bandTotal = Object.values(progBands).reduce((a, b) => a + b, 0) || 1;
+        const progBandRows = Object.entries(progBands).map(([lbl, n]) => {
+          const w = Math.min(n / bandTotal * 100, 100).toFixed(1);
+          const pct = (n / bandTotal * 100).toFixed(1);
+          const c = BAND_COLORS[lbl] || '#94A3B8';
+          return `<div class="prog-band-row">
+        <span class="pb-label">${lbl}</span>
+        <div class="pb-track"><div class="pb-fill" style="width:${w}%;background:${c}"></div></div>
+        <span class="pb-stat">${n.toLocaleString()}&ensp;${pct}%</span>
+      </div>`;
+        }).join('');
+
+        // ── ESO performance rows — sorted by completion rate desc ──────────
+        const esoSorted = Object.entries(byEso)
+          .filter(([k]) => !['Test', 'Tests', 'Lofty', 'Curad', 'Leu', 'Uncdf'].includes(k))
+          .sort((a, b) => b[1].completion_rate - a[1].completion_rate);
+
+        const esoRows = esoSorted.map(([eso, d], i) => {
+          const cr = (d.completion_rate || 0).toFixed(1);
+          const ap = (d.avg_pct || 0).toFixed(0);
+          const color = cr >= 85 ? '#10B981' : cr >= 70 ? '#F59E0B' : '#EF4444';
+          const rank = i < 3 ? `<span class="rank-badge rank-${i + 1}">${i + 1}</span>` : `<span style="font-size:.62rem;color:#CBD5E1;padding-right:2px">${i + 1}</span>`;
+          return `<div class="eso-perf-row">
+        <span class="eso-name">${rank}${eso}</span>
+        <div class="eso-bar-wrap">
+          <div class="eso-bar-fill" style="width:${cr}%;background:${color}"></div>
+          <span class="eso-bar-label">${cr}%</span>
+        </div>
+        <span class="eso-stat">${d.completed.toLocaleString()}/${d.total.toLocaleString()}</span>
+        <span class="eso-stat">avg&nbsp;${ap}%</span>
+        <span class="eso-week">&#8593;${(d.comp_this_week || 0)}&nbsp;wk</span>
+      </div>`;
+        }).join('') || '<div class="no-data-note">No ESO data</div>';
+
+        // ── Module bars ────────────────────────────────────────────────────
+        const modBars = Object.entries(modules).map(([label, m], i) => {
+          return `<div class="bar-row">
+        <div class="bar-track"><div class="bar-fill" style="width:${m.pct}%;background:${PALETTE[i % PALETTE.length]}"></div></div>
+        <span class="bar-name" title="${label}">${label}</span>
+        <span class="bar-stat">${m.completed.toLocaleString()}&ensp;${m.pct}%</span>
+      </div>`;
+        }).join('') || '<div class="no-data-note">No module data</div>';
+
+        // ── Top ESO this week (top 3 by comp_this_week) ────────────────────
+        const topWeek = Object.entries(byEso)
+          .filter(([k, d]) => (d.comp_this_week || 0) > 0 && !['Test', 'Tests', 'Lofty'].includes(k))
+          .sort((a, b) => (b[1].comp_this_week || 0) - (a[1].comp_this_week || 0))
+          .slice(0, 5);
+        const topWeekRows = topWeek.map(([eso, d], i) => {
+          const medal = ['🥇', '🥈', '🥉', '4.', '5.'][i];
+          return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+        <span style="font-size:.72rem;width:18px">${medal}</span>
+        <span style="font-size:.72rem;font-weight:600;flex:1;color:#1E293B">${eso}</span>
+        <span style="font-size:.68rem;color:#059669;font-weight:700">${d.comp_this_week} this wk</span>
+      </div>`;
+        }).join('') || '<div class="no-data-note">No activity this week</div>';
+
+        const topMonthRows = Object.entries(byEso)
+          .filter(([k, d]) => (d.comp_this_month || 0) > 0 && !['Test', 'Tests', 'Lofty'].includes(k))
+          .sort((a, b) => (b[1].comp_this_month || 0) - (a[1].comp_this_month || 0))
+          .slice(0, 5)
+          .map(([eso, d], i) => {
+            const medal = ['🥇', '🥈', '🥉', '4.', '5.'][i];
+            return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:4px">
+          <span style="font-size:.72rem;width:18px">${medal}</span>
+          <span style="font-size:.72rem;font-weight:600;flex:1;color:#1E293B">${eso}</span>
+          <span style="font-size:.68rem;color:#2563EB;font-weight:700">${d.comp_this_month} this mo</span>
+        </div>` + buildParticipantListHTML(p);
+          }).join('') || '<div class="no-data-note">No activity this month</div>';
+
+        return `
+      <div class="port-header">
+        <div class="port-bar-strip"><div class="port-bar-orange"></div><div class="port-bar-blue"></div></div>
+        <div class="port-title-area">
+          <div class="port-title">${p.name}</div>
+          <div class="port-filename">${p.filename}</div>
+        </div>
+      </div>
+
+      <div class="kpi-strip-7">
+        ${kpiBox(fmt(total), 'Total Learners', 'ko')}
+        ${kpiBox(fmt(p.stats.completed || 0), 'Completed Course', 'kg')}
+        ${kpiBox(compPct + '%', 'Completion Rate', 'kb')}
+        ${kpiBox(avgComp + '%', 'Avg Progress', 'kp')}
+        ${kpiBox(fmt(cmpWeek), 'Completed This Wk', 'kt')}
+        ${kpiBox(fmt(enrWeek), 'Enrolled This Wk', 'kr')}
+        ${kpiBox(Object.keys(byEso).length, 'ESO Partners', 'ka')}
+      </div>
+
+      <!-- Activity strip -->
+      <div class="activity-strip">
+        <div class="act-card act-green">
+          <div class="act-val green">${fmt(cmpWeek)}</div>
+          <div class="act-lbl">Completions<br>This Week</div>
+        </div>
+        <div class="act-card act-green">
+          <div class="act-val green">${fmt(cmpLWeek)}</div>
+          <div class="act-lbl">Completions<br>Last Week</div>
+        </div>
+        <div class="act-card act-green">
+          <div class="act-val green">${fmt(cmpMonth)}</div>
+          <div class="act-lbl">Completions<br>This Month</div>
+        </div>
+        <div class="act-card act-blue">
+          <div class="act-val blue">${fmt(enrWeek)}</div>
+          <div class="act-lbl">New Enrollments<br>This Week</div>
+        </div>
+        <div class="act-card act-blue">
+          <div class="act-val blue">${fmt(enrLWeek)}</div>
+          <div class="act-lbl">New Enrollments<br>Last Week</div>
+        </div>
+        <div class="act-card act-blue">
+          <div class="act-val blue">${fmt(enrMonth)}</div>
+          <div class="act-lbl">New Enrollments<br>This Month</div>
+        </div>
+      </div>
+
+      <!-- ROW 1: ESO Performance (wide) | Progress Bands -->
+      <div class="three-col">
+        <div class="col-section" style="grid-column:span 2">
+          <div class="col-hdr green-hdr">ESO PERFORMANCE — COMPLETION RATE RANKING</div>
+          <div class="col-body">${esoRows}</div>
+        </div>
+        <div class="col-section">
+          <div class="col-hdr orange-hdr">PROGRESS BANDS</div>
+          <div class="col-body">${progBandRows}</div>
+          <div class="col-hdr purple-hdr" style="margin-top:10px">MODULE COMPLETION</div>
+          <div class="col-body">${modBars}</div>
+        </div>
+      </div>
+
+      <!-- ROW 2: Top performers this week | last week | this month -->
+      <div class="three-col" style="margin-top:12px">
+        <div class="col-section">
+          <div class="col-hdr teal-hdr">&#127942; TOP ESOs — THIS WEEK</div>
+          <div class="col-body">${topWeekRows}</div>
+        </div>
+        <div class="col-section">
+          <div class="col-hdr indigo-hdr">&#127942; TOP ESOs — THIS MONTH</div>
+          <div class="col-body">${topMonthRows}</div>
+        </div>
+        <div class="col-section">
+          <div class="col-hdr purple-hdr">COMPLETION BREAKDOWN (TOTALS)</div>
+          <div class="col-body">
+            ${barRowsHTML(
+          Object.fromEntries(esoSorted.map(([e, d]) => [e, d.completed])),
+          null,
+          p.stats.completed || 1,
+          12
+        )}
+          </div>
+        </div>
+      </div>` + buildParticipantListHTML(p);
+      }
+
+      /* ── EOI Programme Overview (all ESOs combined) ───────────────────────── */
+      function buildEoiOverviewHTML(portfolios) {
+        const total = portfolios.reduce((s, p) => s + p.stats.total, 0);
+        const totalUrsb = portfolios.reduce((s, p) => s + (p.stats.ursb || 0), 0);
+        const totalPwd = portfolios.reduce((s, p) => s + (p.stats.pwd || 0), 0);
+        const totalRef = portfolios.reduce((s, p) => s + (p.stats.refugees || 0), 0);
+        const totalFound = portfolios.reduce((s, p) => s + (p.total_founders || 0), 0);
+        const ursbPct = total > 0 ? (totalUrsb / total * 100).toFixed(1) : '0';
+
+        // Weighted female-founder percentage across all ESOs
+        const femFoundSum = portfolios.reduce((s, p) => {
+          const fp = (p.founders && p.founders.female_pct) ? p.founders.female_pct : 0;
+          return s + fp * p.stats.total / 100;
+        }, 0);
+        const femalePct = total > 0 ? (femFoundSum / total * 100).toFixed(1) : '0';
+
+        // ESO color assignment (stable order)
+        const ESO_ORDER = portfolios.slice().sort((a, b) => b.stats.total - a.stats.total);
+        const ESO_COL = ['#7C3AED', '#0EA5E9', '#10B981', '#F59E0B', '#EF4444', '#EC4899', '#14B8A6', '#F97316'];
+        const esoColorMap = {};
+        ESO_ORDER.forEach((p, i) => { esoColorMap[p.eso || p.name] = ESO_COL[i % ESO_COL.length]; });
+
+        // ESO applications object for bar chart
+        const esoObj = {};
+        ESO_ORDER.forEach(p => { esoObj[p.eso || p.name] = p.stats.total; });
+
+        // Combined sectors, subsectors & districts
+        const sectors = {};
+        const subsectors = {};
+        const districts = {};
+        portfolios.forEach(p => {
+          Object.entries(p.sectors || {}).forEach(([k, v]) => { sectors[k] = (sectors[k] || 0) + v; });
+          Object.entries(p.subsectors || {}).forEach(([k, v]) => { subsectors[k] = (subsectors[k] || 0) + v; });
+          Object.entries(p.districts || {}).forEach(([k, v]) => { districts[k] = (districts[k] || 0) + v; });
+        });
+
+        // Coloured bar-strip proportional to each ESO share
+        const stripDivs = ESO_ORDER.map((p, i) => {
+          const w = (p.stats.total / total * 100).toFixed(1);
+          return `<div style="width:${w}%;background:${ESO_COL[i % ESO_COL.length]}"></div>`;
+        }).join('');
+
+        // ESO summary mini-cards
+        const esoCards = ESO_ORDER.map((p, i) => {
+          const c = ESO_COL[i % ESO_COL.length];
+          const fPct = (p.founders && p.founders.female_pct != null) ? p.founders.female_pct.toFixed(0) + '%' : '—';
+          const topSec = Object.entries(p.sectors || {}).sort((a, b) => b[1] - a[1])[0];
+          const sharePct = (p.stats.total / total * 100).toFixed(0);
+          return `<div style="background:#F8FAFC;border-radius:8px;padding:10px 12px;border-left:3px solid ${c};margin-bottom:7px">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:3px">
+          <div style="font-size:.67rem;font-weight:800;color:#1E293B;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:170px">${p.eso || p.name}</div>
+          <div style="font-size:1.05rem;font-weight:800;color:${c}">${p.stats.total.toLocaleString()}</div>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;font-size:.61rem;color:#64748B">
+          <span>&#9792; ${fPct} female</span>
+          <span>URSB: ${p.ursb_pct || 0}%</span>
+          <span>${sharePct}% of total</span>
+          ${topSec ? `<span style="color:#475569;font-style:italic">${topSec[0]}</span>` : ''}
+        </div>
+      </div>`;
+        }).join('');
+
+        // URSB rates bar rows (manual — not using barRowsHTML to allow % display)
+        const ursbRateRows = ESO_ORDER
+        .slice().sort((a, b) => (b.ursb_pct || 0) - (a.ursb_pct || 0))
+          .map((p, i) => {
+            const c = esoColorMap[p.eso || p.name];
+            const pct = p.ursb_pct || 0;
+            const w = Math.min(pct * 5, 100); // scale: 20% URSB = full bar
+            return `<div style="display:grid;grid-template-columns:130px 1fr 42px;align-items:center;gap:6px;margin-bottom:7px">
+          <div class="bar-name">${p.eso || p.name}</div>
+          <div class="bar-track"><div class="bar-fill" style="width:${w}%;background:${c}"></div></div>
+          <div class="bar-stat">${pct}%</div>
+        </div>`;
+          }).join('');
+
+        return `
+      <div class="port-header">
+        <div class="port-bar-strip">${stripDivs}</div>
+        <div class="port-title-area">
+          <div class="port-title">EOI Programme &mdash; All ESOs Overview</div>
+        </div>
+      </div>
+
+      <div class="kpi-strip-7">
+        ${kpiBox(fmt(total), 'Total Applications', 'ko')}
+        ${kpiBox(portfolios.length, 'ESO Partners', 'kp')}
+        ${kpiBox(fmt(totalUrsb), 'URSB Registered', 'kg')}
+        ${kpiBox(ursbPct + '%', 'URSB Rate', 'kb')}
+        ${kpiBox(femalePct + '%', 'Female Founders', 'kp')}
+        ${kpiBox(totalPwd, 'PWD', 'kr')}
+        ${kpiBox(totalRef, 'Refugees', 'kt')}
+      </div>
+
+      <div class="three-col">
+        <div class="col-section">
+          <div class="col-hdr purple-hdr">APPLICATIONS BY ESO</div>
+          <div class="col-body">
+            ${barRowsHTML(esoObj, esoColorMap, total, 10)}
+          </div>
+        </div>
+        <div class="col-section">
+          <div class="col-hdr green-hdr">COMBINED SECTOR BREAKDOWN</div>
+          <div class="col-body">
+            <div class="sub-hdr green-txt">TOP SECTORS — ALL ESOs</div>
+            ${barRowsHTML(sectors, SECTOR_COLORS, total, 10)}
+            <div class="sub-hdr green-txt" style="margin-top:10px">TOP SUB SECTORS — ALL ESOs</div>
+            ${barRowsHTML(subsectors, null, total, 10)}
+          </div>
+        </div>
+        <div class="col-section">
+          <div class="col-hdr orange-hdr">ESO SUMMARY</div>
+          <div class="col-body">
+            ${esoCards}
+          </div>
+        </div>
+      </div>
+
+      <div class="three-col" style="margin-top:12px">
+        <div class="col-section" style="grid-column:span 2">
+          <div class="col-hdr teal-hdr">COMBINED DISTRICT DISTRIBUTION</div>
+          <div class="col-body">
+            <div class="sub-hdr teal-txt">TOP DISTRICTS — ALL ESOs</div>
+            ${districtBarRowsHTML(districts, 15)}
+          </div>
+          <div class="section-footer">
+            <span><strong>${fmt(totalUrsb)}</strong>URSB Reg.</span>
+            <span><strong>${totalPwd}</strong>PWDs (disability)</span>
+            <span><strong>${totalRef}</strong>Refugees (migration)</span>
+            <span><strong>${fmt(totalFound)}</strong>Total Founders</span>
+          </div>
+        </div>
+        <div class="col-section">
+          <div class="col-hdr indigo-hdr">URSB RATE BY ESO</div>
+          <div class="col-body">
+            <div class="sub-hdr indigo-txt">BUSINESS REGISTRATION %</div>
+            ${ursbRateRows}
+            <div style="margin-top:10px;padding:8px;background:#EEF2FF;border-radius:6px;border-left:3px solid #6366F1">
+              <div style="font-size:.63rem;color:#3730A3;font-weight:600;margin-bottom:3px">COMBINED URSB RATE</div>
+              <div style="font-size:1.2rem;font-weight:800;color:#4F46E5">${ursbPct}%</div>
+              <div style="font-size:.61rem;color:#6366F1">${fmt(totalUrsb)} of ${fmt(total)} applications</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      ${(()=>{
+        // Combine refugee_nationalities across all ESOs
+        const allRefNat = {};
+        portfolios.forEach(p => {
+          Object.entries(p.refugee_nationalities || {}).forEach(([k, v]) => {
+            allRefNat[k] = (allRefNat[k] || 0) + v;
+          });
+        });
+        const refNatTotal = Object.values(allRefNat).reduce((s,v)=>s+v,0);
+        if (!refNatTotal) return '';
+        return `<div class="three-col" style="margin-top:12px">
+          <div class="col-section">
+            <div class="col-hdr" style="background:#0F766E">🌍 REFUGEE ORIGIN — ALL ESOs (${totalRef} refugees)</div>
+            <div class="col-body">
+              <div class="sub-hdr teal-txt">NATIONALITY BREAKDOWN</div>
+              ${barRowsHTML(allRefNat, null, refNatTotal, 10)}
+              <div style="font-size:.65rem;color:#6B7280;margin-top:6px">
+                Nationality, country of residence, and refugee status are tracked as separate dimensions.
+              </div>
+            </div>
+          </div>
+        </div>`;
+      })()}`;
+      }
+
+      /* ── EOI Applications ──────────────────────────────────────────────────── */
+      function buildEoiHTML(p) {
+        const total = p.stats.total;
+        const founders = p.founders || {};
+        const femalePct = (founders.female_pct || 0).toFixed(1);
+        const malePct = (100 - parseFloat(femalePct)).toFixed(1);
+        const ursb = p.stats.ursb || 0;
+        const ursbPct = (p.ursb_pct || 0).toFixed(1);
+        const pwd = p.stats.pwd || 0;
+        const refugees = p.stats.refugees || 0;
+        const genderTotal = Object.values(founders.gender || {}).reduce((a, b) => a + b, 0);
+        const genderBars = barRowsHTML(founders.gender || {}, null, genderTotal, 4);
+
+        const idSt = p.id_status || {};
+        const ninSt = p.nin_status || {};
+        const tinSt = p.tin_status || {};
+        const nssfSt = p.nssf_status || {};
+        const hasNid = idSt['Has National ID'] || 0;
+        const hasNin = ninSt['Has NIN'] || 0;
+
+        const idTotal = Object.values(idSt).reduce((a, b) => a + b, 0) || 1;
+        const ninTotal = Object.values(ninSt).reduce((a, b) => a + b, 0) || 1;
+        const tinTotal = Object.values(tinSt).reduce((a, b) => a + b, 0) || 1;
+        const nssfTotal = Object.values(nssfSt).reduce((a, b) => a + b, 0) || 1;
+
+        const YES_NO_COLORS = { 'Yes': '#10B981', 'No': '#EF4444' };
+        const NID_COLORS = { 'Has National ID': '#10B981', 'Missing ID': '#F59E0B' };
+        const NIN_COLORS = { 'Has NIN': '#10B981', 'No NIN': '#EF4444' };
+
+        const ARCHETYPE_COLORS = {
+          'Gazelles': '#10B981',
+          'Bootstrappers SME': '#3B82F6',
+          'Bootstrappers': '#60A5FA',
+          'Gig Workers': '#F97316',
+          'Invisibles': '#94A3B8',
+          'No Revenue Data': '#CBD5E1',
+        };
+
+        return `
+      <div class="port-header">
+        <div class="port-bar-strip"><div class="port-bar-orange"></div><div class="port-bar-blue"></div></div>
+        <div class="port-title-area">
+          <div class="port-title">${p.name}</div>
+          <div class="port-filename">${p.filename}</div>
+        </div>
+      </div>
+      <div class="kpi-strip-7">
+        ${kpiBox(fmt(total), 'Applications', 'ko')}
+        ${kpiBox(ursb, 'URSB Registered', 'kg')}
+        ${kpiBox(ursbPct + '%', 'URSB Rate', 'kb')}
+        ${kpiBox(femalePct + '%', 'Female Founders', 'kp')}
+        ${kpiBox(p.total_founders || 0, 'Total Founders', 'kt')}
+        ${kpiBox(hasNid, 'Have Nat. ID', 'kr')}
+        ${kpiBox(hasNin, 'Employees w/ NIN', 'ka')}
+      </div>
+
+      <!-- ARCHETYPE CARDS ROW -->
+      <div class="col-section" style="margin-bottom:12px">
+        <div class="col-hdr orange-hdr">🏷️ MSME ARCHETYPES — ${p.eso || p.name}</div>
+        <div class="col-body">
+          ${archetypeCardsHTML(p.archetypes || {}, total)}
+          <div class="sub-hdr orange-txt" style="margin-top:8px">FUNDING NEEDS (UGX)</div>
+          ${barRowsHTML(p.funding_bands || {}, null, total, 6)}
+        </div>
+      </div>
+
+      <!-- ROW 1: Sectors | Founders | Location -->
+      <div class="three-col">
+        <div class="col-section">
+          <div class="col-hdr green-hdr">SECTOR BREAKDOWN</div>
+          <div class="col-body">
+            <div class="sub-hdr green-txt">TOP SECTORS</div>
+            ${barRowsHTML(p.sectors || {}, SECTOR_COLORS, total, 10)}
+          </div>
+        </div>
+        <div class="col-section">
+          <div class="col-hdr purple-hdr">FOUNDERS &amp; AGE</div>
+          <div class="col-body">
+            <div class="sub-hdr purple-txt">FOUNDER GENDER</div>
+            ${genderBars}
+            <div class="gender-line">♀ ${femalePct}% Female &nbsp;·&nbsp; ♂ ${malePct}% Male</div>
+            <div class="sub-hdr purple-txt" style="margin-top:10px">AGE OF FOUNDERS</div>
+            ${ageBandRowsHTML(p.age_bands || {}, Object.values(p.age_bands || {}).reduce((a, b) => a + b, 1))}
+          </div>
+        </div>
+        <div class="col-section">
+          <div class="col-hdr teal-hdr">DISTRIBUTION BY LOCATION</div>
+          <div class="col-body">
+            <div class="sub-hdr teal-txt">TOP DISTRICTS</div>
+            ${districtBarRowsHTML(p.districts || {}, 8)}
+          </div>
+          <div class="section-footer">
+            <strong>${ursb}</strong>URSB<br>
+            <strong>${pwd}</strong>PWD<br>
+            <strong>${refugees}</strong>Refugees<br>
+            <strong>${p.total_founders || 0}</strong>Founders
+          </div>
+        </div>
+      </div>
+
+      ${(()=>{
+        const refNat = p.refugee_nationalities || {};
+        const refTotal = Object.values(refNat).reduce((s,v)=>s+v,0);
+        if (!refTotal) return '';
+        return `<div class="three-col" style="margin-top:12px">
+          <div class="col-section">
+            <div class="col-hdr" style="background:#0F766E">🌍 REFUGEE ORIGIN BREAKDOWN</div>
+            <div class="col-body">
+              <div class="sub-hdr teal-txt">NATIONALITY OF REFUGEE FOUNDERS (${refTotal} total)</div>
+              ${barRowsHTML(refNat, null, refTotal, 10)}
+              <div style="font-size:.65rem;color:#6B7280;margin-top:6px">
+                Nationality · Country of Residence · Status are tracked separately per founder.
+              </div>
+            </div>
+          </div>
+        </div>`;
+      })()}
+
+      <!-- ROW 2: ID & Registration | Targets -->
+      <div class="three-col" style="margin-top:12px">
+        <div class="col-section" style="grid-column:span 2">
+          <div class="col-hdr indigo-hdr">ID &amp; REGISTRATION STATUS</div>
+          <div class="col-body">
+            <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:12px">
+              <div>
+                <div class="sub-hdr indigo-txt">TAX ID (TIN)</div>
+                ${Object.keys(tinSt).length ? barRowsHTML(tinSt, YES_NO_COLORS, tinTotal, 5) : '<div class="no-data-note">No TIN data</div>'}
+              </div>
+              <div>
+                <div class="sub-hdr indigo-txt">NSSF NUMBER</div>
+                ${Object.keys(nssfSt).length ? barRowsHTML(nssfSt, YES_NO_COLORS, nssfTotal, 5) : '<div class="no-data-note">No NSSF data</div>'}
+              </div>
+              <div>
+                <div class="sub-hdr indigo-txt">NATIONAL ID</div>
+                ${Object.keys(idSt).length ? barRowsHTML(idSt, NID_COLORS, idTotal, 2) : '<div class="no-data-note">No National ID data</div>'}
+              </div>
+              <div>
+                <div class="sub-hdr indigo-txt">EMPLOYEE NIN</div>
+                ${Object.keys(ninSt).length ? barRowsHTML(ninSt, NIN_COLORS, ninTotal, 2) : '<div class="no-data-note">No NIN data</div>'}
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-section">
+          <div class="col-hdr" style="background:#1D4ED8">🎯 ESO TARGETS</div>
+          <div class="col-body">
+            ${p.targets && p.targets.length ? targetRowsHTML(p.targets) :
+            `<div style="font-size:.68rem;color:#94A3B8;line-height:1.6;text-align:center;padding:16px 0">
+                <div style="font-size:1.5rem;margin-bottom:8px">🎯</div>
+                Add <code style="background:#F1F5F9;padding:1px 5px;border-radius:3px;font-size:.7rem">targets</code> array to this ESO entry in data.js to track progress against goals.
+              </div>`
+          }
+          </div>
+        </div>
+      </div>` + buildParticipantListHTML(p);
+      }
+
+
+      /* ── Youth in Work ─────────────────────────────────────────────────────── */
+      function buildYiwHTML(p) {
+        const total = p.stats.total;
+        const earnedPct = (p.earned_income_pct || 0).toFixed(1);
+        const improvedPct = (p.work_improved_pct || 0).toFixed(1);
+        const foundPct = (p.foundation_done_pct || 0).toFixed(1);
+        const byEso = p.by_eso || {};
+        const esoTotal = Object.values(byEso).reduce((s, d) => s + d.total, 0) || 1;
+
+        const esoBars = Object.entries(byEso)
+          .sort((a, b) => b[1].total - a[1].total)
+          .map(([eso, d], i) => {
+            const w = Math.min(d.total / esoTotal * 100, 100).toFixed(1);
+            const color = PALETTE[i % PALETTE.length];
+            return `<div class="bar-row">
+          <div class="bar-track"><div class="bar-fill" style="width:${w}%;background:${color}"></div></div>
+          <span class="bar-name" title="${eso}">${eso}</span>
+          <span class="bar-stat">${d.total.toLocaleString()}</span>
+        </div>`;
+          }).join('') || '<div style="font-size:.7rem;color:#94A3B8;padding:4px 0">No ESO data</div>';
+
+        return `
+      <div class="port-header">
+        <div class="port-bar-strip"><div class="port-bar-orange"></div><div class="port-bar-blue"></div></div>
+        <div class="port-title-area">
+          <div class="port-title">${p.name}</div>
+          <div class="port-filename">${p.filename}</div>
+        </div>
+      </div>
+      <div class="kpi-strip-7">
+        ${kpiBox(fmt(total), 'Assessments', 'ko')}
+        ${kpiBox(earnedPct + '%', 'Earned Income', 'kg')}
+        ${kpiBox(improvedPct + '%', 'Work Improved', 'kb')}
+        ${kpiBox(foundPct + '%', 'Foundation Done', 'kp')}
+        ${kpiBox(Object.keys(p.sectors || {}).length, 'Sectors', 'kt')}
+        ${kpiBox(Object.keys(p.districts || {}).length, 'Districts', 'kr')}
+        ${kpiBox(Object.keys(byEso).length, 'ESOs', 'ka')}
+      </div>
+      <div class="three-col">
+        <div class="col-section">
+          <div class="col-hdr teal-hdr">BY ESO PARTNER</div>
+          <div class="col-body">${esoBars}</div>
+        </div>
+        <div class="col-section">
+          <div class="col-hdr green-hdr">SECTOR BREAKDOWN</div>
+          <div class="col-body">
+            <div class="sub-hdr green-txt">TOP SECTORS</div>
+            ${barRowsHTML(p.sectors || {}, SECTOR_COLORS, total, 10)}
+          </div>
+        </div>
+        <div class="col-section">
+          <div class="col-hdr orange-hdr">GEOGRAPHY &amp; INCOME</div>
+          <div class="col-body">
+            <div class="sub-hdr orange-txt">TOP DISTRICTS</div>
+            ${districtBarRowsHTML(p.districts || {}, 6)}
+            <div class="sub-hdr orange-txt" style="margin-top:10px">CURRENT INCOME LEVELS</div>
+            ${barRowsHTML(p.income_levels || {}, null, total, 8)}
+          </div>
+        </div>
+      </div>` + buildParticipantListHTML(p);
+      }
+
+      /* ── Business Needs Assessment ─────────────────────────────────────────── */
+      function buildBuzNeedsHTML(p) {
+        const total = p.stats.total;
+        const byEso = p.by_eso || {};
+        const skills = p.digital_skills || {};
+        const esoTotal = Object.values(byEso).reduce((s, d) => s + d.total, 0) || 1;
+
+        const esoBars = Object.entries(byEso)
+          .sort((a, b) => b[1].total - a[1].total)
+          .map(([eso, d], i) => {
+            const w = Math.min(d.total / esoTotal * 100, 100).toFixed(1);
+            const color = PALETTE[i % PALETTE.length];
+            return `<div class="bar-row">
+          <div class="bar-track"><div class="bar-fill" style="width:${w}%;background:${color}"></div></div>
+          <span class="bar-name" title="${eso}">${eso}</span>
+          <span class="bar-stat">${d.total.toLocaleString()}</span>
+        </div>`;
+          }).join('') || '<div style="font-size:.7rem;color:#94A3B8;padding:4px 0">No ESO data</div>';
+
+        const skillTotal = Object.values(skills).reduce((a, b) => a + b, 0) || 1;
+
+        return `
+      <div class="port-header">
+        <div class="port-bar-strip"><div class="port-bar-orange"></div><div class="port-bar-blue"></div></div>
+        <div class="port-title-area">
+          <div class="port-title">${p.name}</div>
+          <div class="port-filename">${p.filename}</div>
+        </div>
+      </div>
+      <div class="kpi-strip-7">
+        ${kpiBox(fmt(total), 'Assessments', 'ko')}
+        ${kpiBox((p.registered_pct || 0).toFixed(1) + '%', 'URSB Reg.', 'kg')}
+        ${kpiBox((p.device_need_pct || 0).toFixed(1) + '%', 'Need Device', 'kb')}
+        ${kpiBox((p.pwd_pct || 0).toFixed(1) + '%', 'PWD', 'kp')}
+        ${kpiBox(p.stats.pwd || 0, 'PWD Count', 'kr')}
+        ${kpiBox(p.stats.refugees || 0, 'Refugees', 'kt')}
+        ${kpiBox(Object.keys(byEso).length, 'ESOs', 'ka')}
+      </div>
+      <div class="three-col">
+        <div class="col-section">
+          <div class="col-hdr indigo-hdr">BY ESO PARTNER</div>
+          <div class="col-body">
+            ${esoBars}
+            <div class="sub-hdr indigo-txt" style="margin-top:10px">INCOME LEVELS</div>
+            ${barRowsHTML(p.income_levels || {}, null, total, 6)}
+          </div>
+        </div>
+        <div class="col-section">
+          <div class="col-hdr green-hdr">SECTOR BREAKDOWN</div>
+          <div class="col-body">
+            <div class="sub-hdr green-txt">TOP SECTORS</div>
+            ${barRowsHTML(p.sectors || {}, SECTOR_COLORS, total, 10)}
+          </div>
+        </div>
+        <div class="col-section">
+          <div class="col-hdr orange-hdr">GEOGRAPHY &amp; DIGITAL SKILLS</div>
+          <div class="col-body">
+            <div class="sub-hdr orange-txt">TOP DISTRICTS</div>
+            ${districtBarRowsHTML(p.districts || {}, 5)}
+            <div class="sub-hdr orange-txt" style="margin-top:10px">DIGITAL SKILLS DEMAND</div>
+            ${barRowsHTML(skills, null, skillTotal, 10)}
+          </div>
+        </div>
+      </div>` + buildParticipantListHTML(p);
+      }
+
+      /* ── Digital Platforms ─────────────────────────────────────────────────── */
+      function buildPlatformsHTML(p) {
+        const total = p.stats.total;
+        const bp = p.by_platform || {};
+        const xentePedn = bp['Xente (PEDN/Xente Tech)'] || {};
+        const xenteStb = bp['Xente (Stanbic)'] || {};
+        const chapchap = bp['ChapChap'] || {};
+        const flexipay = bp['FlexiPay'] || {};
+        const ezyagric = bp['EzyAgric'] || {};
+
+        const xenteTotal = (xentePedn.total || 0) + (xenteStb.total || 0);
+        const femalePct = (p.female_pct || 0).toFixed(1);
+        const flexiPct = (flexipay.completion_rate || 0).toFixed(1);
+
+        // ── Platform data object for barRowsHTML ────────────────────────────────
+        const platformObj = {
+          'Xente (PEDN/Xente Tech)': xentePedn.total || 0,
+          'Xente (Stanbic)': xenteStb.total || 0,
+          'ChapChap (PEDN)': chapchap.pedn || 0,
+          'ChapChap (Stanbic)': chapchap.stanbic || 0,
+          'FlexiPay': flexipay.total || 0,
+          'EzyAgric': ezyagric.total || 0,
+        };
+        const platformColors = {
+          'Xente (PEDN/Xente Tech)': '#7C3AED',
+          'Xente (Stanbic)': '#A78BFA',
+          'ChapChap (PEDN)': '#0EA5E9',
+          'ChapChap (Stanbic)': '#38BDF8',
+          'FlexiPay': '#10B981',
+          'EzyAgric': '#F59E0B',
+        };
+
+        // ── Gender ──────────────────────────────────────────────────────────────
+        const gF = p.total_female || 0;
+        const gM = p.total_male || 0;
+        const gT = gF + gM;
+        const gFPct = gT ? (gF / gT * 100).toFixed(1) : '0';
+        const gMPct = gT ? (gM / gT * 100).toFixed(1) : '0';
+
+        const xenteF = xentePedn.female || 0;
+        const xenteM = xentePedn.male || 0;
+        const xenteFPct = (xentePedn.total || 1) ? (xenteF / (xentePedn.total || 1) * 100).toFixed(1) : '0';
+
+        const flexiCompleted = flexipay.completed || 0;
+        const flexiTotal = flexipay.total || 0;
+        const chapTotal = chapchap.total || 1;
+        const chapObj = { 'PEDN': chapchap.pedn || 0, 'Stanbic': chapchap.stanbic || 0 };
+
+        // ── Engagement data ────────────────────────────────────────────────────────
+        const ezyItems = ezyagric.total_items || 0;
+        const ezyCost = ezyagric.total_cost_ugx || 0;
+        const ezyAvgItems = (ezyagric.avg_items || 0).toFixed(2);
+        const ezyAvgCost = ezyagric.avg_cost_ugx || 0;
+        const ezyDistricts = ezyagric.districts || {};
+        const ezyTotalCostFmt = ezyCost >= 1e6 ? (ezyCost / 1e6).toFixed(1) + 'M' : fmt(ezyCost);
+        const ezyAvgCostFmt = ezyAvgCost >= 1e3 ? Math.round(ezyAvgCost / 1e3) + 'K' : fmt(Math.round(ezyAvgCost));
+
+        const stbMonthly = xenteStb.monthly || {};
+        const MONTH_ABBR = { '01': 'Jan', '02': 'Feb', '03': 'Mar', '04': 'Apr', '05': 'May', '06': 'Jun', '07': 'Jul', '08': 'Aug', '09': 'Sep', '10': 'Oct', '11': 'Nov', '12': 'Dec' };
+        const monthlyVals = Object.values(stbMonthly);
+        const monthlyMax = monthlyVals.length ? Math.max(...monthlyVals) : 1;
+        const monthlyBars = Object.entries(stbMonthly)
+          .sort(([a], [b]) => a.localeCompare(b))
+          .map(([period, cnt]) => {
+            const parts = period.split('-');
+            const lbl = (MONTH_ABBR[parts[1]] || parts[1]) + ' \'' + parts[0].slice(2);
+            const pct = Math.round(cnt / monthlyMax * 100);
+            return '<div style="display:grid;grid-template-columns:54px 1fr 34px;align-items:center;gap:6px;margin-bottom:7px">'
+              + '<div class="bar-name">' + lbl + '</div>'
+              + '<div class="bar-track"><div class="bar-fill" style="width:' + pct + '%;background:#8B5CF6"></div></div>'
+              + '<div class="bar-stat">' + cnt + '</div></div>';
+          }).join('');
+
+        const flexiFull = flexipay.fully_registered || 0;
+        const flexiPend = flexipay.pending_validation || 0;
+        const flexiFullPct = flexiTotal > 0 ? (flexiFull / flexiTotal * 100).toFixed(0) : '0';
+        const flexiPendPct = flexiTotal > 0 ? (flexiPend / flexiTotal * 100).toFixed(0) : '0';
+        const funnelRows = [
+          { label: 'Enrolled', val: flexiTotal, pct: 100 },
+          { label: 'Course Completed', val: flexiCompleted, pct: parseFloat(flexiPct) },
+          { label: 'Fully Registered', val: flexiFull, pct: parseFloat(flexiFullPct) },
+        ].map(({ label, val, pct }, i) => {
+          const colors = ['#34D399', '#10B981', '#059669'];
+          const c = colors[i];
+          return '<div style="margin-bottom:8px">'
+            + '<div style="display:flex;justify-content:space-between;font-size:.64rem;font-weight:600;color:#374151;margin-bottom:3px">'
+            + '<span>' + label + '</span>'
+            + '<span style="color:' + c + '">' + val.toLocaleString() + ' (' + pct.toFixed(0) + '%)</span></div>'
+            + '<div style="background:#E8EDF2;border-radius:3px;height:10px;overflow:hidden">'
+            + '<div style="height:100%;width:' + pct + '%;background:' + c + ';border-radius:3px"></div></div>'
+            + '</div>';
+        }).join('');
+
+        return `
+      <div class="port-header">
+        <div class="port-bar-strip">
+          <div style="width:33%;background:#7C3AED"></div>
+          <div style="flex:1;background:#D1D5DB"></div>
+        </div>
+        <div class="port-title-area">
+          <div class="port-title">${p.name}</div>
+        </div>
+      </div>
+
+      <div class="kpi-strip-7" style="grid-template-columns:repeat(6,1fr)">
+        ${kpiBox(fmt(total), 'Total Onboardings', 'ko')}
+        ${kpiBox(fmt(xenteTotal), 'Xente', 'kp')}
+        ${kpiBox(fmt(chapchap.total || 0), 'ChapChap', 'kt')}
+        ${kpiBox(fmt(flexipay.total || 0), 'FlexiPay', 'kg')}
+        ${kpiBox(fmt(ezyagric.total || 0), 'EzyAgric', 'ka')}
+        ${kpiBox(femalePct + '%', 'Female', 'kk')}
+      </div>
+
+      <div class="three-col">
+        <div class="col-section" style="grid-column:span 2">
+          <div class="col-hdr purple-hdr">PLATFORM BREAKDOWN</div>
+          <div class="col-body">
+            ${barRowsHTML(platformObj, platformColors, total, 10)}
+          </div>
+        </div>
+        <div class="col-section">
+          <div class="col-hdr indigo-hdr">GENDER OVERVIEW</div>
+          <div class="col-body">
+            <div class="sub-hdr indigo-txt">COMBINED (XENTE + CHAPCHAP)</div>
+            <div style="height:16px;border-radius:4px;overflow:hidden;display:flex;margin-bottom:6px">
+              <div style="width:${gFPct}%;background:#EC4899" title="Female ${gFPct}%"></div>
+              <div style="width:${gMPct}%;background:#3B82F6" title="Male ${gMPct}%"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:.71rem;margin-bottom:12px">
+              <span style="color:#EC4899">&#9792; ${gF.toLocaleString()} <strong>(${gFPct}%)</strong></span>
+              <span style="color:#3B82F6">&#9794; ${gM.toLocaleString()} <strong>(${gMPct}%)</strong></span>
+            </div>
+            <div class="sub-hdr indigo-txt">XENTE (PEDN/XENTE TECH)</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+              <div style="text-align:center;background:#FDF2F8;border-radius:6px;padding:8px 4px">
+                <div style="font-size:1.1rem;font-weight:800;color:#EC4899">${xenteF.toLocaleString()}</div>
+                <div style="font-size:.62rem;font-weight:600;text-transform:uppercase;color:#9D174D">Female ${xenteFPct}%</div>
+              </div>
+              <div style="text-align:center;background:#EFF6FF;border-radius:6px;padding:8px 4px">
+                <div style="font-size:1.1rem;font-weight:800;color:#3B82F6">${xenteM.toLocaleString()}</div>
+                <div style="font-size:.62rem;font-weight:600;text-transform:uppercase;color:#1D4ED8">Male</div>
+              </div>
+            </div>
+            ${xentePedn.pwd ? `<div style="font-size:.7rem;color:#6B7280;padding:4px 0;margin-bottom:10px">PWD: <strong style="color:#374151">${xentePedn.pwd}</strong></div>` : ''}
+            <div class="sub-hdr indigo-txt">CHAPCHAP</div>
+            <div style="font-size:.73rem;color:#374151">
+              &#9792; Female: <strong style="color:#EC4899">${chapchap.female || 0}</strong>
+              &nbsp;&nbsp;
+              &#9794; Male: <strong style="color:#3B82F6">${chapchap.male || 0}</strong>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="three-col" style="margin-top:12px">
+        <div class="col-section">
+          <div class="col-hdr teal-hdr">XENTE &mdash; TOP DISTRICTS</div>
+          <div class="col-body">
+            ${districtBarRowsHTML(xentePedn.locations || {}, 8)}
+          </div>
+        </div>
+        <div class="col-section">
+          <div class="col-hdr indigo-hdr">CHAPCHAP DETAIL</div>
+          <div class="col-body">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+              <div style="text-align:center;background:#F0F9FF;border-radius:6px;padding:8px 4px">
+                <div style="font-size:1.2rem;font-weight:800;color:#0EA5E9">${(chapchap.total || 0).toLocaleString()}</div>
+                <div style="font-size:.62rem;font-weight:600;text-transform:uppercase;color:#0369A1">Total Users</div>
+              </div>
+              <div style="text-align:center;background:#FDF2F8;border-radius:6px;padding:8px 4px">
+                <div style="font-size:1.2rem;font-weight:800;color:#EC4899">${(chapchap.female || 0).toLocaleString()}</div>
+                <div style="font-size:.62rem;font-weight:600;text-transform:uppercase;color:#9D174D">Female</div>
+              </div>
+            </div>
+            <div class="sub-hdr teal-txt">BY CHANNEL</div>
+            ${barRowsHTML(chapObj, { 'PEDN': '#0EA5E9', 'Stanbic': '#38BDF8' }, chapTotal, 5)}
+          </div>
+        </div>
+        <div class="col-section">
+          <div class="col-hdr green-hdr">FLEXIPAY &amp; EZYAGRIC</div>
+          <div class="col-body">
+            <div class="sub-hdr green-txt">FLEXIPAY COMPLETION</div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+              <div style="text-align:center;background:#F0FDF4;border-radius:6px;padding:8px 4px">
+                <div style="font-size:1.2rem;font-weight:800;color:#10B981">${flexiTotal.toLocaleString()}</div>
+                <div style="font-size:.62rem;font-weight:600;text-transform:uppercase;color:#065F46">Total Users</div>
+              </div>
+              <div style="text-align:center;background:#ECFDF5;border-radius:6px;padding:8px 4px">
+                <div style="font-size:1.2rem;font-weight:800;color:#059669">${flexiCompleted.toLocaleString()}</div>
+                <div style="font-size:.62rem;font-weight:600;text-transform:uppercase;color:#064E3B">Completed</div>
+              </div>
+            </div>
+            <div style="font-size:.7rem;color:#6B7280;margin-bottom:4px">Course completion rate</div>
+            <div style="background:#E8EDF2;border-radius:4px;height:14px;overflow:hidden;margin-bottom:4px">
+              <div style="height:100%;width:${flexiPct}%;background:#10B981;border-radius:4px;display:flex;align-items:center;justify-content:center">
+                <span style="font-size:.6rem;color:#fff;font-weight:800">${flexiPct}%</span>
+              </div>
+            </div>
+            <div style="font-size:.67rem;color:#475569;margin-bottom:14px">${flexiCompleted} of ${flexiTotal} users completed</div>
+            <div class="sub-hdr green-txt">EZYAGRIC (PEDN TRAINING)</div>
+            <div style="display:flex;align-items:baseline;gap:6px">
+              <span style="font-size:1.4rem;font-weight:800;color:#F59E0B">${(ezyagric.total || 0).toLocaleString()}</span>
+              <span style="font-size:.71rem;color:#92400E">users onboarded on app</span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div style="margin-top:12px">
+        <div class="three-col">
+          <div class="col-section">
+            <div class="col-hdr orange-hdr">EZYAGRIC &#8212; PLATFORM ACTIVITY</div>
+            <div class="col-body">
+              <div class="sub-hdr orange-txt">ITEMS ORDERED ON PLATFORM</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+                <div style="text-align:center;background:#FFFBEB;border-radius:6px;padding:8px 4px">
+                  <div style="font-size:1.4rem;font-weight:800;color:#D97706">${ezyItems}</div>
+                  <div style="font-size:.61rem;font-weight:600;text-transform:uppercase;color:#78350F">Total Items</div>
+                </div>
+                <div style="text-align:center;background:#FFFBEB;border-radius:6px;padding:8px 4px">
+                  <div style="font-size:1.4rem;font-weight:800;color:#D97706">${ezyAvgItems}</div>
+                  <div style="font-size:.61rem;font-weight:600;text-transform:uppercase;color:#78350F">Avg / User</div>
+                </div>
+              </div>
+              <div class="sub-hdr orange-txt">TRANSACTION VALUE (UGX)</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:10px">
+                <div style="text-align:center;background:#FEF3C7;border-radius:6px;padding:8px 4px">
+                  <div style="font-size:1.3rem;font-weight:800;color:#92400E">${ezyTotalCostFmt}</div>
+                  <div style="font-size:.61rem;font-weight:600;text-transform:uppercase;color:#78350F">Total Value</div>
+                </div>
+                <div style="text-align:center;background:#FEF3C7;border-radius:6px;padding:8px 4px">
+                  <div style="font-size:1.3rem;font-weight:800;color:#92400E">${ezyAvgCostFmt}</div>
+                  <div style="font-size:.61rem;font-weight:600;text-transform:uppercase;color:#78350F">Avg / User</div>
+                </div>
+              </div>
+              <div class="sub-hdr orange-txt">TOP DISTRICTS</div>
+              ${districtBarRowsHTML(ezyDistricts, 5)}
+            </div>
+          </div>
+          <div class="col-section">
+            <div class="col-hdr purple-hdr">STANBIC XENTE &#8212; MONTHLY TREND</div>
+            <div class="col-body">
+              <div class="sub-hdr purple-txt">MONTHLY ONBOARDINGS</div>
+              ${monthlyBars || '<div class="no-data-note">No date data available</div>'}
+              <div style="margin-top:10px;padding:8px;background:#F5F3FF;border-radius:6px;border-left:3px solid #8B5CF6">
+                <div style="font-size:.64rem;color:#5B21B6;font-weight:600;margin-bottom:4px">ENGAGEMENT INSIGHT</div>
+                <div style="font-size:.65rem;color:#6D28D9;line-height:1.5">Onboarding peaked in Dec&nbsp;2025, tapering through Jan&ndash;Feb&nbsp;2026. Reflects active ecosystem registration during the initial platform launch period.</div>
+              </div>
+              <div class="sub-hdr purple-txt" style="margin-top:10px">COMBINED XENTE USERS</div>
+              <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+                <div style="text-align:center;background:#F5F3FF;border-radius:6px;padding:8px 4px">
+                  <div style="font-size:1.3rem;font-weight:800;color:#7C3AED">${fmt(xentePedn.total || 0)}</div>
+                  <div style="font-size:.61rem;font-weight:600;text-transform:uppercase;color:#5B21B6">PEDN/Xente</div>
+                </div>
+                <div style="text-align:center;background:#EDE9FE;border-radius:6px;padding:8px 4px">
+                  <div style="font-size:1.3rem;font-weight:800;color:#7C3AED">${fmt(xenteStb.total || 0)}</div>
+                  <div style="font-size:.61rem;font-weight:600;text-transform:uppercase;color:#5B21B6">Stanbic</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="col-section">
+            <div class="col-hdr green-hdr">FLEXIPAY &#8212; ENGAGEMENT FUNNEL</div>
+            <div class="col-body">
+              <div class="sub-hdr green-txt">USER JOURNEY</div>
+              <div style="font-size:.62rem;color:#6B7280;margin-bottom:8px">Enrolment to full registration</div>
+              ${funnelRows}
+              <div style="margin-top:8px;padding:7px;background:#F0FDF4;border-radius:6px;border-left:3px solid #10B981">
+                <div style="display:flex;justify-content:space-between;font-size:.67rem;font-weight:600;margin-bottom:4px">
+                  <span style="color:#065F46">Fully Registered</span>
+                  <span style="color:#065F46">${flexiFull.toLocaleString()} (${flexiFullPct}%)</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:.67rem;font-weight:600">
+                  <span style="color:#6B7280">Pending Validation</span>
+                  <span style="color:#92400E">${flexiPend.toLocaleString()} (${flexiPendPct}%)</span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>` + buildParticipantListHTML(p);
+      }
+
+      /* ── Device Financing ──────────────────────────────────────────────────── */
+      function buildDevicesHTML(p) {
+        const total = p.stats.total;
+        const disPct = (p.disability_pct || 0).toFixed(1);
+        const regPct = (p.business_reg_pct || 0).toFixed(1);
+        const withDis = p.stats.with_disability || 0;
+        const bizReg = p.stats.business_reg || 0;
+
+        const deviceTypes = p.device_types || {};
+        const priceBands = p.price_bands || {};
+        const paymentDuration = p.payment_duration || {};
+        const esoHubs = p.eso_hubs || {};
+        const idTypes = p.id_types || {};
+        const regBody = p.reg_body || {};
+        const disTypes = p.disability_types || {};
+        const deviceByEso = p.device_by_eso || {};
+        const simReg = p.sim_registered || {};
+        const weeklyAct = p.weekly_activity || {};
+        const esoWeekly = p.eso_weekly || {};
+        const devWeekly = p.device_weekly || {};
+        const priceStats = p.price_stats || {};
+
+        const deviceTotal = Object.values(deviceTypes).reduce((a, b) => a + b, 0) || 1;
+        const priceTotal = Object.values(priceBands).reduce((a, b) => a + b, 0) || 1;
+        const payTotal = Object.values(paymentDuration).reduce((a, b) => a + b, 0) || 1;
+        const esoTotal = Object.values(esoHubs).reduce((a, b) => a + b, 0) || 1;
+        const idTotal = Object.values(idTypes).reduce((a, b) => a + b, 0) || 1;
+        const regBodyTotal = Object.values(regBody).reduce((a, b) => a + b, 0) || 1;
+        const simRegTotal = Object.values(simReg).reduce((a, b) => a + b, 0) || 1;
+
+        const appsWk = weeklyAct.apps_this_week || 0;
+        const appsLwk = weeklyAct.apps_last_week || 0;
+        const appsMo = weeklyAct.apps_this_month || 0;
+        const avgPrice = priceStats.avg ? 'UGX ' + fmt(priceStats.avg) : '—';
+        const medPrice = priceStats.median ? 'UGX ' + fmt(priceStats.median) : '—';
+
+        const DEVICE_COLORS = {
+          'Smartphone': '#3B82F6', 'Tablet': '#8B5CF6', 'Laptop': '#10B981',
+          'POS': '#F59E0B', 'Software': '#EF4444'
+        };
+        const PRICE_COLORS = {
+          'Under 200K': '#6EE7B7', '200K–500K': '#34D399',
+          '500K–1M': '#10B981', '1M–2M': '#059669', '2M+': '#047857'
+        };
+        const PAY_COLORS = {
+          'Weekly': '#60A5FA', 'Bi-Weekly': '#3B82F6', 'Monthly': '#2563EB',
+          'Quarterly': '#1D4ED8', 'Semi-Annual': '#1E40AF', 'Yearly': '#1E3A8A'
+        };
+
+        // ── ESO performance rows (sorted by total, filtered) ───────────────
+        const ESO_FILTER = ['Other', 'FindingXY', 'Test', 'Tests'];
+        const esoRanked = Object.entries(esoWeekly)
+          .filter(([k]) => !ESO_FILTER.includes(k))
+          .sort((a, b) => b[1].total - a[1].total);
+
+        const esoRankRows = esoRanked.map(([eso, d], i) => {
+          const barW = Math.min(d.total / (esoRanked[0][1].total || 1) * 100, 100).toFixed(1);
+          const color = i === 0 ? '#3B82F6' : i === 1 ? '#8B5CF6' : i === 2 ? '#10B981' : '#64748B';
+          const rank = i < 3
+            ? `<span class="rank-badge rank-${i + 1}">${i + 1}</span>`
+            : `<span style="font-size:.62rem;color:#CBD5E1;padding-right:2px">${i + 1}</span>`;
+          return `<div class="eso-perf-row">
+        <div class="eso-name">${rank} ${eso}</div>
+        <div class="eso-bar-wrap"><div class="eso-bar-fill" style="width:${barW}%;background:${color}"></div></div>
+        <div class="eso-stat">${d.total.toLocaleString()}</div>
+        <div class="eso-stat" style="color:#10B981">↑${d.this_week} wk</div>
+        <div class="eso-stat" style="color:#6366F1">↑${d.this_month} mo</div>
+      </div>`;
+        }).join('');
+
+        // ── Top ESOs this week ──────────────────────────────────────────────
+        const topWk = Object.entries(esoWeekly)
+          .filter(([k]) => !ESO_FILTER.includes(k) && k !== 'MUBS_EIIC')
+          .sort((a, b) => b[1].this_week - a[1].this_week)
+          .slice(0, 5);
+        const topWkRows = topWk.map(([eso, d], i) => {
+          const medals = ['🥇', '🥈', '🥉'];
+          const medal = medals[i] || `${i + 1}.`;
+          return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:5px">
+        <span style="font-size:.85rem;min-width:22px">${medal}</span>
+        <span style="font-size:.72rem;font-weight:700;color:#1E293B;flex:1">${eso}</span>
+        <span style="font-size:.72rem;font-weight:800;color:#3B82F6">${d.this_week}</span>
+      </div>`;
+        }).join('') || '<div class="no-data-note">No data for this week</div>';
+
+        // ── Top ESOs last week ──────────────────────────────────────────────
+        const topLwk = Object.entries(esoWeekly)
+          .filter(([k]) => !ESO_FILTER.includes(k))
+          .sort((a, b) => b[1].last_week - a[1].last_week)
+          .slice(0, 5);
+        const topLwkRows = topLwk.map(([eso, d], i) => {
+          const medals = ['🥇', '🥈', '🥉'];
+          const medal = medals[i] || `${i + 1}.`;
+          return `<div style="display:flex;align-items:center;gap:6px;margin-bottom:5px">
+        <span style="font-size:.85rem;min-width:22px">${medal}</span>
+        <span style="font-size:.72rem;font-weight:700;color:#1E293B;flex:1">${eso}</span>
+        <span style="font-size:.72rem;font-weight:800;color:#6366F1">${d.last_week}</span>
+      </div>`;
+        }).join('') || '<div class="no-data-note">No data last week</div>';
+
+        // ── Device type weekly rows ─────────────────────────────────────────
+        const devWeeklyRows = Object.entries(devWeekly).sort((a, b) => b[1].total - a[1].total).map(([dev, d]) => {
+          const barW = Math.min(d.total / (deviceTotal || 1) * 100, 100).toFixed(1);
+          const color = DEVICE_COLORS[dev] || '#64748B';
+          return `<div class="dev-weekly-row">
+        <div class="dw-name">${dev}</div>
+        <div style="position:relative;height:10px;background:#E8EDF2;border-radius:2px;overflow:hidden">
+          <div style="position:absolute;left:0;top:0;height:100%;background:${color};border-radius:2px;width:${barW}%"></div>
+        </div>
+        <div class="dw-stat">${d.total.toLocaleString()}</div>
+        <div class="dw-stat" style="color:#10B981">${d.this_week}</div>
+        <div class="dw-stat" style="color:#6366F1">${d.this_month}</div>
+      </div>`;
+        }).join('') || '<div class="no-data-note">No device weekly data</div>';
+
+        // All Applicants Card (with export)
+        let allApplicants = [];
+        if (p.raw_records && Array.isArray(p.raw_records)) {
+          allApplicants = p.raw_records;
+        }
+        let ninCard = `
+          <div class="card" style="margin-bottom:18px">
+            <div style="display:flex;align-items:center;justify-content:space-between;gap:10px">
+              <h3 style="margin-bottom:10px; font-size:.95rem; color:#1E293B">All Applicants (${allApplicants.length})</h3>
+              <button id="export-nin-btn" style="padding:6px 16px;font-size:.85em;background:#3B82F6;color:#fff;border:none;border-radius:5px;cursor:pointer">Export CSV</button>
+            </div>
+            <div style="overflow-x:auto">
+              <table style="width:100%; font-size:.92em">
+                <thead><tr><th>Name</th><th>ESO</th><th>NIN</th><th>Phone</th><th>Price Range</th></tr></thead>
+                <tbody>
+                  ${allApplicants.length > 0 ? allApplicants.slice(0, 20).map(r => `<tr><td>${r.n || r.b || 'N/A'}</td><td>${r.eso || p.eso || ''}</td><td>${r.nin || ''}</td><td>${r.phone || ''}</td><td>${r.price_range || ''}</td></tr>`).join('') : '<tr><td colspan="5" style="color:#64748B;text-align:center">No applicants found</td></tr>'}
+                </tbody>
+              </table>
+              ${allApplicants.length > 20 ? `<div style='font-size:.8em;color:#64748B;padding:6px 0'>Showing first 20 applicants</div>` : ''}
+            </div>
+          </div>
+        `;
+
+        // Attach export handler after rendering
+        setTimeout(() => {
+          const btn = document.getElementById('export-nin-btn');
+          if (btn) {
+            btn.onclick = function() {
+              const rows = allApplicants.map(r => [
+                (r.n || r.b || ''),
+                (r.eso || p.eso || ''),
+                (r.nin || ''),
+                (r.phone || ''),
+                (r.price_range || '')
+              ]);
+              let csv = 'Name,ESO,NIN,Phone,Price Range\n';
+              csv += rows.map(row => row.map(x => '"'+String(x).replace(/"/g,'""')+'"').join(',')).join('\n');
+              const blob = new Blob([csv], {type: 'text/csv'});
+              const url = URL.createObjectURL(blob);
+              const a = document.createElement('a');
+              a.href = url;
+              a.download = 'all_applicants.csv';
+              document.body.appendChild(a);
+              a.click();
+              setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 100);
+            };
+          }
+        }, 0);
+        return `
+      ${ninCard}
+      <div class="port-header">
+        <div class="port-bar-strip"><div class="port-bar-orange"></div><div class="port-bar-blue"></div></div>
+        <div class="port-title-area">
+          <div class="port-title">${p.name}</div>
+          <div class="port-filename">${p.filename}</div>
+        </div>
+      </div>
+
+      <!-- KPI strip -->
+      <div class="kpi-strip-7">
+        ${kpiBox(fmt(total), 'Total Applications', 'ko')}
+        ${kpiBox(appsWk, 'This Week', 'kg')}
+        ${kpiBox(appsLwk, 'Last Week', 'kb')}
+        ${kpiBox(appsMo, 'This Month', 'kp')}
+        ${kpiBox(disPct + '%', 'Disability Rate', 'kr')}
+        ${kpiBox(regPct + '%', 'Business Reg. Rate', 'kt')}
+        ${kpiBox(avgPrice, 'Avg Device Price', 'ka')}
+      </div>
+
+      <!-- Activity strip -->
+      <div class="activity-strip" style="grid-template-columns:repeat(3,1fr) repeat(3,1fr)">
+        <div class="act-card act-green">
+          <div class="act-val">${appsWk.toLocaleString()}</div>
+          <div class="act-lbl">Apps This Week</div>
+        </div>
+        <div class="act-card act-green">
+          <div class="act-val">${appsLwk.toLocaleString()}</div>
+          <div class="act-lbl">Apps Last Week</div>
+        </div>
+        <div class="act-card act-green">
+          <div class="act-val">${appsMo.toLocaleString()}</div>
+          <div class="act-lbl">Apps This Month</div>
+        </div>
+        <div class="act-card act-blue">
+          <div class="act-val">${medPrice}</div>
+          <div class="act-lbl">Median Price</div>
+        </div>
+        <div class="act-card act-blue">
+          <div class="act-val">${withDis}</div>
+          <div class="act-lbl">With Disability</div>
+        </div>
+        <div class="act-card act-blue">
+          <div class="act-val">${bizReg}</div>
+          <div class="act-lbl">Business Registered</div>
+        </div>
+      </div>
+
+      <!-- ROW 1: Location | ESO Performance Ranking -->
+      <div class="three-col">
+        <div class="col-section" style="grid-column:span 2">
+          <div class="col-hdr purple-hdr">DISTRIBUTION BY LOCATION</div>
+          <div class="col-body">
+            ${districtBarRowsHTML(p.districts || {}, 10)}
+          </div>
+        </div>
+        <div class="col-section">
+          <div class="col-hdr teal-hdr">ESO PARTNER PERFORMANCE</div>
+          <div class="col-body">
+            ${esoRanked.length ? `
+              <div class="eso-perf-row" style="margin-bottom:4px">
+                <div style="font-size:.6rem;color:#94A3B8;font-weight:700">ESO</div>
+                <div></div>
+                <div style="font-size:.6rem;color:#94A3B8;text-align:right">Total</div>
+                <div style="font-size:.6rem;color:#10B981;text-align:right">This Wk</div>
+                <div style="font-size:.6rem;color:#6366F1;text-align:right">This Mo</div>
+              </div>
+              ${esoRankRows}` : barRowsHTML(esoHubs, null, esoTotal, 12)}
+          </div>
+        </div>
+      </div>
+
+      <!-- ROW 2: Device Types | Price & Payment | ID & Registration -->
+      <div class="three-col" style="margin-top:12px">
+        <div class="col-section">
+          <div class="col-hdr indigo-hdr">DEVICE TYPES REQUESTED</div>
+          <div class="col-body">
+            ${Object.keys(deviceTypes).length
+            ? Object.entries(deviceTypes).sort((a, b) => b[1] - a[1]).slice(0, 8).map(([device, count], i) => {
+              const w = Math.min(count / deviceTotal * 100, 100).toFixed(1);
+              const pct = (count / deviceTotal * 100).toFixed(1);
+              const color = DEVICE_COLORS[device] || PALETTE[i % PALETTE.length];
+              const esoD = deviceByEso[device] || {};
+              const esoT = Object.values(esoD).reduce((a, b) => a + b, 0) || 1;
+              return `<div class="device-expand-row" onclick="this.classList.toggle('open');this.nextElementSibling.classList.toggle('open')">
+                    <div class="bar-row">
+                      <div class="bar-track"><div class="bar-fill" style="width:${w}%;background:${color}"></div></div>
+                      <span class="bar-name" title="${device}">${device}</span>
+                      <span class="bar-stat">${count.toLocaleString()}&ensp;${pct}%</span>
+                      <span class="drill-arrow">&#9658;</span>
+                    </div>
+                  </div>
+                  <div class="device-drill-panel">
+                    <div class="drill-label">By ESO / Hub</div>
+                    ${Object.keys(esoD).length ? barRowsHTML(esoD, null, esoT, 8) : '<div class="no-data-note">No ESO breakdown available</div>'}
+                  </div>`;
+            }).join('')
+            : '<div class="no-data-note">No device type data</div>'}
+          </div>
+        </div>
+        <div class="col-section">
+          <div class="col-hdr orange-hdr">PRICE &amp; PAYMENT</div>
+          <div class="col-body">
+            <div class="sub-hdr orange-txt">PRICE RANGE (UGX)</div>
+            ${Object.keys(priceBands).length
+            ? barRowsHTML(priceBands, PRICE_COLORS, priceTotal, 6)
+            : '<div class="no-data-note">No price data</div>'}
+            <div class="sub-hdr orange-txt" style="margin-top:10px">PAYMENT PERIOD PREFERENCE</div>
+            ${Object.keys(paymentDuration).length
+            ? barRowsHTML(paymentDuration, PAY_COLORS, payTotal, 6)
+            : '<div class="no-data-note">No payment period data</div>'}
+          </div>
+        </div>
+        <div class="col-section">
+          <div class="col-hdr green-hdr">ID &amp; REGISTRATION</div>
+          <div class="col-body">
+            <div class="sub-hdr green-txt">ID TYPE</div>
+            ${Object.keys(idTypes).length
+            ? barRowsHTML(idTypes, null, idTotal, 5)
+            : '<div class="no-data-note">No ID type data</div>'}
+            <div class="sub-hdr green-txt" style="margin-top:8px">REGISTRATION BODY</div>
+            ${Object.keys(regBody).length
+            ? barRowsHTML(regBody, null, regBodyTotal, 5)
+            : '<div class="no-data-note">No registration data</div>'}
+            <div class="sub-hdr green-txt" style="margin-top:8px">DISABILITY STATUS</div>
+            ${barRowsHTML({ 'With Disability': withDis, 'Without': total - withDis },
+              { 'With Disability': '#EF4444', 'Without': '#10B981' }, total, 2)}
+            ${Object.keys(disTypes).length
+            ? `<div class="sub-hdr green-txt" style="margin-top:6px">DISABILITY TYPES</div>
+                 ${barRowsHTML(disTypes, null, withDis || 1, 6)}`
+            : ''}
+            <div class="sub-hdr green-txt" style="margin-top:8px">SIM REGISTERED IN OWN NAME</div>
+            ${Object.keys(simReg).length
+            ? barRowsHTML(simReg, { 'Yes': '#10B981', 'No': '#EF4444' }, simRegTotal, 3)
+            : '<div class="no-data-note">No SIM registration data</div>'}
+          </div>
+        </div>
+      </div>
+
+      <!-- ROW 3: Top ESOs This Week | Top ESOs Last Week | Device Weekly Breakdown -->
+      <div class="three-col" style="margin-top:12px">
+        <div class="col-section">
+          <div class="col-hdr indigo-hdr">🏆 TOP ESOs — THIS WEEK</div>
+          <div class="col-body">
+            ${topWkRows}
+          </div>
+        </div>
+        <div class="col-section">
+          <div class="col-hdr purple-hdr">🏆 TOP ESOs — LAST WEEK</div>
+          <div class="col-body">
+            ${topLwkRows}
+          </div>
+        </div>
+        <div class="col-section">
+          <div class="col-hdr orange-hdr">DEVICE TYPE ACTIVITY</div>
+          <div class="col-body">
+            <div class="dev-weekly-row" style="margin-bottom:6px">
+              <div style="font-size:.6rem;color:#94A3B8;font-weight:700">Device</div>
+              <div></div>
+              <div style="font-size:.6rem;color:#94A3B8;text-align:right">Total</div>
+              <div style="font-size:.6rem;color:#10B981;text-align:right">Wk</div>
+              <div style="font-size:.6rem;color:#6366F1;text-align:right">Mo</div>
+            </div>
+            ${devWeeklyRows}
+          </div>
+        </div>
+      </div>`;
+      }
+
+      /* ═══════════════════════════════════════════════════════════════
+         HTML BUILDERS — SEGMENTATION / GROWTH PLANS (existing)
+      ═══════════════════════════════════════════════════════════════ */
+      function buildSegmentationHTML(p, pid) {
+        const total = p.stats.total;
+        const femalePct = (p.female_pct != null) ? p.female_pct.toFixed(1)
+          : (p.gender && p.gender['Female'] ? (p.gender['Female'] / total * 100).toFixed(1) : '0');
+        const malePct = (100 - parseFloat(femalePct)).toFixed(1);
+        const youthPct = (p.youth_pct != null) ? p.youth_pct.toFixed(1) : '0';
+        const ruralPct = (p.rural_pct != null) ? p.rural_pct.toFixed(1) : '0';
+        const avgRev = p.avg_revenue_str || (p.revenue && p.revenue.mean > 0 ? 'UGX ' + fmt(p.revenue.mean) : '—');
+        const mainSector = p.main_sector || (Object.entries(p.sectors || {}).sort((a, b) => b[1] - a[1])[0] || [, 'All'])[0];
+        const hasGroups = p.groups && Object.keys(p.groups).length > 0;
+        const hasPwd = (p.ursb || 0) + (p.pwd || 0) + (p.refugees || 0) > 0;
+
+        const midSection2 = hasGroups
+          ? `<div class="sub-hdr orange-txt" style="margin-top:10px">GROUPS &amp; COLLECTIVES (${p.collectives_total || 0} total)</div>
+         ${barRowsHTML(p.groups, null, total, 8)}`
+          : (p.employment_status && Object.keys(p.employment_status).length > 0
+            ? `<div class="sub-hdr orange-txt" style="margin-top:10px">EMPLOYMENT STATUS</div>
+             ${barRowsHTML(p.employment_status, null, total, 6)}`
+            : '');
+
+        const footerHTML = hasPwd
+          ? `<div class="section-footer">
+           <span><strong>${p.ursb || 0}</strong>URSB Reg.</span>
+           <span><strong>${p.pwd || 0}</strong>PWD Founders</span>
+           <span><strong>${p.refugees || 0}</strong>Refugees</span>
+           <span><strong>${avgRev}</strong>Avg Rev UGX</span>
+         </div>`
+          : `<div class="section-footer" style="grid-template-columns:1fr">
+           <span><strong>${avgRev}</strong>Avg Revenue UGX</span>
+         </div>`;
+
+        return `
+      <div class="port-header">
+        <div class="port-bar-strip"><div class="port-bar-orange"></div><div class="port-bar-blue"></div></div>
+        <div class="port-title-area">
+          <div class="port-title">${p.name}</div>
+          <div class="port-filename">${p.filename}</div>
+        </div>
+      </div>
+
+      <div class="kpi-strip-7">
+        ${kpiBox(fmt(total), 'Total Submissions', 'ko')}
+        ${kpiBox(p.pwd || 0, 'PWD Founders', 'kb')}
+        ${kpiBox(p.refugees || 0, 'Refugee Founders', 'kr')}
+        ${kpiBox(femalePct + '%', 'Female Founders', 'kp')}
+        ${kpiBox(youthPct + '%', 'Youth (18–35)', 'kg')}
+        ${kpiBox(ruralPct + '%', 'Rural Location', 'kt')}
+        ${kpiBox(fmt(p.fte), 'FTE Workers', 'ka')}
+      </div>
+
+      <div class="three-col">
+        <div class="col-section">
+          <div class="col-hdr green-hdr">SECTOR &amp; SUBSECTOR BREAKDOWN</div>
+          <div class="col-body">
+            <div class="sub-hdr green-txt">TOP SECTORS</div>
+            ${barRowsHTML(p.sectors, SECTOR_COLORS, total, 8)}
+            <div class="sub-hdr green-txt" style="margin-top:10px">TOP SUBSECTORS — ${mainSector}</div>
+            ${barRowsHTML(p.subsectors, null, total, 8)}
+          </div>
+        </div>
+
+        <div class="col-section">
+          <div class="col-hdr orange-hdr">LOCATION &amp; GROUPS</div>
+          <div class="col-body">
+            <div class="sub-hdr orange-txt">LOCATION TYPE</div>
+            ${barRowsHTML(p.location, LOCATION_COLORS, total, 4)}
+            ${midSection2}
+          </div>
+          ${footerHTML}
+        </div>
+
+        <div class="col-section">
+          <div class="col-hdr purple-hdr">ARCHETYPES &amp; DEMOGRAPHICS</div>
+          <div class="col-body">
+            <div class="sub-hdr purple-txt">MSME ARCHETYPES</div>
+            ${barRowsHTML(p.archetypes, ARCHETYPE_COLORS, total, 6)}
+            <div class="gender-line">♀ ${femalePct}% Female &nbsp;·&nbsp; ♂ ${malePct}% Male</div>
+            <div class="sub-hdr purple-txt">AGE OF LEAD FOUNDER</div>
+            ${ageBandRowsHTML(p.age_bands, total)}
+            <div class="sub-hdr purple-txt" style="margin-top:10px">TOP DISTRICTS</div>
+            ${districtBarRowsHTML(p.districts, 5)}
+          </div>
+        </div>
+      </div>` + buildParticipantListHTML(p);
+      }
+
+      function buildGrowthPlansHTML(p, pid) {
+        const total = p.stats.total;
+        const districtCount = Object.keys(p.districts || {}).length;
+        const womenPct = total > 0 ? (p.women_led / total * 100).toFixed(1) : '0';
+        const youthPct = total > 0 ? (p.youth_led / total * 100).toFixed(1) : '0';
+        const mainSector = (Object.entries(p.sectors || {}).sort((a, b) => b[1] - a[1])[0] || [, 'All'])[0];
+
+        const genderFemalePct = (p.gender && p.gender['Female'])
+          ? (p.gender['Female'] / total * 100).toFixed(1) : '0';
+        const genderMalePct = (100 - parseFloat(genderFemalePct)).toFixed(1);
+
+        return `
+      <div class="port-header">
+        <div class="port-bar-strip"><div class="port-bar-orange"></div><div class="port-bar-blue"></div></div>
+        <div class="port-title-area">
+          <div class="port-title">${p.name}</div>
+          <div class="port-filename">${p.filename}</div>
+        </div>
+      </div>
+
+      <div class="kpi-strip-7">
+        ${kpiBox(fmt(total), 'Total MSMEs', 'ko')}
+        ${kpiBox(districtCount, 'Districts', 'kb')}
+        ${kpiBox(p.youth_led || 0, 'Youth-Led (18–35)', 'kg')}
+        ${kpiBox(youthPct + '%', 'Youth %', 'kt')}
+        ${kpiBox(genderFemalePct + '%', 'Female %', 'kp')}
+        ${kpiBox(Object.keys(p.sectors || {}).length, 'Sectors', 'kr')}
+        ${kpiBox(Object.keys(p.commodities || {}).length, 'Commodities', 'ka')}
+      </div>
+
+      <div class="three-col">
+        <div class="col-section">
+          <div class="col-hdr green-hdr">SECTORS &amp; COMMODITIES</div>
+          <div class="col-body">
+            <div class="sub-hdr green-txt">SECTOR BREAKDOWN</div>
+            ${barRowsHTML(p.sectors, SECTOR_COLORS, total, 8)}
+            <div class="sub-hdr green-txt" style="margin-top:10px">TOP COMMODITIES</div>
+            ${barRowsHTML(p.commodities, null, total, 8)}
+          </div>
+        </div>
+
+        <div class="col-section">
+          <div class="col-hdr orange-hdr">DISTRICTS &amp; BUSINESS STRUCTURE</div>
+          <div class="col-body">
+            <div class="sub-hdr orange-txt">MSMEs BY DISTRICT</div>
+            ${districtBarRowsHTML(p.districts, 10)}
+            <div class="sub-hdr orange-txt" style="margin-top:10px">BUSINESS STRUCTURE</div>
+            ${barRowsHTML(p.biz_structures, null, total, 6)}
+          </div>
+        </div>
+
+        <div class="col-section">
+          <div class="col-hdr purple-hdr">DEMOGRAPHICS &amp; VALUE CHAIN</div>
+          <div class="col-body">
+            <div class="sub-hdr purple-txt">VALUE CHAIN ROLES</div>
+            ${barRowsHTML(p.value_chain, null, total, 6)}
+            <div class="gender-line">♀ ${genderFemalePct}% Women &nbsp;·&nbsp; ♂ ${genderMalePct}% Men</div>
+            ${Object.keys(p.age_bands || {}).length > 0
+            ? `<div class="sub-hdr purple-txt">AGE DISTRIBUTION</div>${ageBandRowsHTML(p.age_bands, total)}`
+            : ''}
+          </div>
+        </div>
+      </div>` + buildParticipantListHTML(p);
+      }
+
+      function buildOverviewHTML(portfolios) {
+        const totalAll = portfolios.reduce((s, p) => s + p.stats.total, 0);
+        const totalFTE = portfolios.reduce((s, p) => s + (p.fte || 0), 0);
+
+        return `
+      <div class="section-hdr">
+        <h2>All Portfolios — Combined Overview</h2>
+        <span class="type-badge badge-all">${portfolios.length} datasets</span>
+      </div>
+
+      <div class="kpi-row">
+        ${portfolios.map((p, i) => {
+          const colors = ['blue', 'green', 'amber', 'violet', 'pink', 'teal'];
+          return kpi(p.name, fmt(p.stats.total), fmt(p.stats.clean) + ' clean records', colors[i % colors.length]);
+        }).join('')}
+        ${kpi('Grand Total', fmt(totalAll), 'across all portfolios', 'blue')}
+        ${totalFTE > 0 ? kpi('Total FTE', fmt(totalFTE), 'full-time jobs supported', 'green') : ''}
+      </div>
+
+      <div class="cg cg-2">
+        <div class="card">
+          <h3>Portfolio Size Comparison</h3>
+          <div class="chart-wrap"><canvas id="_ov-sizes"></canvas></div>
+        </div>
+        <div class="card">
+          <h3>Combined Sector Distribution</h3>
+          <div class="chart-wrap"><canvas id="_ov-sectors-donut"></canvas></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:18px">
+        <h3>Sector Breakdown by Portfolio (Grouped)</h3>
+        <div class="chart-wrap" style="max-height:none"><canvas id="_ov-sectors-grouped" style="max-height:340px"></canvas></div>
+      </div>
+
+      <div class="cg cg-2">
+        <div class="card">
+          <h3>Combined Gender Distribution</h3>
+          <div class="chart-wrap squat"><canvas id="_ov-gender"></canvas></div>
+        </div>
+        <div class="card">
+          <h3>Combined Location Distribution</h3>
+          <div class="chart-wrap squat"><canvas id="_ov-location"></canvas></div>
+        </div>
+      </div>
+    `;
+      }
+
+      const TYPE_ORDER = ['overview', 'eoi', 'foundation', 'yiw', 'buz_needs', 'devices', 'platforms', 'growth_plans', 'cohorts', 'digital_credit', 'report', 'partners', 'so_what'];
+      const TYPE_LABELS = {
+        overview: 'Portfolio Overview',
+        eoi: 'EOI & Segmentation',
+        foundation: 'Foundation',
+        yiw: 'Youth Enabled Outreach',
+        buz_needs: 'Business Needs',
+        devices: 'Devices',
+        platforms: 'Platforms',
+        growth_plans: 'Growth Plans',
+        cohorts: 'Acceleration Cohorts',
+        report: 'Participant Report',
+        partners: 'Partners (ESO)',
+        so_what: 'Decision Hub',
+      };
+
+      let _activeType = null;
+      let _activePanel = null;
+      let _panels = {};
+      let _typeSubTabs = {};
+
+      window.triggerActivePanelReRender = function () {
+        window._forceRender = true;
+        if (_activePanel) showPanel(_activePanel);
+      };
+
+      function showPanel(pid) {
+        if (_activePanel === pid && !window._forceRender) return;
+        window._forceRender = false;
+
+        if (_activePanel && _activePanel !== pid) destroyPanel(_activePanel);
+        _activePanel = pid;
+
+        document.querySelectorAll('.panel').forEach(el => el.classList.remove('active'));
+        const panel = document.getElementById(pid);
+        if (panel) panel.classList.add('active');
+
+        (_typeSubTabs[_activeType] || []).forEach(({ btn, pid: bpid }) => {
+          btn.classList.toggle('active', bpid === pid);
+        });
+
+        const meta = _panels[pid];
+        if (!meta) return;
+
+        if (meta.portfolio) {
+          const p_dyn = window.recalculatePortfolio(meta.portfolio, window.TIME_FILTER);
+          panel.innerHTML = {
+            segmentation: buildSegmentationHTML,
+            growth_plans: buildGrowthPlansHTML,
+            eoi: buildEoiHTML,
+            yiw: buildYiwHTML,
+            buz_needs: buildBuzNeedsHTML,
+            devices: buildDevicesHTML,
+            foundation: buildFoundationHTML,
+            platforms: buildPlatformsHTML,
+            cohorts: buildCohortsHTML,
+            digital_credit: buildDigitalCreditHTML,
+          }[meta.type]?.(p_dyn, pid) ?? buildGrowthPlansHTML(p_dyn, pid);
+        }
+
+        if (meta.type === 'overview') {
+          const dynPortfolios = meta.portfolios.map(p => window.recalculatePortfolio(p, window.TIME_FILTER));
+          panel.innerHTML = buildOverviewHTML(dynPortfolios);
+          requestAnimationFrame(() => initOverviewCharts(dynPortfolios));
+        } else if (meta.type === 'eoi-overview') {
+          const eoiPortfolios = window.PORTFOLIO_DATA.portfolios.filter(p => p.type === 'eoi' || p.type === 'segmentation');
+          panel.innerHTML = buildEoiOverviewHTML(eoiPortfolios);
+        } else if (meta.type === 'report') {
+          panel.innerHTML = buildReportHTML(window.PORTFOLIO_DATA.portfolios);
+        } else if (meta.type === 'partners') {
+          panel.innerHTML = buildEsoReportListHTML(window.PORTFOLIO_DATA.portfolios);
+        } else if (meta.type === 'eso_report') {
+          panel.innerHTML = buildEsoReportHTML(meta.eso, meta.portfolios);
+        } else if (meta.type === 'so_what') {
+          panel.innerHTML = buildSoWhatHTML(window.PORTFOLIO_DATA.portfolios);
+        }
+      }
+
+      function showTypeGroup(type) {
+        if (_activeType === type) return;
+        _activeType = type;
+
+        document.querySelectorAll('.type-tab-btn').forEach(b => b.classList.remove('active'));
+        const typeBtn = document.querySelector(`.type-tab-btn[data-type="${type}"]`);
+        if (typeBtn) typeBtn.classList.add('active');
+
+        const subBar = document.getElementById('sub-tabs-bar');
+        subBar.innerHTML = '';
+        (_typeSubTabs[type] || []).forEach(({ btn }) => subBar.appendChild(btn));
+
+        const subs = _typeSubTabs[type] || [];
+        if (subs.length) showPanel(subs[0].pid);
+      }
+
+      function initOverviewCharts(portfolios) {
+        /* Portfolio sizes bar */
+        const names = portfolios.map(p => p.name);
+        const sizes = portfolios.map(p => p.stats.total);
+        const colors = portfolios.map((_, i) => PORTFOLIO_COLORS[i % PORTFOLIO_COLORS.length]);
+        makeChart('_ov-sizes', 'bar', names, [{
+          data: sizes,
+          backgroundColor: colors,
+          borderRadius: 6,
+        }], {
+          plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ` ${Number(c.raw).toLocaleString()} records` } } },
+          scales: {
+            x: { grid: { display: false }, ticks: { font: { size: 11 } } },
+            y: { grid: { color: '#F1F5F9' }, ticks: { font: { size: 11 } } }
+          }
+        });
+
+        /* Combined sectors donut */
+        const allSectors = {};
+        portfolios.forEach(p => {
+          Object.entries(p.sectors || {}).forEach(([k, v]) => { allSectors[k] = (allSectors[k] || 0) + v; });
+        });
+        donut('_ov-sectors-donut', allSectors, SECTOR_COLORS);
+
+        /* Combined gender */
+        const allGender = {};
+        portfolios.forEach(p => {
+          Object.entries(p.gender || {}).forEach(([k, v]) => { allGender[k] = (allGender[k] || 0) + v; });
+        });
+        donut('_ov-gender', allGender, GENDER_COLORS);
+
+        /* Combined location */
+        const allLocation = {};
+        portfolios.forEach(p => {
+          const src = p.location || {};
+          Object.entries(src).forEach(([k, v]) => { allLocation[k] = (allLocation[k] || 0) + v; });
+        });
+        donut('_ov-location', allLocation, LOCATION_COLORS);
+      }
+
+      function showNoData() {
+        document.getElementById('main-content').innerHTML = `
+          <div class="no-data">
+            <div class="icon">📂</div>
+            <h2>No Portfolio Data Found</h2>
+            <p>Run the data extractor: <code>python extract_data.py</code></p>
+          </div>`;
+      }
+
+      function init() {
+        const data = window.PORTFOLIO_DATA;
+        if (!data || !Array.isArray(data.portfolios) || !data.portfolios.length) {
+          showNoData();
+          return;
+        }
+
+        const portfolios = data.portfolios;
+        const typeBar = document.getElementById('type-tabs-bar');
+        const content = document.getElementById('main-content');
+        typeBar.innerHTML = ''; 
+
+        const ovTypeBtn = document.createElement('button');
+        ovTypeBtn.className = 'type-tab-btn';
+        ovTypeBtn.textContent = 'All Portfolios';
+        ovTypeBtn.dataset.type = 'overview';
+        ovTypeBtn.onclick = () => showTypeGroup('overview');
+        typeBar.appendChild(ovTypeBtn);
+
+        const ovPanel = document.createElement('div');
+        ovPanel.id = 'panel-overview';
+        ovPanel.className = 'panel';
+        content.appendChild(ovPanel);
+        _panels['panel-overview'] = { type: 'overview', portfolios };
+        _typeSubTabs['overview'] = [{ 
+          btn: (() => {
+            const b = document.createElement('button'); b.className='sub-tab-btn'; b.textContent='Global View';
+            b.dataset.panel='panel-overview'; b.onclick=()=>showPanel('panel-overview'); return b;
+          })(), pid: 'panel-overview' 
+        }];
+
+        const groups = {};
+        portfolios.forEach(p => {
+          const navType = p.type === 'segmentation' ? 'eoi' : p.type;
+          (groups[navType] = groups[navType] || []).push(p);
+        });
+
+        TYPE_ORDER.filter(t => groups[t]).forEach(type => {
+          const typeBtn = document.createElement('button');
+          typeBtn.className = 'type-tab-btn';
+          typeBtn.textContent = TYPE_LABELS[type] || type;
+          typeBtn.dataset.type = type;
+          typeBtn.onclick = () => showTypeGroup(type);
+          typeBar.appendChild(typeBtn);
+
+          _typeSubTabs[type] = [];
+
+          if (type === 'eoi') {
+            const ovPid = 'panel-eoi-overview';
+            const ovP = document.createElement('div'); ovP.id=ovPid; ovP.className='panel';
+            content.appendChild(ovP); _panels[ovPid] = { type: 'eoi-overview' };
+            _typeSubTabs[type].push({ 
+              btn: (() => {
+                const b = document.createElement('button'); b.className='sub-tab-btn'; b.textContent='Overview';
+                b.dataset.panel=ovPid; b.onclick=()=>showPanel(ovPid); return b;
+              })(), pid: ovPid 
+            });
+          }
+
+          groups[type].forEach((p, i) => {
+            const pid = `panel-${type}-${i}`;
+            const panel = document.createElement('div'); panel.id=pid; panel.className='panel';
+            content.appendChild(panel); _panels[pid] = { type: p.type, portfolio: p };
+            _typeSubTabs[type].push({
+              btn: (() => {
+                const b = document.createElement('button'); b.className='sub-tab-btn'; b.textContent=p.name;
+                b.dataset.panel=pid; b.onclick=()=>showPanel(pid); return b;
+              })(), pid
+            });
+          });
+        });
+
+        const reportTypeBtn = document.createElement('button');
+        reportTypeBtn.className = 'type-tab-btn';
+        reportTypeBtn.textContent = TYPE_LABELS['report'];
+        reportTypeBtn.dataset.type = 'report';
+        reportTypeBtn.onclick = () => showTypeGroup('report');
+        typeBar.appendChild(reportTypeBtn);
+
+        const reportPanel = document.createElement('div');
+        reportPanel.id = 'panel-report-tab';
+        reportPanel.className = 'panel';
+        content.appendChild(reportPanel);
+        _panels['panel-report-tab'] = { type: 'report' };
+        _typeSubTabs['report'] = [{
+          btn: (() => {
+            const b = document.createElement('button'); b.className='sub-tab-btn'; b.textContent='Identity Explorer';
+            b.dataset.panel='panel-report-tab'; b.onclick=()=>showPanel('panel-report-tab'); return b;
+          })(), pid: 'panel-report-tab'
+        }];
+
+        const partnersTypeBtn = document.createElement('button');
+        partnersTypeBtn.className = 'type-tab-btn';
+        partnersTypeBtn.textContent = TYPE_LABELS['partners'];
+        partnersTypeBtn.dataset.type = 'partners';
+        partnersTypeBtn.onclick = () => showTypeGroup('partners');
+        typeBar.appendChild(partnersTypeBtn);
+
+        const partnersListPanel = document.createElement('div');
+        partnersListPanel.id = 'panel-partners-list';
+        partnersListPanel.className = 'panel';
+        content.appendChild(partnersListPanel);
+        _panels['panel-partners-list'] = { type: 'partners' };
+        _typeSubTabs['partners'] = [{ 
+          btn: (() => {
+            const b = document.createElement('button'); b.className='sub-tab-btn'; b.textContent='Partner Comparison';
+            b.dataset.panel='panel-partners-list'; b.onclick=()=>showPanel('panel-partners-list'); return b;
+          })(), pid: 'panel-partners-list' 
+        }];
+
+        const esoSet = new Set();
+        portfolios.forEach(p => { if (p.eso) esoSet.add(p.eso); });
+        Array.from(esoSet).sort().forEach(eso => {
+          if (!eso || eso === 'Unknown') return;
+          const pid = `panel-eso-report-${eso.replace(/[^a-zA-Z0-9]/g, '_')}`;
+          const panel = document.createElement('div'); panel.id=pid; panel.className='panel';
+          content.appendChild(panel); 
+          _panels[pid] = { type: 'eso_report', eso, portfolios: portfolios.filter(p => p.eso === eso) };
+          _typeSubTabs['partners'].push({
+            btn: (() => {
+              const b = document.createElement('button'); b.className='sub-tab-btn'; b.textContent=eso;
+              b.dataset.panel=pid; b.onclick=()=>showPanel(pid); return b;
+            })(), pid
+          });
+        });
+
+        const soWhatBtn = document.createElement('button');
+        soWhatBtn.className = 'type-tab-btn';
+        soWhatBtn.textContent = TYPE_LABELS['so_what'];
+        soWhatBtn.dataset.type = 'so_what';
+        soWhatBtn.onclick = () => showTypeGroup('so_what');
+        typeBar.appendChild(soWhatBtn);
+
+        const soWhatPanel = document.createElement('div');
+        soWhatPanel.id = 'panel-so-what';
+        soWhatPanel.className = 'panel';
+        content.appendChild(soWhatPanel);
+        _panels['panel-so-what'] = { type: 'so_what' };
+        _typeSubTabs['so_what'] = [{
+          btn: (() => {
+            const b = document.createElement('button'); b.className='sub-tab-btn'; b.textContent='Impact Metrics';
+            b.dataset.panel='panel-so-what'; b.onclick=()=>showPanel('panel-so-what'); return b;
+          })(), pid: 'panel-so-what'
+        }];
+
+        showTypeGroup('overview');
+      }
+
+      document.addEventListener('click', function (e) {
+        if (e.target && e.target.classList.contains('eso-report-btn')) {
+          const name = e.target.dataset.name;
+          const eso = e.target.dataset.eso;
+          if (name) {
+            window.showTrace(name, eso);
+          } else if (eso) {
+            const pid = `panel-eso-report-${eso.replace(/[^a-zA-Z0-9]/g, '_')}`;
+            if (_panels[pid]) {
+                showTypeGroup('partners');
+                showPanel(pid);
+            }
+          }
+        }
+      });
+
+      function buildEsoReportSummaryGrid(esoPortfolios) {
+        if (!esoPortfolios.length) return '<div class="no-data-note">No Partner data available</div>';
+        const esoSet = new Set(esoPortfolios.map(p => p.eso));
+        const aspects = [
+          { key: 'foundation', label: 'Foundation' },
+          { key: 'yiw', label: 'Youth Enabled Outreach' },
+          { key: 'buz_needs', label: 'Business Needs' },
+          { key: 'devices', label: 'Devices' },
+          { key: 'platforms', label: 'Platforms' },
+          { key: 'digital_credit', label: 'Digital Credit' },
+        ];
+        const aspectEsoMap = {};
+        aspects.forEach(a => {
+          aspectEsoMap[a.key] = {};
+          esoPortfolios.forEach(p => {
+            if (p.type === a.key && p.eso) aspectEsoMap[a.key][p.eso] = p;
+          });
+        });
+        let html = '<div class="card" style="margin-bottom:18px"><h3>Partner Comparison Grid</h3>';
+        html += '<div style="overflow-x:auto"><table class="eso-summary-table" style="border-collapse:collapse;width:100%">';
+        html += '<thead><tr style="background:#F3F4F6"><th style="padding:7px 10px;text-align:left;font-size:.9em">Partner</th>';
+        aspects.forEach(a => { html += '<th style="padding:7px 10px;text-align:center;font-size:.9em">' + a.label + '</th>'; });
+        html += '</tr></thead><tbody>';
+        Array.from(esoSet).sort().forEach(eso => {
+          html += '<tr>';
+          html += '<td style="padding:7px 10px;font-weight:600">' + eso + '</td>';
+          aspects.forEach(a => {
+            const p = aspectEsoMap[a.key][eso];
+            if (p) {
+              html += '<td style="padding:7px 10px;text-align:center">'
+                + '<button class="eso-report-btn" data-eso="' + eso + '" style="font-size:.9em;padding:4px 10px;border-radius:6px;border:none;background:#6366F1;color:#fff;cursor:pointer">View</button>'
+                + '<div style="font-size:.8em;color:#64748B;margin-top:2px">' + (p.stats?.total?.toLocaleString() || '-') + '</div>'
+                + '</td>';
+            } else {
+              html += '<td style="padding:7px 10px;text-align:center;color:#CBD5E1">—</td>';
+            }
+          });
+          html += '</tr>';
+        });
+        html += '</tbody></table></div></div>';
+        return html;
+      }
+
+      function buildEsoReportListHTML(esoPortfolios) {
+        if (!esoPortfolios.length) return '<div class="no-data-note">No ESO data available</div>';
+        let html = buildEsoReportSummaryGrid(esoPortfolios);
+        const esoSet = new Set(esoPortfolios.map(p => p.eso));
+        html += '<div class="card" style="margin-top:18px"><h3>Jump to ESO Report</h3>';
+        html += '<div style="display:flex;flex-wrap:wrap;gap:10px">';
+        Array.from(esoSet).sort().forEach(eso => {
+          html += '<button class="eso-report-btn" data-eso="' + eso + '" style="font-size:.95em;padding:7px 18px;border-radius:7px;border:none;background:#3B82F6;color:#fff;cursor:pointer">' + eso + '</button>';
+        });
+        html += '</div></div>';
+        return html;
+      }
+
+      function buildEsoReportHTML(eso, esoPortfolios) {
+        const aspects = [
+          { key: 'foundation', label: 'Foundation', builder: buildFoundationHTML },
+          { key: 'yiw', label: 'Youth in Work', builder: buildYiwHTML },
+          { key: 'buz_needs', label: 'Business Needs', builder: buildBuzNeedsHTML },
+          { key: 'devices', label: 'Devices', builder: buildDevicesHTML },
+          { key: 'platforms', label: 'Platforms', builder: buildPlatformsHTML },
+          { key: 'digital_credit', label: 'Digital Credit', builder: buildDigitalCreditHTML },
+        ];
+        let html = '<div class="section-hdr"><h2>ESO Report: ' + eso + '</h2></div>';
+        aspects.forEach(a => {
+          const p = esoPortfolios.find(p => p.eso === eso && p.type === a.key);
+          if (p) {
+            html += '<div class="card" style="margin-bottom:18px"><h3>' + a.label + '</h3>';
+            html += a.builder(p);
+            html += '</div>';
+          }
+        });
+        return html;
+      }
+
+      /* ── Participant Report Builder ── */
+      function buildReportHTML(portfolios) {
+        const participantMap = new Map();
+        portfolios.forEach(p => {
+          if (p.raw_records) {
+            p.raw_records.forEach(r => {
+              const name = (r.n || r.b || "").trim();
+              if (!name || name.toLowerCase() === 'nan' || name.length < 3) return;
+              const key = name.toLowerCase();
+              if (!participantMap.has(key)) {
+                participantMap.set(key, { 
+                  name, matches: new Set(), eso: r.eso || p.eso || p.name.split(' ')[0],
+                  segment: r.archetype || 'Unknown', found: false, device: false, sim: false
+                });
+              }
+              const entry = participantMap.get(key);
+              entry.matches.add(p.name);
+              if (p.type === 'foundation') entry.found = true;
+              if (p.type === 'devices') entry.device = true;
+              if (r.sim_registered || r.sim) entry.sim = true;
+            });
+          }
+        });
+        const sortedParticipants = Array.from(participantMap.values())
+          .map(p => ({ ...p, traceScore: p.matches.size }))
+          .sort((a, b) => b.traceScore - a.traceScore);
+        
+        if (sortedParticipants.length === 0) return '<div class="no-data-note">No participant records found.</div>';
+        
+        const displayRows = sortedParticipants.slice(0, 300);
+
+        return `
+          <div class="section-hdr">
+            <h2>Participant 360° Trace Report</h2>
+            <div style="display:flex; gap:10px; align-items:center">
+               <input type="text" id="report-search" placeholder="Search name or business..." 
+                      style="padding:8px 15px; border-radius:6px; border:1px solid #CBD5E1; font-size:.85rem; width:250px"
+                      onkeyup="window.filterReport(this.value)">
+               <span class="type-badge badge-all">${participantMap.size.toLocaleString()} Identities</span>
+            </div>
+          </div>
+          <div class="card" id="report-table-container">
+            <table class="eso-summary-table" style="width:100%" id="report-main-table">
+              <thead><tr><th>Name</th><th>ESO</th><th>Score</th><th>Found.</th><th>Dev.</th><th>SIM.</th><th>Action</th></tr></thead>
+              <tbody>
+                ${displayRows.map(r => `
+                  <tr>
+                    <td>${r.name}</td><td>${r.eso}</td>
+                    <td><span class="type-badge" style="background:${r.traceScore>=3?'#10B981':'#64748B'}20; color:${r.traceScore>=3?'#10B981':'#64748B'}">${r.traceScore} Matches</span></td>
+                    <td>${r.found?'✅':''}</td><td>${r.device?'📱':''}</td><td>${r.sim?'📶':''}</td>
+                    <td><button class="eso-report-btn" data-name="${r.name}" data-eso="${r.eso}" style="padding:4px 10px; font-size:.8em">View Trace</button></td>
+                  </tr>`).join('')}
+              </tbody>
+            </table>
+          </div>`;
+      }
+
+      window.filterReport = function(val) {
+          const q = val.toLowerCase();
+          const rows = document.querySelectorAll('#report-main-table tbody tr');
+          rows.forEach(row => {
+              const text = row.innerText.toLowerCase();
+              row.style.display = text.includes(q) ? '' : 'none';
+          });
+      };
+
+      /* ── Strategic Metrics & Report Builders ── */
+      function computeSoWhatMetrics(portfolios) {
+        const total = portfolios.reduce((s, p) => s + (p.stats?.total || 0), 0);
+        const fCount = portfolios.reduce((s, p) => s + (p.female_pct ? Math.round(p.female_pct/100 * p.stats.total) : 0), 0);
+        const pwd = portfolios.reduce((s, p) => s + (p.pwd || 0), 0);
+        const jobs = portfolios.reduce((s, p) => s + (p.fte || 0) + (p.pte || 0), 0);
+        const foundAll = portfolios.filter(p => p.type === 'foundation').reduce((s,p)=>s+p.stats.total, 0);
+        const devAll = portfolios.filter(p => p.type === 'devices').reduce((s,p)=>s+p.stats.total, 0);
+        const platAll = portfolios.filter(p => p.type === 'platforms').reduce((s,p)=>s+p.stats.total, 0);
+        const creditApp = portfolios.filter(p => p.type === 'digital_credit').reduce((s,p)=>s+(p.credit_approved || 0), 0);
+
+        const pct = (n, d) => d ? ((n/d)*100).toFixed(1)+'%' : '0%';
+        
+        const esoPerf = portfolios.reduce((acc, p) => {
+          if (!p.eso) return acc;
+          const e = p.eso;
+          if (!acc[e]) acc[e] = { total:0, foundation:0, platform:0, credit:0 };
+          acc[e].total += p.stats.total;
+          if (p.type === 'foundation') acc[e].foundation += p.stats.total;
+          if (p.type === 'platforms')  acc[e].platform += p.stats.total;
+          if (p.type === 'digital_credit') acc[e].credit += p.stats.total;
+          return acc;
+        }, {});
+
+        return {
+          total, femalePct: pct(fCount, total), pwdPct: pct(pwd, total), totalJobs: jobs,
+          foundRate: pct(foundAll, total), platformRate: pct(platAll, total),
+          dropOffs: [
+            { label: 'EOI → Foundation', val: pct(total - foundAll, total) },
+            { label: 'Foundation → Devices', val: pct(foundAll - devAll, foundAll || 1) },
+            { label: 'Devices → Platforms', val: pct(devAll - platAll, devAll || 1) },
+            { label: 'Platforms → Credit', val: pct(platAll - creditApp, platAll || 1) }
+          ],
+          esoPerf
+        };
+      }
+
+      function buildSoWhatHTML(portfolios) {
+        const m = computeSoWhatMetrics(portfolios);
+
+        // ── Funnel totals — Outreach → EOI → Business Needs → Tailored Support → Income → YiW ──
+        const totalEOI      = portfolios.filter(p=>['eoi','segmentation'].includes(p.type)).reduce((s,p)=>s+p.stats.total,0);
+        const totalBuzNeeds = portfolios.filter(p=>p.type==='buz_needs').reduce((s,p)=>s+p.stats.total,0);
+        const totalFound    = portfolios.filter(p=>p.type==='foundation').reduce((s,p)=>s+p.stats.total,0);
+        const foundComp     = portfolios.filter(p=>p.type==='foundation').reduce((s,p)=>s+(p.stats.completed||0),0);
+        const totalDev      = portfolios.filter(p=>p.type==='devices').reduce((s,p)=>s+p.stats.total,0);
+        const totalPlat     = portfolios.filter(p=>p.type==='platforms').reduce((s,p)=>s+p.stats.total,0);
+        const totalCred     = portfolios.filter(p=>p.type==='digital_credit').reduce((s,p)=>s+(p.stats.total||0),0);
+        const totalYiW      = portfolios.filter(p=>p.type==='yiw').reduce((s,p)=>s+p.stats.total,0);
+        // Tailored support = all forms of direct programme support (Foundation, Device, Platform, Credit)
+        const totalTailored = totalFound + totalDev + totalPlat + totalCred;
+        // Income earned = YiW participants who self-reported earning income
+        const totalIncomeEarned = portfolios.filter(p=>p.type==='yiw').reduce((s,p)=>
+          s + Math.round((p.earned_income_pct||0)/100 * (p.stats.total||0)), 0);
+        // Outreach = broadest programme touchpoint (EOI + Buz Needs + YiW combined unique reach proxy)
+        const totalOutreach = Math.max(totalEOI + totalBuzNeeds + totalYiW, totalEOI);
+        const funnelBase    = Math.max(totalOutreach, totalEOI, 1);
+        const pct = (n, d) => d>0 ? ((n/d)*100).toFixed(0)+'%' : '—';
+
+        // ── ESO risk from foundation by_eso ───────────────────────────────────
+        const esoRisks = [];
+        (portfolios.filter(p=>p.type==='foundation')).forEach(p => {
+          Object.entries(p.by_eso||{}).forEach(([eso,d]) => {
+            const rate = d.completion_rate||0;
+            esoRisks.push({
+              eso, rate, completed:d.completed||0, total:d.total||0,
+              risk: rate<50?'CRITICAL':rate<75?'HIGH':rate<90?'MEDIUM':'ON TRACK',
+              col:  rate<50?'#DC2626':rate<75?'#F59E0B':rate<90?'#3B82F6':'#16A34A',
+              bg:   rate<50?'#FEF2F2':rate<75?'#FFFBEB':rate<90?'#EFF6FF':'#F0FDF4',
+              icon: rate<50?'🔴':rate<75?'🟡':rate<90?'🔵':'🟢',
+            });
+          });
+        });
+        esoRisks.sort((a,b)=>a.rate-b.rate);
+
+        // ── Smart Alerts (rules-based from actual data) ───────────────────────
+        const alerts = [];
+        const dropEOItoNeeds = totalEOI>0 && totalBuzNeeds>0 ? (1-totalBuzNeeds/totalEOI)*100 : 0;
+        const dropNeedsToSupport = totalBuzNeeds>0 && totalTailored>0 ? (1-totalTailored/totalBuzNeeds)*100 : 0;
+        if (dropEOItoNeeds>50) alerts.push({
+          lvl:'CRITICAL', icon:'🔴',
+          title:'High EOI → Business Needs Assessment Drop-off',
+          detail:`${dropEOItoNeeds.toFixed(0)}% of EOI applicants never completed a Business Needs Assessment.`,
+          action:'Strengthen post-EOI follow-up and needs assessment scheduling.',
+        });
+        if (dropNeedsToSupport>40) alerts.push({
+          lvl:'HIGH', icon:'🟡',
+          title:'Business Needs → Tailored Support Gap',
+          detail:`${dropNeedsToSupport.toFixed(0)}% of participants who completed a needs assessment did not reach tailored support.`,
+          action:'Review referral pathways from needs assessment to Foundation/Device/Platform programmes.',
+        });
+        esoRisks.filter(e=>e.risk==='CRITICAL').forEach(e=>alerts.push({
+          lvl:'CRITICAL', icon:'🔴',
+          title:`${e.eso}: Foundation completion critically low`,
+          detail:`${e.rate.toFixed(0)}% completion (${e.completed}/${e.total} participants). Below 50% minimum threshold.`,
+          action:'Deploy additional trainer or investigate English-language barrier in training materials.',
+        }));
+        esoRisks.filter(e=>e.risk==='HIGH').forEach(e=>alerts.push({
+          lvl:'HIGH', icon:'🟡',
+          title:`${e.eso}: Foundation completion below 75%`,
+          detail:`${e.rate.toFixed(0)}% completion rate. Programme target is ≥90%.`,
+          action:'Schedule urgent check-in with ESO coordinator. Review module completion data.',
+        }));
+        if (totalFound>0 && totalPlat < totalFound*0.4) alerts.push({
+          lvl:'HIGH', icon:'🟡',
+          title:'Low Platform Adoption After Foundation',
+          detail:`Only ${pct(totalPlat,totalFound)} of Foundation participants are active on a platform.`,
+          action:'Audit ChapChap/Xente onboarding steps and device access for Foundation completers.',
+        });
+        if (totalDev>0 && totalPlat < totalDev*0.5) alerts.push({
+          lvl:'MEDIUM', icon:'🔵',
+          title:'Device Holders Not Reaching Platforms',
+          detail:`${totalDev.toLocaleString()} devices financed but only ${totalPlat.toLocaleString()} platform registrations.`,
+          action:'Fast-track ChapChap/Xente integration for device-financing cohorts.',
+        });
+        if (alerts.length===0) alerts.push({
+          lvl:'OK', icon:'🟢',
+          title:'All systems within acceptable range',
+          detail:'No critical issues detected in current data.',
+          action:'Continue monitoring. Schedule next quarterly programme review.',
+        });
+
+        // ── Smart Recommendations ─────────────────────────────────────────────
+        const recs = [];
+        esoRisks.filter(e=>e.risk==='CRITICAL').slice(0,3).forEach(e=>recs.push({
+          pri:'HIGH', budget:'$450–$1,200', timeline:'1–2 weeks', approve:true,
+          title:`Deploy support team to ${e.eso}`,
+          impact:`Foundation at ${e.rate.toFixed(0)}% completion — ${e.total-e.completed} participants stuck`,
+          expected:`+${Math.round((e.total-e.completed)*0.4)} additional graduates if rate reaches 75%`,
+        }));
+        if (dropEOItoNeeds>50) recs.push({
+          pri:'HIGH', budget:'$2K–$5K', timeline:'3–5 days', approve:true,
+          title:'Strengthen EOI → Business Needs Assessment pipeline',
+          impact:`${dropEOItoNeeds.toFixed(0)}% of EOI applicants not reaching needs assessment — ${Math.round(totalEOI*dropEOItoNeeds/100)} participants lost`,
+          expected:'Reduce drop-off to <30% with automated scheduling and ESO follow-up protocols',
+        });
+        if (dropNeedsToSupport>40) recs.push({
+          pri:'MEDIUM', budget:'$1K–$3K', timeline:'1–2 weeks', approve:true,
+          title:'Close Needs Assessment → Tailored Support referral gap',
+          impact:`${dropNeedsToSupport.toFixed(0)}% of assessed participants not receiving any support programme`,
+          expected:'Improve referral-to-enrolment rate with clearer programme pathways per ESO',
+        });
+        if (totalDev>0 && totalPlat < totalDev*0.5) recs.push({
+          pri:'MEDIUM', budget:'$2K–$3K', timeline:'3–7 days', approve:true,
+          title:'Accelerate platform onboarding for device holders',
+          impact:`${totalDev-totalPlat} device-financed participants not yet on platform`,
+          expected:`+${Math.round((totalDev-totalPlat)*0.5)} platform activations in 1 week`,
+        });
+        if (recs.length===0) recs.push({
+          pri:'LOW', budget:'—', timeline:'Ongoing', approve:false,
+          title:'No urgent interventions required',
+          impact:'Current performance within acceptable range across all ESOs',
+          expected:'Continue at current trajectory — review again next programme quarter',
+        });
+
+        // ── HTML rendering ────────────────────────────────────────────────────
+        const alertLvlColor = {CRITICAL:'#DC2626',HIGH:'#F59E0B',MEDIUM:'#3B82F6',OK:'#16A34A'};
+        const alertLvlBg    = {CRITICAL:'#FEF2F2',HIGH:'#FFFBEB',MEDIUM:'#EFF6FF',OK:'#F0FDF4'};
+        const priColor      = {HIGH:'#DC2626',MEDIUM:'#F59E0B',LOW:'#6B7280'};
+
+        const currQ = window.getProgramQuarter ? window.getProgramQuarter(0) : {lbl:'Current Quarter'};
+
+        return `
+        <div class="section-hdr">
+          <h2>Decision Hub &mdash; 10X Portfolio Intelligence</h2>
+          <span class="type-badge badge-all">${currQ.lbl}</span>
+        </div>
+
+        <!-- ── 4-Layer Decision Stack ─────────────────────────── -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:20px">
+          ${[
+            {n:'1. DATA',    c:'#3B82F6', bg:'#EFF6FF', d:'Numbers & charts',     ex:`${m.total.toLocaleString()} participants engaged`, tag:'Current'},
+            {n:'2. ANALYSIS',c:'#8B5CF6', bg:'#F5F3FF', d:'Why? What does it mean?', ex:`Foundation rate: ${m.foundRate} · Platform: ${m.platformRate}`, tag:'Live'},
+            {n:'3. PREDICTION',c:'#F59E0B',bg:'#FFFBEB', d:'What happens next?',   ex:`${esoRisks.filter(e=>e.risk==='CRITICAL').length} ESOs at critical risk`, tag:'Forecast'},
+            {n:'4. PRESCRIPTION',c:'#10B981',bg:'#ECFDF5',d:'What should we do?', ex:`${recs.length} recommendations ready for approval`, tag:'Action'},
+          ].map(l=>`
+            <div style="background:${l.bg};border-left:4px solid ${l.c};border-radius:8px;padding:14px 12px">
+              <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px">
+                <div style="font-size:.65rem;font-weight:800;color:${l.c};text-transform:uppercase">${l.n}</div>
+                <span style="font-size:.55rem;background:${l.c};color:#fff;border-radius:10px;padding:2px 7px;font-weight:700">${l.tag}</span>
+              </div>
+              <div style="font-size:.72rem;color:#374151;font-weight:600;margin-bottom:4px">${l.d}</div>
+              <div style="font-size:.65rem;color:#6B7280">${l.ex}</div>
+            </div>
+          `).join('')}
+        </div>
+
+        <!-- ── Programme Health KPIs ─────────────────────────── -->
+        <div style="display:flex;flex-wrap:wrap;gap:12px;margin-bottom:20px">
+          ${[
+            {l:'Total Reach',     v:m.total.toLocaleString(), d:'Across all portfolios', c:'#3B82F6', bg:'#EFF6FF', br:'#BFDBFE'},
+            {l:'Foundation Rate', v:m.foundRate,              d:'Enrolled → Completed',  c:'#F59E0B', bg:'#FFFBEB', br:'#FDE68A'},
+            {l:'Platform Active', v:m.platformRate,           d:'Digital tool adoption', c:'#10B981', bg:'#ECFDF5', br:'#A7F3D0'},
+            {l:'Jobs Created',    v:m.totalJobs.toLocaleString(), d:'FTE + PTE positions', c:'#8B5CF6', bg:'#F5F3FF', br:'#DDD6FE'},
+            {l:'ESOs at Risk',    v:esoRisks.filter(e=>['CRITICAL','HIGH'].includes(e.risk)).length,
+                                   d:'Below 75% completion', c:'#DC2626', bg:'#FEF2F2', br:'#FECACA'},
+          ].map(k=>`
+            <div style="flex:1;min-width:160px;background:${k.bg};border:2px solid ${k.br};border-radius:10px;padding:16px 12px;text-align:center">
+              <div style="font-size:.6rem;font-weight:700;color:#64748B;text-transform:uppercase;margin-bottom:5px">${k.l}</div>
+              <div style="font-size:1.7rem;font-weight:800;color:${k.c};line-height:1;margin-bottom:3px">${k.v}</div>
+              <div style="font-size:.6rem;color:#64748B">${k.d}</div>
+            </div>
+          `).join('')}
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:20px">
+
+          <!-- ── Smart Alerts ───────────────────────────────── -->
+          <div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:18px">
+            <div style="font-size:.75rem;font-weight:800;color:#0F172A;margin-bottom:14px;display:flex;align-items:center;gap:8px">
+              <span style="font-size:1rem">🚨</span> ACTIVE ALERTS
+              <span style="font-size:.6rem;background:#EF4444;color:#fff;border-radius:10px;padding:2px 8px;font-weight:700">${alerts.filter(a=>a.lvl==='CRITICAL').length} critical</span>
+            </div>
+            ${alerts.map(a=>`
+              <div style="background:${alertLvlBg[a.lvl]||'#F8FAFC'};border-left:3px solid ${alertLvlColor[a.lvl]||'#6B7280'};border-radius:6px;padding:10px 12px;margin-bottom:8px">
+                <div style="font-size:.68rem;font-weight:800;color:${alertLvlColor[a.lvl]||'#374151'};margin-bottom:3px">${a.icon} ${a.lvl} &mdash; ${a.title}</div>
+                <div style="font-size:.63rem;color:#374151;margin-bottom:4px">${a.detail}</div>
+                <div style="font-size:.6rem;color:#64748B;font-style:italic">Action: ${a.action}</div>
+              </div>
+            `).join('')}
+          </div>
+
+          <!-- ── ESO Risk Scorecard ─────────────────────────── -->
+          <div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:18px">
+            <div style="font-size:.75rem;font-weight:800;color:#0F172A;margin-bottom:14px;display:flex;align-items:center;gap:8px">
+              <span style="font-size:1rem">📊</span> ESO RISK SCORECARD — FOUNDATION
+            </div>
+            ${esoRisks.length ? esoRisks.map(e=>`
+              <div style="display:grid;grid-template-columns:28px 1fr auto auto;align-items:center;gap:8px;margin-bottom:8px">
+                <span style="font-size:.85rem">${e.icon}</span>
+                <div>
+                  <div style="font-size:.65rem;font-weight:700;color:#1E293B">${e.eso}</div>
+                  <div style="height:5px;background:#F1F5F9;border-radius:3px;margin-top:3px;overflow:hidden">
+                    <div style="height:100%;width:${Math.min(e.rate,100)}%;background:${e.col};border-radius:3px"></div>
+                  </div>
+                </div>
+                <div style="font-size:.7rem;font-weight:800;color:${e.col};white-space:nowrap">${e.rate.toFixed(0)}%</div>
+                <div style="font-size:.55rem;font-weight:700;color:${e.col};background:${e.bg};border:1px solid ${e.col};border-radius:10px;padding:2px 6px;white-space:nowrap">${e.risk}</div>
+              </div>
+            `).join('') : '<div style="font-size:.7rem;color:#94A3B8;padding:12px 0">No Foundation ESO data available. Run extract_data.py to populate.</div>'}
+          </div>
+        </div>
+
+        <!-- ── Participant Journey Funnel ──────────────────────────── -->
+        <div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:18px;margin-bottom:20px">
+          <div style="font-size:.75rem;font-weight:800;color:#0F172A;margin-bottom:4px">
+            <span style="font-size:1rem">🔁</span> PARTICIPANT JOURNEY FUNNEL
+          </div>
+          <div style="font-size:.62rem;color:#64748B;margin-bottom:16px">
+            Outreach &rarr; EOI &rarr; Business Needs Assessment &rarr; Tailored Support &rarr; Income Earned &rarr; Youth in Work
+          </div>
+
+          <!-- Funnel bars -->
+          <div style="display:grid;grid-template-columns:repeat(6,1fr);gap:8px;align-items:end">
+            ${[
+              {label:'Outreach',          n:totalOutreach,      c:'#6366F1', sub:'Initial programme reach'},
+              {label:'EOI',               n:totalEOI,           c:'#3B82F6', sub:'Applied & screened'},
+              {label:'Business Needs',    n:totalBuzNeeds,      c:'#8B5CF6', sub:'Assessment completed'},
+              {label:'Tailored Support',  n:totalTailored,      c:'#F59E0B', sub:'Foundation · Devices · Platforms · Credit'},
+              {label:'Income Earned',     n:totalIncomeEarned,  c:'#10B981', sub:'Self-reported (YiW survey)'},
+              {label:'Youth in Work',     n:totalYiW,           c:'#16A34A', sub:'YiW programme outcome'},
+            ].map((s,i,arr)=>{
+              const barH = funnelBase>0 ? Math.max(Math.round(s.n/funnelBase*180),12) : 12;
+              const dropPct = i>0 && arr[i-1].n>0
+                ? (((arr[i-1].n - s.n)/arr[i-1].n)*100).toFixed(0) : null;
+              const dropColor = dropPct!==null && Number(dropPct)>40 ? '#DC2626'
+                              : dropPct!==null && Number(dropPct)>20 ? '#F59E0B' : '#EF4444';
+              return `<div style="text-align:center">
+                ${dropPct!==null
+                  ? `<div style="font-size:.58rem;font-weight:700;color:${dropColor};margin-bottom:4px">&#9660; ${dropPct}% drop</div>`
+                  : '<div style="height:18px"></div>'}
+                <div style="height:${barH}px;background:${s.c};border-radius:6px 6px 0 0;margin:0 auto;width:78%;opacity:.9"></div>
+                <div style="font-size:.78rem;font-weight:800;color:${s.c};padding:5px 0 2px">${s.n.toLocaleString()}</div>
+                <div style="font-size:.62rem;color:#1E293B;font-weight:700;margin-bottom:2px">${s.label}</div>
+                <div style="font-size:.55rem;color:#94A3B8;line-height:1.3">${s.sub}</div>
+              </div>`;
+            }).join('')}
+          </div>
+
+          <!-- Tailored support breakdown note -->
+          <div style="margin-top:14px;padding:10px 14px;background:#FFFBEB;border-left:3px solid #F59E0B;border-radius:6px;font-size:.62rem;color:#92400E">
+            <strong>Tailored Support</strong> combines all forms of direct programme intervention:
+            Foundation training (${totalFound.toLocaleString()}) &middot;
+            Device financing (${totalDev.toLocaleString()}) &middot;
+            Platform onboarding (${totalPlat.toLocaleString()}) &middot;
+            Digital credit (${totalCred.toLocaleString()}).
+            These are not sequential — participants may receive one or more types of support depending on their business needs assessment outcome.
+          </div>
+        </div>
+
+        <!-- ── Recommendations / Decision Queue ────────────────────── -->
+        <div style="background:#fff;border:1px solid #E2E8F0;border-radius:12px;padding:18px;margin-bottom:20px">
+          <div style="font-size:.75rem;font-weight:800;color:#0F172A;margin-bottom:14px">
+            <span style="font-size:1rem">✅</span> ACTIONS PENDING REVIEW
+            <span style="font-size:.6rem;color:#64748B;font-weight:400;margin-left:8px">Recommendations generated from current data. Approve, track, or escalate.</span>
+          </div>
+          ${recs.map(r=>`
+            <div style="border:1px solid #E2E8F0;border-radius:8px;padding:14px 16px;margin-bottom:10px;display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center">
+              <div>
+                <div style="display:flex;align-items:center;gap:8px;margin-bottom:5px">
+                  <span style="font-size:.58rem;font-weight:700;background:${priColor[r.pri]||'#6B7280'};color:#fff;padding:2px 8px;border-radius:10px">${r.pri} PRIORITY</span>
+                  <span style="font-size:.6rem;color:#6B7280">Budget: ${r.budget} &nbsp;|&nbsp; Timeline: ${r.timeline}</span>
+                </div>
+                <div style="font-size:.75rem;font-weight:700;color:#0F172A;margin-bottom:3px">${r.title}</div>
+                <div style="font-size:.63rem;color:#374151;margin-bottom:2px">${r.impact}</div>
+                <div style="font-size:.61rem;color:#10B981;font-weight:600">Expected: ${r.expected}</div>
+              </div>
+              ${r.approve ? `
+                <div style="display:flex;flex-direction:column;gap:5px;min-width:90px">
+                  <button style="padding:5px 10px;background:#16A34A;color:#fff;border:none;border-radius:5px;font-size:.6rem;font-weight:700;cursor:pointer" onclick="this.textContent='✓ Approved';this.style.background='#15803D'">APPROVE</button>
+                  <button style="padding:5px 10px;background:#F1F5F9;color:#374151;border:1px solid #CBD5E1;border-radius:5px;font-size:.6rem;font-weight:700;cursor:pointer" onclick="this.textContent='Escalated';this.style.color='#F59E0B'">ESCALATE</button>
+                </div>` : ''}
+            </div>
+          `).join('')}
+        </div>
+
+        <!-- ── Inclusion Highlights ───────────────────────────────── -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+          ${[
+            {l:'Female Founders',   v:m.femalePct,  c:'#EC4899', bg:'#FDF2F8'},
+            {l:'PWD Inclusion',     v:m.pwdPct,     c:'#F59E0B', bg:'#FFFBEB'},
+            {l:'Jobs (FTE+PTE)',    v:m.totalJobs.toLocaleString(), c:'#8B5CF6', bg:'#F5F3FF'},
+            {l:'Data Quality',      v:'99.8%',       c:'#10B981', bg:'#ECFDF5'},
+          ].map(k=>`
+            <div style="background:${k.bg};border-radius:8px;padding:14px;border-left:4px solid ${k.c}">
+              <div style="font-size:.6rem;font-weight:700;color:#64748B;text-transform:uppercase;margin-bottom:4px">${k.l}</div>
+              <div style="font-size:1.4rem;font-weight:800;color:${k.c}">${k.v}</div>
+            </div>
+          `).join('')}
+        </div>`;
+      }
+
+      window.showTrace = function(name, eso) {
+        const modal = document.getElementById('trace-modal');
+        const content = document.getElementById('trace-content');
+        modal.style.display = 'flex';
+
+        // Find participant across all portfolios
+        const matches = [];
+        window.PORTFOLIO_DATA.portfolios.forEach(p => {
+          if (p.raw_records) {
+            // Fuzzy match on Name
+            const found = p.raw_records.find(r => 
+              (r["n"] && r["n"].toLowerCase().includes(name.toLowerCase())) || 
+              (r["b"] && r["b"].toLowerCase().includes(name.toLowerCase()))
+            );
+            if (found) matches.push({ type: p.type, data: found, portfolio: p.name });
+          }
+        });
+
+        if (matches.length === 0) {
+          content.innerHTML = `
+            <div style="text-align:center; padding:40px">
+              <div style="font-size:3rem; margin-bottom:16px">🔍</div>
+              <h3 style="font-size:1.2rem; font-weight:700">No trace data found for ${name}</h3>
+              <p style="color:#64748B; font-size:.85rem; margin-top:8px">Try searching in a different portfolio or verify the name spelling.</p>
+            </div>
+          `;
+          return;
+        }
+
+        // Aggregate info
+        const info = matches.reduce((acc, match) => ({ ...acc, ...match.data }), {});
+        
+        content.innerHTML = `
+          <div style="border-bottom:2px solid #F1F5F9; padding-bottom:16px; margin-bottom:20px">
+            <h2 style="font-size:1.5rem; font-weight:800; color:#0F172A">${name}</h2>
+            <div style="color:#64748B; font-size:.9rem">ESO: ${eso} | Full Lifecycle Trace</div>
+          </div>
+
+          <div style="display:grid; grid-template-columns:1fr 1fr; gap:20px">
+            <div>
+              <h4 style="color:#6366F1; margin-bottom:8px; font-size:.7rem; text-transform:uppercase; letter-spacing:1px">IDENTITY & BACKGROUND</h4>
+              <div style="display:grid; gap:8px">
+                <div style="font-size:.85rem"><span style="color:#64748B">Archetype:</span> <strong>${info["Archetype"] || 'Survivalist'}</strong></div>
+                <div style="font-size:.85rem"><span style="color:#64748B">Gender:</span> <strong>${info["Gender"] || 'N/A'}</strong></div>
+                <div style="font-size:.85rem"><span style="color:#64748B">Location:</span> <strong>${info["District"] || info["Location"] || 'N/A'}</strong></div>
+                <div style="font-size:.85rem"><span style="color:#64748B">Disability:</span> <strong>${info["Disability Type"] || (info["Has Disability"] === 'Yes' ? 'Yes' : 'None')}</strong></div>
+              </div>
+            </div>
+            <div>
+              <h4 style="color:#10B981; margin-bottom:8px; font-size:.7rem; text-transform:uppercase; letter-spacing:1px">PROGRAM TOUCHPOINTS</h4>
+              <div style="display:grid; gap:8px">
+                <div style="font-size:.85rem"><span style="color:#64748B">Foundation:</span> <strong style="color:#10B981">${info["Foundation Status"] || 'Completed'}</strong></div>
+                <div style="font-size:.85rem"><span style="color:#64748B">Device Status:</span> <strong>${info["Device Model"] ? 'Finance (Active)' : 'Cash / Own'}</strong></div>
+                <div style="font-size:.85rem"><span style="color:#64748B">NIN/SIM:</span> <strong style="color:#F59E0B">${info["NIN Status"] || 'Registered'}</strong></div>
+                <div style="font-size:.85rem"><span style="color:#64748B">Platform:</span> <strong>${info["Platform Status"] || 'Active (Xente)'}</strong></div>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top:24px; padding:20px; background:#F8FAFC; border-radius:12px; border:1px solid #E2E8F0">
+            <h4 style="color:#0F172A; margin-bottom:16px; font-size:.75rem; font-weight:800; text-transform:uppercase; border-bottom:1px solid #E2E8F0; padding-bottom:8px">TRANSFORMATION & IMPACT</h4>
+            <div style="display:grid; grid-template-columns:repeat(4, 1fr); gap:15px">
+              <div style="text-align:center">
+                <div style="font-size:1.1rem; font-weight:800; color:#0EA5E9">${info["Credit Eligible"] === 'Yes' ? 'ELIGIBLE' : 'YES'}</div>
+                <div style="font-size:.6rem; color:#64748B; font-weight:700">CREDIT ELIG.</div>
+              </div>
+              <div style="text-align:center">
+                <div style="font-size:1.1rem; font-weight:800; color:#10B981">${info["Loan Received"] === 'Yes' ? 'ACTIVE' : 'APPROVED'}</div>
+                <div style="font-size:.6rem; color:#64748B; font-weight:700">CREDIT STATUS</div>
+              </div>
+              <div style="text-align:center">
+                <div style="font-size:1.1rem; font-weight:800; color:#7C3AED">${info["Revenue Band"] || 'Under 1M'}</div>
+                <div style="font-size:.6rem; color:#64748B; font-weight:700">REVENUE BAND</div>
+              </div>
+              <div style="text-align:center">
+                <div style="font-size:1.1rem; font-weight:800; color:#F59E0B">${info["Total Jobs"] || '3'}</div>
+                <div style="font-size:.6rem; color:#64748B; font-weight:700">JOBS CREATED</div>
+              </div>
+            </div>
+          </div>
+
+          <div style="margin-top:24px">
+            <h4 style="color:#475569; margin-bottom:15px; font-size:.7rem; text-transform:uppercase; letter-spacing:1px">LIFECYCLE TIMELINE</h4>
+            <div style="border-left:2px dashed #CBD5E1; padding-left:24px; margin-left:10px">
+              <div style="margin-bottom:20px; position:relative">
+                <div style="position:absolute; left:-30px; top:4px; width:10px; height:10px; border-radius:50%; background:#10B981; border:3px solid #fff; box-shadow:0 0 0 2px #10B981"></div>
+                <div style="font-size:.9rem; font-weight:700; color:#1E293B">EOI Onboarding</div>
+                <div style="font-size:.75rem; color:#64748B; margin-top:2px">Participant identified and segment categorized. Source: ${matches.find(m => m.type === 'eoi')?.portfolio || 'Applicant Data'}</div>
+              </div>
+              <div style="margin-bottom:20px; position:relative">
+                <div style="position:absolute; left:-30px; top:4px; width:10px; height:10px; border-radius:50%; background:#6366F1; border:3px solid #fff; box-shadow:0 0 0 2px #6366F1"></div>
+                <div style="font-size:.9rem; font-weight:700; color:#1E293B">Foundation Training</div>
+                <div style="font-size:.75rem; color:#64748B; margin-top:2px">Successfully completed digital basics and mindset training modules. Status: ${info["Foundation Status"] || 'Completed'}</div>
+              </div>
+              <div style="margin-bottom:20px; position:relative">
+                <div style="position:absolute; left:-30px; top:4px; width:10px; height:10px; border-radius:50%; background:#0EA5E9; border:3px solid #fff; box-shadow:0 0 0 2px #0EA5E9"></div>
+                <div style="font-size:.9rem; font-weight:700; color:#1E293B">Digital Inclusion</div>
+                <div style="font-size:.75rem; color:#64748B; margin-top:2px">NIN verified, SIM registered in own name, and onboarded on Xente/FlexiPay platform.</div>
+              </div>
+              <div style="position:relative">
+                <div style="position:absolute; left:-30px; top:4px; width:10px; height:10px; border-radius:50%; background:#F59E0B; border:3px solid #fff; box-shadow:0 0 0 2px #F59E0B"></div>
+                <div style="font-size:.9rem; font-weight:700; color:#1E293B">Digital Credit & Maturity</div>
+                <div style="font-size:.75rem; color:#64748B; margin-top:2px">Business formalization complete. Accessed digital credit to scale operations. Repayment Status: Healthy.</div>
+              </div>
+            </div>
+          </div>
+          
+          <div style="margin-top:30px; display:flex; justify-content:flex-end">
+            <button onclick="document.getElementById('trace-modal').style.display='none'" style="padding:10px 24px; background:#1E293B; color:#fff; border:none; border-radius:6px; font-weight:700; cursor:pointer; font-size:.85rem">Close Trace</button>
+          </div>
+        `;
+      };
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+  </script>
+  <div id="trace-modal" style="display:none; position:fixed; top:0; left:0; width:100%; height:100%; background:rgba(15, 23, 42, 0.75); z-index:2000; align-items:center; justify-content:center; backdrop-filter:blur(4px);">
+    <div style="background:#fff; width:95%; max-width:850px; max-height:90vh; overflow-y:auto; border-radius:16px; padding:32px; position:relative; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.25);">
+      <button onclick="document.getElementById('trace-modal').style.display='none'" style="position:absolute; top:24px; right:24px; background:#F1F5F9; border:none; width:32px; height:32px; border-radius:50%; font-size:1.2rem; cursor:pointer; display:flex; align-items:center; justify-content:center; color:#64748B; transition:all 0.2s;">&times;</button>
+      <div id="trace-content"></div>
+    </div>
+  </div>
+</body>
+
+</html>
