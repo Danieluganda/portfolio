@@ -30,7 +30,7 @@ DATA_SRC_DIR = Path('C:/Users/SERVERPT-260424/Dev/live_portifolio/app/data_src')
 # Files starting with '~$' (Excel temp/lock files) are always skipped.
 PORTFOLIO_DIRS = [
     DATA_SRC_DIR / 'eoi',
-    DATA_SRC_DIR / 'yiw',
+    # YIW is maintained from BASE_DIR / 'YIW' / 'YiW_Cleaned_Dataset.xlsx'.
     DATA_SRC_DIR / 'outreach',
     DATA_SRC_DIR / 'devices',
     DATA_SRC_DIR / 'platforms',
@@ -449,6 +449,16 @@ def detect_file_type(xl, filename=''):
     try:
         peek = xl.parse(xl.sheet_names[0], nrows=0)
         cols_lower = [str(c).lower() for c in peek.columns]
+        cols_joined = ' | '.join(cols_lower)
+        if (
+            'yiw_cleaned_dataset' in fname or
+            (
+                'support organization' in cols_joined and
+                'earned income from 10x' in cols_joined and
+                'working conditions improved' in cols_joined
+            )
+        ):
+            return 'yiw'
         if any(c.startswith('1.implementing_partner') for c in cols_lower):
             return 'buz_needs'
         # Devices: check before EOI since device forms also ask about business names
@@ -1030,23 +1040,36 @@ def parse_yiw_file(filename, xl):
     df    = xl.parse(sheet, dtype=str)
     df    = df.dropna(how='all')
 
-    eso_col      = find_col_like(df, 'implementing_partner') or find_col_like(df, 'implementing', 'partner')
-    sector_col   = find_col_like(df, 'sector')
-    district_col = find_col_like(df, 'district')
-    earned_col   = find_col_like(df, 'earned', 'income', 'result') or find_col_like(df, 'earned an income')
+    eso_col      = find_col(df, 'Support Organization') or find_col_like(df, 'implementing_partner') or find_col_like(df, 'implementing', 'partner')
+    sector_col   = find_col(df, 'Business Sector') or find_col_like(df, 'sector')
+    district_col = find_col(df, 'Business District') or find_col(df, 'Residence District') or find_col_like(df, 'district')
+    earned_col   = find_col(df, 'Earned Income from 10X') or find_col_like(df, 'earned', 'income', 'result') or find_col_like(df, 'earned an income')
     improved_col = find_col_like(df, 'working conditions', 'improved') or find_col_like(df, 'work improved')
     income_col   = (find_col_like(df, 'how much', 'earned') or
+                    find_col(df, 'Income Earned (UGX)') or
                     find_col_like(df, 'current earnings') or
                     find_col_like(df, 'current income'))
     # Foundation-completion columns may appear under multiple names across versions
     found_cols = [c for c in df.columns
                   if 'foundation' in c.lower() and
                      ('complete' in c.lower() or 'course' in c.lower())]
+    course_completed_col = find_col(df, 'Course Completed')
+    if course_completed_col and course_completed_col not in found_cols:
+        found_cols.append(course_completed_col)
 
     total     = len(df)
     sectors   = value_counts_dict(df[sector_col],   top_n=15) if sector_col   else {}
     districts = value_counts_dict(df[district_col], top_n=15) if district_col else {}
     income_levels = value_counts_dict(df[income_col], top_n=10) if income_col else {}
+    gender_col = find_col(df, 'Gender') or find_col_like(df, 'gender')
+    age_col = find_col(df, 'Age') or find_col_like(df, 'how old') or find_col_like(df, 'age')
+    employment_col = find_col(df, 'Employment Type') or find_col_like(df, 'employment', 'type')
+    quarter_col = find_col(df, 'Reporting Quarter') or find_col(df, 'Source Quarter') or find_col_like(df, 'quarter')
+    pwd_col = find_col(df, 'Disability Status') or find_col(df, 'PWDS') or find_col(df, 'PWD Flag')
+    refugee_col = find_col(df, 'Refugee Status') or find_col(df, 'Refugee') or find_col(df, 'Refugee Flag')
+    business_status_col = find_col(df, 'Business Status')
+    income_band_col = find_col(df, 'Income Band')
+    work_desc_col = find_col(df, 'Work Improvement Description') or find_col_like(df, 'how did your work improve')
 
     by_eso = {}
     if eso_col:
@@ -1061,6 +1084,33 @@ def parse_yiw_file(filename, xl):
         s = df[col].astype(str).str.strip().str.lower()
         return round(s.isin(['yes', 'yes, i have', 'yes, i have earned']).sum() / max(total, 1) * 100, 1)
 
+    def yes_count(col):
+        if not col or col not in df.columns:
+            return 0
+        s = df[col].astype(str).str.strip().str.lower()
+        return int(s.isin(['yes', 'y', 'true', '1', 'yes, i have', 'yes, completed', 'completed', 'yes, i have earned']).sum())
+
+    def income_value(raw):
+        cleaned = re.sub(r'[^0-9.]', '', str(raw or ''))
+        try:
+            return float(cleaned) if cleaned else 0
+        except Exception:
+            return 0
+
+    def median(values):
+        values = sorted(v for v in values if v is not None)
+        if not values:
+            return 0
+        mid = len(values) // 2
+        return values[mid] if len(values) % 2 else (values[mid - 1] + values[mid]) / 2
+
+    def percentile(values, pct):
+        values = sorted(v for v in values if v is not None)
+        if not values:
+            return 0
+        idx = int(round((len(values) - 1) * pct))
+        return values[max(0, min(idx, len(values) - 1))]
+
     earned_pct   = yes_pct(earned_col)
     improved_pct = yes_pct(improved_col)
     found_pct    = 0.0
@@ -1069,6 +1119,34 @@ def parse_yiw_file(filename, xl):
         pct = round(s.isin(['yes', 'yes, completed', 'completed']).sum() / max(total, 1) * 100, 1)
         if pct > found_pct:
             found_pct = pct
+
+    earned_amounts = []
+    income_outliers = 0
+    if income_col:
+        for raw in df[income_col].dropna():
+            value = income_value(raw)
+            if value > 5_000_000:
+                income_outliers += 1
+            elif value > 0:
+                earned_amounts.append(value)
+
+    income_amount_bands = collections.Counter()
+    income_amount_bands['No income'] = max(total - len(earned_amounts) - income_outliers, 0)
+    for value in earned_amounts:
+        if value <= 100_000:
+            income_amount_bands['Survival (<=100k)'] += 1
+        elif value <= 500_000:
+            income_amount_bands['Growing (100k-500k)'] += 1
+        elif value <= 1_000_000:
+            income_amount_bands['Stable (500k-1M)'] += 1
+        else:
+            income_amount_bands['Thriving (>1M)'] += 1
+
+    work_improvements = {}
+    for col in df.columns:
+        cl = str(col).lower()
+        if cl.startswith('outcome - '):
+            work_improvements[str(col).replace('Outcome - ', '').strip()] = yes_count(col)
 
     return {
         'raw_records': extract_raw_records(df),
@@ -1082,7 +1160,36 @@ def parse_yiw_file(filename, xl):
         'earned_income_pct':   earned_pct,
         'work_improved_pct':   improved_pct,
         'foundation_done_pct': found_pct,
+        'earned_income_count': yes_count(earned_col),
+        'work_improved_count': yes_count(improved_col),
+        'foundation_done_count': max(yes_count(fc) for fc in found_cols) if found_cols else 0,
+        'earned_amount_stats': {
+            'count': len(earned_amounts),
+            'total': int(sum(earned_amounts)),
+            'avg': int(sum(earned_amounts) / len(earned_amounts)) if earned_amounts else 0,
+            'median': int(median(earned_amounts)),
+            'q1': int(percentile(earned_amounts, 0.25)),
+            'q3': int(percentile(earned_amounts, 0.75)),
+            'outliers_excluded': income_outliers,
+        },
+        'income_amount_bands': dict(income_amount_bands),
+        'business_status': value_counts_dict(df[business_status_col]) if business_status_col else {},
+        'theme_counts': {},
+        'yiw_quotes': [],
+        'gender': value_counts_dict(df[gender_col]) if gender_col else {},
+        'age_bands': value_counts_dict(df[age_col]) if age_col else {},
+        'employment_types': value_counts_dict(df[employment_col]) if employment_col else {},
+        'quarters': value_counts_dict(df[quarter_col]) if quarter_col else {},
+        'inclusion_metrics': {
+            'pwd': yes_count(pwd_col),
+            'refugees': yes_count(refugee_col),
+        },
+        'work_improvements': work_improvements,
         'by_eso':       by_eso,
+        'by_eso_detail': {},
+        'by_district_detail': {},
+        'by_sector_detail': {},
+        'by_quarter_detail': {},
         'sectors':      sectors,
         'districts':    districts,
         'income_levels': income_levels,
@@ -2076,10 +2183,8 @@ def _get_kobo_submissions(base_url, token, asset_uid, cache_max_age_hours=4):
     records = _fetch_kobo_submissions(base_url, token, asset_uid)
     if records:
         cache[asset_uid] = {'ts': time.time(), 'records': records}
-        try:
-            KOBO_CACHE_FILE.write_text(json.dumps(cache), encoding='utf-8')
-        except Exception:
-            pass
+        # Disk can be tight on this workstation; avoid rewriting the large
+        # Kobo cache file during scheduled syncs. Fresh API data is still used.
     return records
 
 
@@ -2459,7 +2564,14 @@ def parse_kobo_buz_needs(records, asset_uid, name='Business Needs'):
             return ''
         value = value.strip('_').replace('__', '_').replace('_', ' ')
         value = ' '.join(value.split())
-        return value.title()
+        label = value.title()
+        return {
+            'Sacco': 'SACCO',
+            'Vsla': 'VSLA',
+            'Mfi': 'MFI',
+            'Mtn': 'MTN',
+            'Mokash': 'MoKash',
+        }.get(label, label)
 
     def _count_field(key, top_n=15):
         counts = {}
@@ -2547,6 +2659,7 @@ def parse_kobo_buz_needs(records, asset_uid, name='Business Needs'):
     credit_amount_bands = {}
     credit_amount_values = []
     credit_match_records = []
+    credit_activity_records = []
     denied_loan_count = 0
     denied_reasons = {}
     credit_ready_demand = 0
@@ -2639,6 +2752,19 @@ def parse_kobo_buz_needs(records, asset_uid, name='Business Needs'):
             credit_demand_by_sector[sector] = credit_demand_by_sector.get(sector, 0) + 1
             credit_demand_by_district[district] = credit_demand_by_district.get(district, 0) + 1
             credit_demand_by_eso[eso] = credit_demand_by_eso.get(eso, 0) + 1
+            credit_activity_records.append({
+                'd': r.get('_submission_time') or r.get('start') or r.get('end') or '',
+                'b': r.get('group_oj8uw97/_1_Business_Name') or '',
+                'eso': eso,
+                'district': district,
+                'sector': sector,
+                'amount': amount or 0,
+                'amount_band': band,
+                'readiness': bucket,
+                'repay': _clean_label(r.get('group_wf5op54/_34_If_you_received_could_you_repay_it')) or 'Unknown',
+                'purpose': str(r.get('group_wf5op54/_36_What_would_you_use_the_money_for') or '').strip(),
+                'prior_source': str(r.get('group_wf5op54/_32_Have_you_ever_got_a_loan_from') or '').strip(),
+            })
 
     credit_demand_by_sector = dict(sorted(credit_demand_by_sector.items(), key=lambda x: -x[1])[:15])
     credit_demand_by_district = dict(sorted(credit_demand_by_district.items(), key=lambda x: -x[1])[:20])
@@ -2770,6 +2896,7 @@ def parse_kobo_buz_needs(records, asset_uid, name='Business Needs'):
         'credit_amount_bands': credit_amount_bands,
         'credit_amount_stats': credit_amount_stats,
         'credit_match_records': credit_match_records[:10000],
+        'credit_activity_records': credit_activity_records[:5000],
         'denied_loan_count': denied_loan_count,
         'denied_reasons': denied_reasons,
         'credit_prior_sources': prior_credit_sources,
@@ -3401,7 +3528,8 @@ def main():
     # by a live API pull so we avoid double-counting.
     kobo_cfg = _load_kobo_config()
     kobo_eoi_active = bool(kobo_cfg and kobo_cfg.get('eoi_assets'))
-    kobo_yiw_active = bool(kobo_cfg and kobo_cfg.get('yiw_assets'))
+    # Youth in Work is intentionally maintained from the local cleaned workbook.
+    kobo_yiw_active = False
     kobo_buz_active = bool(kobo_cfg and kobo_cfg.get('buz_needs_assets'))
     kobo_dev_active = bool(kobo_cfg and kobo_cfg.get('devices_assets'))
 
@@ -3420,11 +3548,15 @@ def main():
     # Skip Excel temp/lock files (starting with '~$') and deduplicate by resolved path.
     seen = set()
     xlsx_files = []
+    yiw_dir = (BASE_DIR / 'YIW').resolve()
+    preferred_yiw_file = yiw_dir / 'YiW_Cleaned_Dataset.xlsx'
     for folder in PORTFOLIO_DIRS:
         if not folder.exists():
             continue
         for f in sorted(folder.glob('*.xlsx')):
             if f.name.startswith('~$'):
+                continue
+            if f.parent.resolve() == yiw_dir and preferred_yiw_file.exists() and f.resolve() != preferred_yiw_file:
                 continue
             if str(f.parent.resolve()) in kobo_skip_dirs:
                 continue
@@ -3506,7 +3638,7 @@ def main():
                 print(f'  ERROR fetching Kobo EOI: {exc}')
                 traceback.print_exc()
 
-        for asset in kobo_cfg.get('yiw_assets', []):
+        for asset in []:
             uid, name = asset['uid'], asset.get('name', asset['uid'])
             print(f'\nKobo YIW: {name}  (uid={uid})')
             try:
@@ -3738,6 +3870,8 @@ def main():
                 })
             if p.get('raw_records'):
                 credit_raw_records.extend(p['raw_records'])
+            if p.get('credit_activity_records'):
+                credit_raw_records.extend(p['credit_activity_records'])
     
     if real_credit_eso:
         credit_demand_by_sector = dict(sorted(credit_demand_by_sector.items(), key=lambda x: -x[1])[:15])

@@ -433,7 +433,7 @@ tr:hover td{background:var(--surface2)}
   </div>
 </div>
 
-<div class="g3" style="margin-bottom:14px">
+<div class="g2" style="margin-bottom:14px">
   <!-- Repayment behaviour -->
   <div class="card">
     <div class="card-hd">
@@ -460,31 +460,27 @@ tr:hover td{background:var(--surface2)}
     </div>
   </div>
 
-  <!-- Due-date horizon -->
+  <!-- Due-date horizon + loan status -->
   <div class="card">
     <div class="card-hd">
-      <div class="card-title"><div class="card-title-dot" style="background:var(--red)"></div>Due-Date Horizon</div>
-      <span class="card-meta">active loans only</span>
+      <div class="card-title"><div class="card-title-dot" style="background:var(--red)"></div>Due-Date Horizon &amp; Loan Status</div>
+      <span class="card-meta">active &amp; managed records</span>
     </div>
     <div class="card-body">
-      <div class="hor-row"><div class="hor-left"><div class="hor-dot" style="background:var(--red)"></div><div class="hor-name">Overdue now</div></div><div class="hor-val" style="color:var(--red)">0</div></div>
-      <div class="hor-row"><div class="hor-left"><div class="hor-dot" style="background:var(--orange)"></div><div class="hor-name">Due ≤ 30 days</div></div><div class="hor-val" style="color:var(--orange)">0</div></div>
-      <div class="hor-row"><div class="hor-left"><div class="hor-dot" style="background:var(--amber)"></div><div class="hor-name">Due 31–60 days</div></div><div class="hor-val" style="color:var(--amber)">0</div></div>
-      <div class="hor-row"><div class="hor-left"><div class="hor-dot" style="background:var(--green)"></div><div class="hor-name">Due 61–90 days</div></div><div class="hor-val" style="color:var(--green)">0</div></div>
+      <div class="g2" style="margin-bottom:0">
+        <div>
+          <div class="hor-row"><div class="hor-left"><div class="hor-dot" style="background:var(--red)"></div><div class="hor-name">Overdue now</div></div><div class="hor-val" style="color:var(--red)">0</div></div>
+          <div class="hor-row"><div class="hor-left"><div class="hor-dot" style="background:var(--orange)"></div><div class="hor-name">Due ≤ 30 days</div></div><div class="hor-val" style="color:var(--orange)">0</div></div>
+          <div class="hor-row"><div class="hor-left"><div class="hor-dot" style="background:var(--amber)"></div><div class="hor-name">Due 31–60 days</div></div><div class="hor-val" style="color:var(--amber)">0</div></div>
+          <div class="hor-row"><div class="hor-left"><div class="hor-dot" style="background:var(--green)"></div><div class="hor-name">Due 61–90 days</div></div><div class="hor-val" style="color:var(--green)">0</div></div>
+        </div>
+        <div id="status-bars"></div>
+      </div>
       <div class="callout callout-green" style="margin-top:12px">
         <div class="callout-lbl">Status</div>
-        <div class="callout-text">PAR buckets activate once individual credit records with due dates are added.</div>
+        <div class="callout-text">PAR buckets and loan status activate once individual credit records with due dates are added.</div>
       </div>
     </div>
-  </div>
-
-  <!-- Status breakdown -->
-  <div class="card">
-    <div class="card-hd">
-      <div class="card-title"><div class="card-title-dot" style="background:var(--teal)"></div>Loan Status</div>
-      <span class="card-meta">managed records</span>
-    </div>
-    <div class="card-body" id="status-bars"></div>
   </div>
 </div>
 
@@ -579,52 +575,6 @@ tr:hover td{background:var(--surface2)}
       <div class="callout callout-lime">
         <div class="callout-lbl">Resilience Signal</div>
         <div class="callout-text">Repeat borrowing among refugees is a strong indicator of financial resilience — it shows the programme is creating sustainable credit pathways, not one-off grants.</div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- Row B: Inclusion by ESO + Inclusion by FSP + Women vs PAR -->
-<div class="g3" style="margin-bottom:14px">
-  <div class="card inclusion-card">
-    <div class="card-hd">
-      <div class="card-title"><div class="card-title-dot" style="background:var(--rose)"></div>Women by ESO</div>
-      <span class="card-meta">% of each ESO portfolio</span>
-    </div>
-    <div class="card-body" id="women-by-eso">
-      <div class="empty"><div class="empty-icon">📊</div>Add women-led field to credit records to see which ESO is reaching the most women.</div>
-    </div>
-  </div>
-
-  <div class="card pwd-card">
-    <div class="card-hd">
-      <div class="card-title"><div class="card-title-dot" style="background:var(--blue)"></div>PWD + Refugee by ESO</div>
-      <span class="card-meta">count per ESO</span>
-    </div>
-    <div class="card-body" id="pwd-ref-by-eso">
-      <div class="empty"><div class="empty-icon">♿</div>Add PWD and refugee fields to records to compare inclusion across ESO partners.</div>
-    </div>
-  </div>
-
-  <div class="card inclusion-card">
-    <div class="card-hd">
-      <div class="card-title"><div class="card-title-dot" style="background:var(--rose)"></div>Women Repayment vs Overall</div>
-      <span class="card-meta">equity performance check</span>
-    </div>
-    <div class="card-body">
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px">
-        <div style="padding:12px;border-radius:var(--r-sm);background:var(--rose-dim);border:1px solid rgba(251,113,133,.2);text-align:center">
-          <div style="font-size:9.5px;font-weight:700;text-transform:uppercase;color:var(--rose);margin-bottom:6px">Women repayment</div>
-          <div style="font-family:var(--font-num);font-size:24px;color:var(--rose)">—</div>
-        </div>
-        <div style="padding:12px;border-radius:var(--r-sm);background:var(--surface2);border:1px solid var(--border);text-align:center">
-          <div style="font-size:9.5px;font-weight:700;text-transform:uppercase;color:var(--ink3);margin-bottom:6px">Overall repayment</div>
-          <div style="font-family:var(--font-num);font-size:24px;color:var(--ink2)">—</div>
-        </div>
-      </div>
-      <div class="callout callout-rose">
-        <div class="callout-lbl">Programme Insight</div>
-        <div class="callout-text">Globally, women borrowers repay at <strong>higher rates</strong> than men. If your data confirms this, it's a powerful argument for increasing women-led loan allocations.</div>
       </div>
     </div>
   </div>
@@ -755,32 +705,23 @@ tr:hover td{background:var(--surface2)}
      SECTION 7 — FSP ACCESS BY GROUP
 ═══════════════════════════════════════ -->
 <div class="sec-label inclusion">Financial Access by Group</div>
-<div class="g3" style="margin-bottom:14px">
-  <div class="card inclusion-card">
-    <div class="card-hd">
-      <div class="card-title"><div class="card-title-dot" style="background:var(--rose)"></div>FSP Access — Women vs Men</div>
-      <span class="card-meta">which channels reach women</span>
-    </div>
-    <div class="card-body" id="fsp-women">
-      <div class="empty"><div class="empty-icon">♀</div>Add gender + provider to records to see which FSPs women prefer vs men. Critical for targeted outreach.</div>
-    </div>
+<div class="card" style="margin-bottom:14px">
+  <div class="card-hd">
+    <div class="card-title"><div class="card-title-dot" style="background:var(--rose)"></div>FSP Access by Group</div>
+    <span class="card-meta">which channels reach women, PWD &amp; refugees</span>
   </div>
-  <div class="card pwd-card">
-    <div class="card-hd">
-      <div class="card-title"><div class="card-title-dot" style="background:var(--blue)"></div>FSP Access — PWD</div>
-      <span class="card-meta">accessibility by channel</span>
+  <div class="card-body">
+    <div class="idv-row">
+      <div class="idv-left"><div class="idv-icon" style="background:var(--rose-dim)">♀</div><div><div class="idv-name">Women vs Men</div><div class="idv-desc">Add gender + provider to records to see which FSPs women prefer vs men.</div></div></div>
+      <div class="idv-val" style="color:var(--rose)">—</div>
     </div>
-    <div class="card-body" id="fsp-pwd">
-      <div class="empty"><div class="empty-icon">♿</div>Add PWD flag + provider to records. If mobile money dominates, it confirms digital channels are more accessible than bank branches for PWD borrowers.</div>
+    <div class="idv-row">
+      <div class="idv-left"><div class="idv-icon" style="background:var(--blue-dim)">♿</div><div><div class="idv-name">PWD Access</div><div class="idv-desc">Add PWD flag + provider to compare digital vs branch-based access.</div></div></div>
+      <div class="idv-val" style="color:var(--blue)">—</div>
     </div>
-  </div>
-  <div class="card ref-card">
-    <div class="card-hd">
-      <div class="card-title"><div class="card-title-dot" style="background:var(--lime)"></div>FSP Access — Refugees</div>
-      <span class="card-meta">which channels reach refugees</span>
-    </div>
-    <div class="card-body" id="fsp-ref">
-      <div class="empty"><div class="empty-icon">🌍</div>Add refugee flag + provider. Refugees often lack formal ID — which FSPs accept them? This tells you where inclusion gaps are in the FSP ecosystem.</div>
+    <div class="idv-row">
+      <div class="idv-left"><div class="idv-icon" style="background:var(--lime-dim)">🌍</div><div><div class="idv-name">Refugee Access</div><div class="idv-desc">Add refugee flag + provider to see which FSPs accept refugees lacking formal ID.</div></div></div>
+      <div class="idv-val" style="color:var(--lime)">—</div>
     </div>
   </div>
 </div>

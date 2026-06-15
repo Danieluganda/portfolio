@@ -5915,7 +5915,7 @@ window.setTimePeriod = function(btn, period) {
     intelTypeBtn.textContent = 'Analysis';
     intelTypeBtn.dataset.type = 'intelligence';
     intelTypeBtn.onclick = () => showTypeGroup('intelligence');
-    typeBar.appendChild(intelTypeBtn);
+    // Analysis tab hidden per menu config
 
     const intelPanel = document.createElement('div');
     intelPanel.id = 'panel-intelligence';
